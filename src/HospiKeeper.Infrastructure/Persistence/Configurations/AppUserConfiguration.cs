@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace HospiKeeper.Infrastructure.Persistence.Configurations;
 
+/// <summary>操作员账号表映射。</summary>
 internal sealed class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
 {
     public void Configure(EntityTypeBuilder<AppUser> builder)

@@ -6,10 +6,12 @@ namespace Sylvie233.Database;
 /// 通过环境变量覆盖数据库配置。
 /// 查找顺序：业务前缀（如 <c>HOSPITKEEPER_DB_HOST</c>）→ <c>SYLVIE233_DB_HOST</c> → <c>MYSQL_HOST</c>。
 /// </summary>
+/// <summary>数据库环境变量覆盖规则。</summary>
 public static class DatabaseEnvironmentOverrides
 {
     public const string DefaultPrefix = "SYLVIE233";
 
+    /// <summary>按约定变量名覆盖配置；未设置的项保持原值。</summary>
     public static void Apply(DatabaseOptions options, string? prefix = null)
     {
         ArgumentNullException.ThrowIfNull(options);

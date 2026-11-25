@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace HospiKeeper.Infrastructure.Persistence.Configurations;
 
+/// <summary>单据序号表映射。</summary>
 internal sealed class DocumentSequenceConfiguration : IEntityTypeConfiguration<DocumentSequence>
 {
     public void Configure(EntityTypeBuilder<DocumentSequence> builder)

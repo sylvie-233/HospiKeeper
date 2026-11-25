@@ -5,6 +5,7 @@ using Avalonia.Media;
 
 namespace Sylvie233.UI.Controls;
 
+/// <summary>柱状图的一个数据项。</summary>
 public sealed record ChartBar(string Label, double Value);
 
 /// <summary>轻量自绘柱状图，避免引入额外图表依赖。</summary>

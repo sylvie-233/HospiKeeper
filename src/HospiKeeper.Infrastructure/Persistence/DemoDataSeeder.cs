@@ -43,6 +43,7 @@ public static class DemoDataSeeder
         new("208", 2, "单人间", 1, 128m, 100m, 100m, false, false, RoomStatus.Disabled)
     };
 
+    /// <summary>仅在空库时写入演示数据；已有账号时直接跳过。</summary>
     public static async Task SeedAsync(
         HotelDbContext db,
         DateTime now,

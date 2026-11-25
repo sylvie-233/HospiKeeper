@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace HospiKeeper.Infrastructure.Persistence.Configurations;
 
+/// <summary>房间表映射。</summary>
 internal sealed class RoomConfiguration : IEntityTypeConfiguration<Room>
 {
     public void Configure(EntityTypeBuilder<Room> builder)

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 
 namespace Sylvie233.UI.Controls;
 
+/// <summary>Ant Design 风格卡片容器。</summary>
 public class AntCard : ContentControl
 {
     public static readonly StyledProperty<object?> HeaderProperty =

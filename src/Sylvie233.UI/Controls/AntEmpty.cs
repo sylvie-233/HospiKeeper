@@ -4,6 +4,7 @@ using Avalonia.Media;
 
 namespace Sylvie233.UI.Controls;
 
+/// <summary>空状态占位。</summary>
 public class AntEmpty : ContentControl
 {
     public static readonly StyledProperty<string?> TitleProperty =

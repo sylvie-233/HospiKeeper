@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace HospiKeeper.Infrastructure.Persistence.Configurations;
 
+/// <summary>同住人表映射。</summary>
 internal sealed class CompanionConfiguration : IEntityTypeConfiguration<Companion>
 {
     public void Configure(EntityTypeBuilder<Companion> builder)

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Sylvie233.Database;
 
+/// <summary>共享数据库注册入口。</summary>
 public static class DatabaseServiceCollectionExtensions
 {
     /// <summary>注册指定 DbContext（MySQL 提供程序）。业务层只需定义自己的 DbContext 与映射。</summary>

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace HospiKeeper.Infrastructure.Persistence.Configurations;
 
+/// <summary>操作日志表映射。</summary>
 internal sealed class OperationLogConfiguration : IEntityTypeConfiguration<OperationLog>
 {
     public void Configure(EntityTypeBuilder<OperationLog> builder)

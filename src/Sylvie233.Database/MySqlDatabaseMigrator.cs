@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace Sylvie233.Database;
 
 /// <summary>基于 EF Core 的通用迁移执行器：记录待应用迁移与执行结果。</summary>
+/// <summary>通用迁移执行器：记录待应用迁移，再调用 EF Core <c>MigrateAsync</c>。</summary>
 public sealed class MySqlDatabaseMigrator<TContext> : IDatabaseMigrator
     where TContext : DbContext
 {
@@ -16,6 +17,7 @@ public sealed class MySqlDatabaseMigrator<TContext> : IDatabaseMigrator
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task MigrateAsync(CancellationToken cancellationToken = default)
     {
         var pending = (await _db.Database.GetPendingMigrationsAsync(cancellationToken)).ToList();

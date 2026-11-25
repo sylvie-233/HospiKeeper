@@ -3,6 +3,7 @@ using Avalonia.Controls;
 
 namespace Sylvie233.UI.Controls;
 
+/// <summary>分区小标题。</summary>
 public class AntSectionTitle : ContentControl
 {
     public static readonly StyledProperty<string?> TitleProperty =

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HospiKeeper.Infrastructure.Persistence.Repositories;
 
+/// <summary>房间仓储：筛选、房号唯一性与历史数据检查。</summary>
 internal sealed class RoomRepository : IRoomRepository
 {
     private readonly HotelDbContext _db;

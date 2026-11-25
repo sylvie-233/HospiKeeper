@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HospiKeeper.Infrastructure.Persistence.Repositories;
 
+/// <summary>结算账单仓储：EF Core 查询、权限过滤与写入。</summary>
 internal sealed class CheckoutBillRepository : ICheckoutBillRepository
 {
     private readonly HotelDbContext _db;

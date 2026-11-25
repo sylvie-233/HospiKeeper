@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HospiKeeper.Infrastructure.Persistence.Repositories;
 
+/// <summary>预定仓储：状态查询、待入住校验与写入。</summary>
 internal sealed class ReservationRepository : IReservationRepository
 {
     private readonly HotelDbContext _db;

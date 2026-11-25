@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace HospiKeeper.Infrastructure.Persistence.Configurations;
 
+/// <summary>入住记录表映射。</summary>
 internal sealed class CheckInRecordConfiguration : IEntityTypeConfiguration<CheckInRecord>
 {
     public void Configure(EntityTypeBuilder<CheckInRecord> builder)

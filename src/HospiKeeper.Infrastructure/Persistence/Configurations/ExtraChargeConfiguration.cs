@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace HospiKeeper.Infrastructure.Persistence.Configurations;
 
+/// <summary>追加消费表映射。</summary>
 internal sealed class ExtraChargeConfiguration : IEntityTypeConfiguration<ExtraCharge>
 {
     public void Configure(EntityTypeBuilder<ExtraCharge> builder)

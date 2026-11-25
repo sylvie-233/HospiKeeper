@@ -4,6 +4,7 @@ using HospiKeeper.Infrastructure.Persistence.Repositories;
 
 namespace HospiKeeper.Infrastructure.Persistence;
 
+/// <summary>基于 EF Core 的工作单元：复用同一个 DbContext，一次 SaveChanges 提交全部变更。</summary>
 public sealed class EfUnitOfWork : IUnitOfWork
 {
     private readonly HotelDbContext _db;

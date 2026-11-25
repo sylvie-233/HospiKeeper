@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Sylvie233.Caching;
 
+/// <summary>基于 <see cref="IMemoryCache"/> 的实现，额外维护 key 注册表以支持前缀清理。</summary>
 public sealed class MemoryCacheService : ICacheService
 {
     private readonly IMemoryCache _cache;

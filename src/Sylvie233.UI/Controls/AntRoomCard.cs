@@ -3,6 +3,7 @@ using Avalonia.Controls;
 
 namespace Sylvie233.UI.Controls;
 
+/// <summary>房态卡片的视觉状态。</summary>
 public enum AntRoomCardState
 {
     Free,

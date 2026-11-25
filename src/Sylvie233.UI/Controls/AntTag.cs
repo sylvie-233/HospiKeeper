@@ -3,6 +3,7 @@ using Avalonia.Controls;
 
 namespace Sylvie233.UI.Controls;
 
+/// <summary>标签的语义色变体。</summary>
 public enum AntTagVariant
 {
     Default,
@@ -14,6 +15,7 @@ public enum AntTagVariant
     Cyan
 }
 
+/// <summary>Ant Design 风格标签。</summary>
 public class AntTag : ContentControl
 {
     public static readonly StyledProperty<AntTagVariant> VariantProperty =

@@ -5,8 +5,10 @@ namespace Sylvie233.Caching;
 /// </summary>
 public interface ICacheService
 {
+    /// <summary>读取缓存；未命中或缓存不可用时返回 <c>null</c>。</summary>
     Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) where T : class;
 
+    /// <summary>写入缓存，可指定绝对过期时间。</summary>
     Task SetAsync<T>(
         string key,
         T value,
@@ -22,7 +24,9 @@ public interface ICacheService
         TimeSpan? absoluteExpiration = null,
         CancellationToken cancellationToken = default) where T : class;
 
+    /// <summary>删除单个 key。</summary>
     Task RemoveAsync(string key, CancellationToken cancellationToken = default);
 
+    /// <summary>按前缀批量删除（用于一组相关缓存统一失效）。</summary>
     Task RemoveByPrefixAsync(string prefix, CancellationToken cancellationToken = default);
 }

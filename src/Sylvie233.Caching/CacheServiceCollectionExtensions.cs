@@ -5,8 +5,10 @@ using StackExchange.Redis;
 
 namespace Sylvie233.Caching;
 
+/// <summary>缓存依赖注册：根据配置选择 Memory 或 Redis，并向业务层暴露 <see cref="ICacheService"/>。</summary>
 public static class CacheServiceCollectionExtensions
 {
+    /// <summary>注册缓存实现；Redis 连接失败不会阻止应用启动，运行期按未命中降级。</summary>
     public static IServiceCollection AddCaching(
         this IServiceCollection services,
         CacheOptions options)

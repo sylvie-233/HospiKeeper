@@ -3,6 +3,7 @@ using Avalonia.Controls;
 
 namespace Sylvie233.UI.Controls;
 
+/// <summary>主窗口内的模态弹窗容器。</summary>
 public class AntModal : ContentControl
 {
     public static readonly StyledProperty<string?> TitleProperty =

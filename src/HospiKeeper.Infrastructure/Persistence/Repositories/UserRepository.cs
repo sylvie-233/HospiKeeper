@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HospiKeeper.Infrastructure.Persistence.Repositories;
 
+/// <summary>操作员账号仓储：登录查询、唯一性与管理员计数。</summary>
 internal sealed class UserRepository : IUserRepository
 {
     private readonly HotelDbContext _db;

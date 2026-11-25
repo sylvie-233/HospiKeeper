@@ -6,6 +6,7 @@ using StackExchange.Redis;
 
 namespace Sylvie233.Caching;
 
+/// <summary>基于 StackExchange.Redis 的实现；连接异常按缓存未命中降级处理。</summary>
 public sealed class RedisCacheService : ICacheService
 {
     private readonly IConnectionMultiplexer _multiplexer;

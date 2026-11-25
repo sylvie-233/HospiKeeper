@@ -3,6 +3,7 @@ using HospiKeeper.Infrastructure.Persistence.Entities;
 
 namespace HospiKeeper.Infrastructure.Persistence.Repositories;
 
+/// <summary>单据序号仓储：按「前缀 + 日期」生成并持久化序列。</summary>
 internal sealed class DocumentNumberRepository : IDocumentNumberRepository
 {
     private readonly HotelDbContext _db;

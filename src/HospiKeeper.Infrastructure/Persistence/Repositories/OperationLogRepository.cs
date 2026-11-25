@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HospiKeeper.Infrastructure.Persistence.Repositories;
 
+/// <summary>操作日志仓储：按动作 / 关键字查询并写入。</summary>
 internal sealed class OperationLogRepository : IOperationLogRepository
 {
     private readonly HotelDbContext _db;

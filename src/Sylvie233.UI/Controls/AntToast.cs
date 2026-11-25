@@ -5,6 +5,7 @@ using Sylvie233.UI.Icons;
 
 namespace Sylvie233.UI.Controls;
 
+/// <summary>轻提示类型。</summary>
 public enum AntToastKind
 {
     Success,
@@ -13,6 +14,7 @@ public enum AntToastKind
     Info
 }
 
+/// <summary>轻提示条，用于成功 / 失败 / 警告反馈。</summary>
 public class AntToast : ContentControl
 {
     public static readonly StyledProperty<AntToastKind> KindProperty =

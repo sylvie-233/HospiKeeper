@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HospiKeeper.Infrastructure.Persistence.Repositories;
 
+/// <summary>房型仓储：名称唯一性与引用计数检查。</summary>
 internal sealed class RoomTypeRepository : IRoomTypeRepository
 {
     private readonly HotelDbContext _db;

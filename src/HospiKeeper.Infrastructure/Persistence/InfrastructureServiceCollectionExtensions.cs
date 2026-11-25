@@ -4,6 +4,7 @@ using Sylvie233.Database;
 
 namespace HospiKeeper.Infrastructure.Persistence;
 
+/// <summary>基础设施注册：共享数据库组件 + 业务仓储 / 初始化器。</summary>
 public static class InfrastructureServiceCollectionExtensions
 {
     /// <summary>组合共享数据库组件与酒店业务仓储、初始化器。</summary>

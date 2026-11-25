@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace HospiKeeper.Infrastructure.Persistence.Configurations;
 
+/// <summary>结算账单表映射。</summary>
 internal sealed class CheckoutBillConfiguration : IEntityTypeConfiguration<CheckoutBill>
 {
     public void Configure(EntityTypeBuilder<CheckoutBill> builder)
