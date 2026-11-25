@@ -43,9 +43,12 @@ services:
     image: redis:7-alpine
     container_name: hospikeeper-redis
     restart: unless-stopped
-    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    command: ["redis-server", "--save", "", "--appendonly", "yes", "--appendfsync", "everysec", "--maxmemory", "256mb", "--maxmemory-policy", "volatile-lru"]
     ports:
       - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      # 系统配置使用无 TTL 的 key；AOF 持久化保证重启后仍可恢复。
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -108,3 +111,5 @@ services:
 volumes:
   mysql_data:
     name: hospikeeper_mysql_data
+  redis_data:
+    name: hospikeeper_redis_data

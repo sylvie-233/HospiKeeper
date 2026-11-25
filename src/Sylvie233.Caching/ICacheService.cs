@@ -24,6 +24,15 @@ public interface ICacheService
         TimeSpan? absoluteExpiration = null,
         CancellationToken cancellationToken = default) where T : class;
 
+    /// <summary>
+    /// 写入不设过期时间的持久缓存项（如系统配置）。
+    /// 与普通缓存不同，不会被默认 TTL 清理；返回是否写入成功。
+    /// </summary>
+    Task<bool> SetPersistentAsync<T>(
+        string key,
+        T value,
+        CancellationToken cancellationToken = default) where T : class;
+
     /// <summary>删除单个 key。</summary>
     Task RemoveAsync(string key, CancellationToken cancellationToken = default);
 

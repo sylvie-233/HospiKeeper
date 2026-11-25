@@ -105,6 +105,18 @@ public sealed class MemoryCacheService : ICacheService
         }
     }
 
+    public Task<bool> SetPersistentAsync<T>(
+        string key,
+        T value,
+        CancellationToken cancellationToken = default) where T : class
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var fullKey = BuildKey(key);
+        _cache.Set(fullKey, CacheSerializer.Serialize(value));
+        _keys[fullKey] = 0;
+        return Task.FromResult(true);
+    }
+
     public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

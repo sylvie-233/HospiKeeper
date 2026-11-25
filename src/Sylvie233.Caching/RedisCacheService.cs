@@ -102,6 +102,26 @@ public sealed class RedisCacheService : ICacheService
         }
     }
 
+    public async Task<bool> SetPersistentAsync<T>(
+        string key,
+        T value,
+        CancellationToken cancellationToken = default) where T : class
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var fullKey = BuildKey(key);
+        try
+        {
+            // 不传 expiry：AOF 持久化后配置可跨 Redis 重启保留。
+            await _database.StringSetAsync(fullKey, CacheSerializer.Serialize(value));
+            return true;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Redis persistent write failed for key {CacheKey}.", fullKey);
+            return false;
+        }
+    }
+
     public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
