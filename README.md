@@ -11,7 +11,7 @@
 | 运行时 | .NET 10（LTS） |
 | 桌面客户端 | Avalonia 12.2 · CommunityToolkit.Mvvm 8.4 |
 | UI 设计系统 | 自研 Ant 风格控件库 `Sylvie233.UI`（TemplatedControl / ControlTheme） |
-| API | ASP.NET Core 10 · Controllers · Swagger |
+| API | ASP.NET Core 10 · Controllers · OpenAPI 3.1 · Scalar |
 | 持久化 | EF Core 10.0.12 · MySql.EntityFrameworkCore 10.0.12（官方 MySQL Provider） |
 | 数据库组件 | 自研 `Sylvie233.Database`：连接配置 + DbContext 注册 + 迁移执行（无业务依赖） |
 | 缓存 | 自研 `Sylvie233.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
@@ -31,7 +31,7 @@ HospiKeeper.slnx
 │  ├─ Sylvie233.Logging/           # Serilog 统一配置：控制台 / 滚动文件（无业务依赖）
 │  ├─ Sylvie233.Database/          # 连接配置、MySQL DbContext 注册、迁移执行（无业务依赖）
 │  ├─ HospiKeeper.Infrastructure/  # EF Core DbContext、映射、仓储、迁移、演示数据
-│  ├─ HospiKeeper.Api/             # 独立 Web API（Token 鉴权 + REST + Swagger）
+│  ├─ HospiKeeper.Api/             # 独立 Web API（Token 鉴权 + REST + OpenAPI / Scalar）
 │  ├─ HospiKeeper.Client/          # 桌面端 HTTP 客户端（IHospiKeeperApi）
 │  ├─ Sylvie233.UI/              # 可复用 UI 设计系统与自研控件
 │  └─ HospiKeeper.Desktop/         # Avalonia 桌面应用（MVVM 页面 + 弹窗）
@@ -92,7 +92,8 @@ dotnet run --project src/HospiKeeper.Api
 ```
 
 - API：`http://localhost:5080`
-- Swagger：`http://localhost:5080/swagger`
+- Scalar 文档：`http://localhost:5080/scalar/v1`
+- OpenAPI JSON：`http://localhost:5080/openapi/v1.json`
 - 首次启动自动执行 `Database.MigrateAsync()`，并在空库中生成演示数据。
 
 ### 3. 启动桌面客户端
@@ -122,6 +123,31 @@ pwsh ./manage.ps1 migrate         # 应用 EF Core 迁移
 pwsh ./manage.ps1 reset -Force    # 清空数据卷后重建环境
 pwsh ./manage.ps1 down            # 停止 API 与容器
 ```
+
+## 接口文档（OpenAPI / Scalar）
+
+API 使用 ASP.NET Core 10 内置的 `Microsoft.AspNetCore.OpenApi` 生成 **OpenAPI 3.1** 文档，界面使用 **Scalar**：
+
+| 地址 | 说明 |
+|------|------|
+| `http://localhost:5080/scalar/v1` | Scalar 交互式文档 |
+| `http://localhost:5080/openapi/v1.json` | OpenAPI JSON（可导入 Postman / Apifox / 代码生成器） |
+
+特性：
+
+- **Bearer 鉴权**：文档内置 `Bearer` 安全方案，Scalar 右侧可直接填入登录返回的 Token；
+  全局接口默认要求鉴权，仅 `POST /api/auth/login` 与 `/health` 例外；
+- **XML 注释**：控制器与接口的中文 `<summary>` 会进入文档，不需要手写 schema 描述；
+- **Tag 分组**：认证、房态看板、入住、退房、在住、预定、记录查询、统计报表、房间 / 房型 / 账号管理；
+- **统一错误响应**：每个接口补充 400 / 401 / 403 / 500 说明，错误体引用 `ApiErrorResponse`；
+- **仅开发环境开放**：`Program.cs` 中通过 `app.Environment.IsDevelopment()` 控制，
+  生产环境不会暴露 `/scalar` 与 `/openapi`；`manage.ps1 up` 启动本地 API 时会自动设置 `ASPNETCORE_ENVIRONMENT=Development`。
+
+新增接口时：
+
+1. 控制器加 `[Tags("...")]` 分组；
+2. 接口与控制器补 `<summary>` 中文注释；
+3. 公开接口需要在 `HospiKeeperOpenApiOperationTransformer` 中取消 Bearer 要求。
 
 ## 初始账号
 

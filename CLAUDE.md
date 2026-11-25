@@ -25,7 +25,7 @@ HospiKeeper（云栖民宿管理系统）是面向中小型民宿 / 小旅馆的
 | .NET | 10（LTS），目标框架 `net10.0` |
 | Avalonia | 12.2 |
 | CommunityToolkit.Mvvm | 8.4 |
-| ASP.NET Core | 10（Web API + Controllers + Swagger） |
+| ASP.NET Core | 10（Web API + Controllers + OpenAPI 3.1 + Scalar） |
 | EF Core | 10.0.12 |
 | MySQL Provider | `MySql.EntityFrameworkCore` 10.0.12（官方 Provider，底层 MySql.Data） |
 | MySQL / Redis | MySQL 8 · Redis 7（Docker Compose） |
@@ -46,7 +46,7 @@ Sylvie233.Caching           ICacheService 端口 + Memory / Redis 实现（无�
 Sylvie233.Logging           Serilog 统一配置：控制台 / 滚动文件（无业务依赖，可独立复用）
 Sylvie233.Database          MySQL 连接配置 / DbContext 注册 / 迁移执行（无业务依赖）
 HospiKeeper.Infrastructure  EF Core DbContext / 配置 / 仓储 / 迁移 / 种子
-HospiKeeper.Api             独立 Web API（控制器、鉴权、Swagger）
+HospiKeeper.Api             独立 Web API（控制器、鉴权、OpenAPI / Scalar）
 HospiKeeper.Client          桌面端 HTTP 客户端
 Sylvie233.UI                Avalonia 设计系统与自研控件（不依赖业务模块）
 HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
@@ -77,7 +77,7 @@ dotnet test
 # 启动 MySQL + Redis
 docker compose -f Scripts/docker-compose.yml up -d --wait
 
-# 启动 API（http://localhost:5080，Swagger /swagger）
+# 启动 API（http://localhost:5080，Scalar /scalar/v1）
 dotnet run --project src/HospiKeeper.Api
 
 # 启动桌面端
@@ -199,11 +199,26 @@ dotnet ef database update \
 ## 9. API 约定
 
 - 路由统一 `api/<resource>`，返回领域实体或 `Contracts` DTO；JSON 枚举以字符串输出。
-- 登录：`POST /api/auth/login` 返回 Bearer Token；除 `/health`、`/swagger`、登录接口外均需 `Authorization: Bearer`。
+- 登录：`POST /api/auth/login` 返回 Bearer Token；除 `/health`、`/scalar`、`/openapi`、登录接口外均需 `Authorization: Bearer`。
 - Token 为内存会话（12 小时）；服务端每次请求重新加载用户，角色 / 停用状态即时生效。
 - 业务异常 `DomainException` 由 `ExceptionHandlingMiddleware` 转为 400 / 403；未处理异常返回 500。
 - 控制器保持轻薄：参数绑定 → 调用 Application 服务 → 返回结果；不要在控制器写业务逻辑。
 - 桌面端接入点：`HospiKeeper.Client/IHospiKeeperApi` / `HospiKeeperApiClient`。
+
+### 接口文档
+
+- 生成器：`Microsoft.AspNetCore.OpenApi`（内置，OpenAPI 3.1）；UI：`Scalar.AspNetCore`。
+- 端点：`/openapi/v1.json`（文档）与 `/scalar/v1`（界面）。
+- 只在 Development 映射；不要在生产环境开放。`manage.ps1 up` 已为本地 API 设置 `ASPNETCORE_ENVIRONMENT=Development`。
+- 文档补充集中在 `src/HospiKeeper.Api/OpenApi/`：
+  - `HospiKeeperOpenApiDocumentTransformer`：标题、描述、`Bearer` 安全方案与全局要求；
+  - `HospiKeeperOpenApiOperationTransformer`：统一错误响应，并为登录等公开接口取消鉴权要求。
+- 新增控制器 / 接口时必须：
+  - 控制器加 `[Tags("中文分组")]`；
+  - 类型与接口补 `<summary>` 中文 XML 注释（`GenerateDocumentationFile` 已开启，缺失注释不报错但不进文档）；
+  - 公开接口在 `PublicPaths` 中登记并取消安全要求。
+- 错误响应统一引用 `ApiErrorResponse`；不要为每个接口重复定义错误 schema。
+- 改动鉴权、公开路径或安全方案时同步更新 README 的「接口文档」章节。
 
 ## 10. UI 约定
 
