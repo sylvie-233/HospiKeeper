@@ -6,7 +6,7 @@ using Sylvie233.UI.Controls;
 namespace HospiKeeper.Desktop.Services;
 
 /// <summary>一条轻提示。</summary>
-public sealed class ToastItem
+public sealed partial class ToastItem : ObservableObject
 {
     public ToastItem(string message, AntToastKind kind)
     {
@@ -16,6 +16,10 @@ public sealed class ToastItem
 
     public string Message { get; }
     public AntToastKind Kind { get; }
+
+    /// <summary>由 ToastService 在移除前设置为 true，用于播放淡出动画。</summary>
+    [ObservableProperty]
+    private bool _isLeaving;
 }
 
 /// <summary>全局轻提示队列，线程安全地切换到 UI 线程。</summary>
@@ -38,6 +42,19 @@ public sealed class ToastService : ObservableObject
             return;
         }
 
+        // 允许从后台线程调用；统一回到 UI 线程更新集合。
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => Show(message, kind));
+            return;
+        }
+
+        // 避免错误连续堆叠遮挡界面，最多保留 4 条。
+        while (Items.Count >= 4)
+        {
+            Items.RemoveAt(0);
+        }
+
         var item = new ToastItem(message, kind);
         Items.Add(item);
         _ = RemoveLaterAsync(item);
@@ -46,6 +63,8 @@ public sealed class ToastService : ObservableObject
     private async Task RemoveLaterAsync(ToastItem item)
     {
         await Task.Delay(kindDelay(item.Kind));
+        await Dispatcher.UIThread.InvokeAsync(() => item.IsLeaving = true);
+        await Task.Delay(180);
         await Dispatcher.UIThread.InvokeAsync(() => Items.Remove(item));
     }
 

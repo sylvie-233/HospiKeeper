@@ -255,13 +255,24 @@
 
         <!-- 工作区 -->
         <Border Grid.Column="1" Background="{DynamicResource AntBgLayoutBrush}">
-          <ContentControl Content="{Binding CurrentPage}" />
+          <ContentControl Name="PageHost" Content="{Binding CurrentPage}">
+            <ContentControl.Transitions>
+              <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.18" />
+              </Transitions>
+            </ContentControl.Transitions>
+          </ContentControl>
         </Border>
       </Grid>
     </DockPanel>
 
     <!-- ============ 模态弹窗 ============ -->
-    <Grid ZIndex="100" IsVisible="{Binding Dialog.IsOpen}">
+    <Grid Name="DialogHost" ZIndex="100" IsVisible="{Binding Dialog.IsOpen}">
+      <Grid.Transitions>
+        <Transitions>
+          <DoubleTransition Property="Opacity" Duration="0:0:0.16" />
+        </Transitions>
+      </Grid.Transitions>
       <Border Background="#40000000" />
       <ScrollViewer HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -287,6 +298,7 @@
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="svc:ToastItem">
           <controls:AntToast Kind="{Binding Kind}"
+                             IsLeaving="{Binding IsLeaving}"
                              Content="{Binding Message}"
                              Margin="0,0,0,8" />
         </DataTemplate>

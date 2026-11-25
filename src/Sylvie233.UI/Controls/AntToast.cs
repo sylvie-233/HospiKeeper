@@ -1,6 +1,9 @@
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Sylvie233.UI.Icons;
 
 namespace Sylvie233.UI.Controls;
@@ -23,12 +26,28 @@ public class AntToast : ContentControl
     public static readonly StyledProperty<Geometry?> IconProperty =
         AvaloniaProperty.Register<AntToast, Geometry?>(nameof(Icon), AntIcons.Check);
 
+    public static readonly StyledProperty<bool> IsLeavingProperty =
+        AvaloniaProperty.Register<AntToast, bool>(nameof(IsLeaving));
+
     static AntToast()
     {
         KindProperty.Changed.AddClassHandler<AntToast>((toast, _) => toast.UpdateKind());
+        IsLeavingProperty.Changed.AddClassHandler<AntToast>((toast, _) => toast.UpdateLeaving());
     }
 
-    public AntToast() => UpdateKind();
+    public AntToast()
+    {
+        Opacity = 0;
+        Transitions = new Transitions
+        {
+            new DoubleTransition
+            {
+                Property = OpacityProperty,
+                Duration = TimeSpan.FromMilliseconds(180)
+            }
+        };
+        UpdateKind();
+    }
 
     public AntToastKind Kind
     {
@@ -40,6 +59,30 @@ public class AntToast : ContentControl
     {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);
+    }
+
+    /// <summary>离开状态：淡出后再由队列移除。</summary>
+    public bool IsLeaving
+    {
+        get => GetValue(IsLeavingProperty);
+        set => SetValue(IsLeavingProperty, value);
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        if (!IsLeaving)
+        {
+            Dispatcher.UIThread.Post(() => SetCurrentValue(OpacityProperty, 1d), DispatcherPriority.Loaded);
+        }
+    }
+
+    private void UpdateLeaving()
+    {
+        if (IsLeaving)
+        {
+            SetCurrentValue(OpacityProperty, 0d);
+        }
     }
 
     private void UpdateKind()

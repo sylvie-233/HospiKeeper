@@ -1,5 +1,8 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Threading;
+using HospiKeeper.Desktop.Services;
 using HospiKeeper.Desktop.ViewModels;
 
 namespace HospiKeeper.Desktop.Views;
@@ -20,6 +23,48 @@ public partial class MainWindow : Window
         _viewModel = viewModel;
         InitializeComponent();
         DataContext = viewModel;
+        viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        viewModel.Dialog.PropertyChanged += OnDialogPropertyChanged;
+    }
+
+    private void OnDialogPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(DialogService.IsOpen)
+            || !_viewModel.Dialog.IsOpen
+            || DialogHost is null)
+        {
+            return;
+        }
+
+        DialogHost.Opacity = 0;
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (DialogHost is not null)
+                {
+                    DialogHost.Opacity = 1;
+                }
+            },
+            DispatcherPriority.Background);
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MainViewModel.CurrentPage) || PageHost is null)
+        {
+            return;
+        }
+
+        PageHost.Opacity = 0;
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (PageHost is not null)
+                {
+                    PageHost.Opacity = 1;
+                }
+            },
+            DispatcherPriority.Background);
     }
 
     private void OnOpened(object? sender, System.EventArgs e) => WindowCentering.Center(this);

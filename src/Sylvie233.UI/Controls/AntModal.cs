@@ -1,5 +1,8 @@
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace Sylvie233.UI.Controls;
 
@@ -21,6 +24,19 @@ public class AntModal : ContentControl
         set => SetValue(TitleProperty, value);
     }
 
+    public AntModal()
+    {
+        Opacity = 0;
+        Transitions = new Transitions
+        {
+            new DoubleTransition
+            {
+                Property = OpacityProperty,
+                Duration = TimeSpan.FromMilliseconds(160)
+            }
+        };
+    }
+
     public double ModalWidth
     {
         get => GetValue(ModalWidthProperty);
@@ -31,5 +47,11 @@ public class AntModal : ContentControl
     {
         get => GetValue(CloseCommandProperty);
         set => SetValue(CloseCommandProperty, value);
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        Dispatcher.UIThread.Post(() => SetCurrentValue(OpacityProperty, 1d), DispatcherPriority.Loaded);
     }
 }

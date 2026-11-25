@@ -288,6 +288,11 @@
   </Style>
   <Style Selector="Border.ant-table-row">
     <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
   </Style>
   <Style Selector="Border.ant-table-row:pointerover">
     <Setter Property="Background" Value="#F5F8FF" />
