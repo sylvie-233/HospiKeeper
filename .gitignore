@@ -1,2 +1,20 @@
+# Build outputs
+bin/
+obj/
 .vs/
+.idea/
+
+# Local tooling
 .workbuddy/
+
+# Local runtime data
+*.user
+*.suo
+*.db
+*.db-shm
+*.db-wal
+HospiKeeper/data/
+
+# Logs / temp
+*.log
+tmp/

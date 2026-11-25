@@ -27,9 +27,9 @@ services:
     ports:
       - '${MYSQL_PORT:-3306}:3306'
     volumes:
+      # 表结构与演示数据由 HospiKeeper.Api 启动时通过 EF Core Migrations 自动创建。
+      # Docs/民宿管理系统-数据库设计-v1.sql 保留为数据库设计参考。
       - mysql_data:/var/lib/mysql
-      # 仅在数据目录为空（首次初始化）时执行
-      - ../Docs/民宿管理系统-数据库设计-v1.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test:
         - CMD-SHELL

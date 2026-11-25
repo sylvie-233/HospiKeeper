@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HospiKeeper.Domain/HospiKeeper.Domain.csproj" />
+    <Project Path="src/HospiKeeper.Contracts/HospiKeeper.Contracts.csproj" />
+    <Project Path="src/HospiKeeper.Application/HospiKeeper.Application.csproj" />
+    <Project Path="src/HospiKeeper.Infrastructure/HospiKeeper.Infrastructure.csproj" />
+    <Project Path="src/HospiKeeper.Api/HospiKeeper.Api.csproj" />
+    <Project Path="src/HospiKeeper.Client/HospiKeeper.Client.csproj" />
+    <Project Path="src/HospiKeeper.UI/HospiKeeper.UI.csproj" />
+    <Project Path="src/HospiKeeper.Desktop/HospiKeeper.Desktop.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/HospiKeeper.Tests/HospiKeeper.Tests.csproj" />
+  </Folder>
+</Solution>
