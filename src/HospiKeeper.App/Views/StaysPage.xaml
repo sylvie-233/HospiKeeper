@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HospiKeeper.App.Controls"
+             xmlns:vm="clr-namespace:HospiKeeper.App.ViewModels"
+             x:Class="HospiKeeper.App.Views.StaysPage"
+             x:DataType="vm:StaysViewModel"
+             BackgroundColor="{StaticResource AppBg}">
+
+  <Grid RowDefinitions="Auto,Auto,*">
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="20,22,20,8">
+      <VerticalStackLayout Spacing="2">
+        <Label Text="在住" Style="{StaticResource PageTitle}" />
+        <Label Text="{Binding SummaryText}" Style="{StaticResource PageSubtitle}" />
+      </VerticalStackLayout>
+      <Button Grid.Column="1" Text="刷新" Command="{Binding RefreshCommand}"
+              Style="{StaticResource LinkButton}" VerticalOptions="End" />
+    </Grid>
+
+    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="20,0,20,10" Padding="14,12">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+        <VerticalStackLayout Spacing="2">
+          <Label Text="押金占用合计" Style="{StaticResource Caption}" />
+          <Label Text="{Binding DepositTotalText}" Style="{StaticResource Money}" FontSize="22" />
+        </VerticalStackLayout>
+        <Button Grid.Column="1" Text="结算说明" Command="{Binding InfoCommand}"
+                Style="{StaticResource GhostButton}" VerticalOptions="Center" />
+      </Grid>
+    </Border>
+
+        <ScrollView Grid.Row="2">
+      <VerticalStackLayout Padding="20,0,20,92" Spacing="9">
+        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Stays}" Spacing="9">
+          <BindableLayout.ItemTemplate>
+            <DataTemplate x:DataType="vm:StayCardViewModel">
+            <Border Style="{StaticResource Card}" Padding="14,12">
+              <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                  <Border BackgroundColor="#EFF6FF" StrokeThickness="0"
+                          StrokeShape="RoundRectangle 9" Padding="9,6" VerticalOptions="Center">
+                    <Label Text="{Binding RoomNo}" TextColor="{StaticResource Primary}"
+                           FontSize="16" FontAttributes="Bold" />
+                  </Border>
+                  <VerticalStackLayout Grid.Column="1" Spacing="2">
+                    <Label Text="{Binding GuestName}" FontSize="15" FontAttributes="Bold" />
+                    <Label Text="{Binding GuestPhone}" Style="{StaticResource Caption}" />
+                  </VerticalStackLayout>
+                  <Label Grid.Column="2" Text="{Binding RoomTypeName}" Style="{StaticResource Muted}"
+                         VerticalOptions="Center" />
+                </Grid>
+
+                <BoxView Style="{StaticResource Divider}" />
+
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" RowSpacing="6">
+                  <VerticalStackLayout Spacing="1">
+                    <Label Text="入住 → 预计退房" Style="{StaticResource Caption}" />
+                    <Label Text="{Binding CheckInText}" FontSize="11" />
+                    <Label Text="{Binding PlanOutText}" FontSize="11" />
+                  </VerticalStackLayout>
+                  <VerticalStackLayout Grid.Column="1" Spacing="1">
+                    <Label Text="成交单价 / 押金" Style="{StaticResource Caption}" />
+                    <Label Text="{Binding PriceText}" FontSize="12" FontAttributes="Bold" />
+                    <Label Text="{Binding DepositText}" FontSize="11" />
+                  </VerticalStackLayout>
+                  <VerticalStackLayout Grid.Row="1" Spacing="1">
+                    <Label Text="已产生费用" Style="{StaticResource Caption}" />
+                    <Label Text="{Binding CostText}" Style="{StaticResource Money}" FontSize="13" />
+                  </VerticalStackLayout>
+                  <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="1">
+                    <Label Text="追加消费" Style="{StaticResource Caption}" />
+                    <Label Text="{Binding ExtraText}" FontSize="11" />
+                  </VerticalStackLayout>
+                </Grid>
+
+                <Label Text="{Binding OperatorName, StringFormat='经办前台：{0}'}"
+                       Style="{StaticResource Caption}" />
+              </VerticalStackLayout>
+            </Border>
+          </DataTemplate>
+          </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+        <VerticalStackLayout Padding="20,40" Spacing="6" HorizontalOptions="Center" IsVisible="{Binding IsEmpty}">
+            <Label Text="🛏️" FontSize="30" HorizontalTextAlignment="Center" />
+            <Label Text="暂无在住客人" Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+          </VerticalStackLayout>
+      </VerticalStackLayout>
+    </ScrollView>
+
+    <controls:ToastHost ZIndex="20" Grid.RowSpan="3" />
+  </Grid>
+</ContentPage>

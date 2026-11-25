@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HospiKeeper.App.Controls"
+             xmlns:vm="clr-namespace:HospiKeeper.App.ViewModels"
+             x:Class="HospiKeeper.App.Views.MinePage"
+             x:DataType="vm:MineViewModel"
+             BackgroundColor="{StaticResource AppBg}">
+
+  <Grid>
+    <ScrollView>
+      <VerticalStackLayout Padding="20,22,20,100" Spacing="14">
+
+        <VerticalStackLayout Spacing="2">
+          <Label Text="我的" Style="{StaticResource PageTitle}" />
+          <Label Text="账号、快捷改价与系统信息" Style="{StaticResource PageSubtitle}" />
+        </VerticalStackLayout>
+
+        <Border Style="{StaticResource Card}" Padding="16,15">
+          <VerticalStackLayout Spacing="9">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+              <Border WidthRequest="48" HeightRequest="48" BackgroundColor="#DBEAFE"
+                      StrokeThickness="0" StrokeShape="RoundRectangle 24">
+                <Label Text="{Binding Initial}" FontSize="20" FontAttributes="Bold"
+                       TextColor="{StaticResource Primary}" HorizontalOptions="Center" VerticalOptions="Center" />
+              </Border>
+              <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                <Label Text="{Binding DisplayName}" FontSize="17" FontAttributes="Bold" />
+                <Label Text="{Binding RoleText}" Style="{StaticResource Caption}" />
+              </VerticalStackLayout>
+              <Border Grid.Column="2" BackgroundColor="#ECFDF5" StrokeThickness="0"
+                      StrokeShape="RoundRectangle 999" Padding="8,3" VerticalOptions="Center">
+                <Label Text="已同步" TextColor="{StaticResource Success}" FontSize="10" />
+              </Border>
+            </Grid>
+            <Label Text="{Binding SyncText}" Style="{StaticResource Caption}" />
+          </VerticalStackLayout>
+        </Border>
+
+        <Border Style="{StaticResource Card}" Padding="0">
+          <VerticalStackLayout>
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="11" Padding="16,14">
+              <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding OpenPriceSheetCommand}" />
+              </Grid.GestureRecognizers>
+              <Label Text="¥" FontSize="18" TextColor="{StaticResource Orange}" VerticalOptions="Center" />
+              <VerticalStackLayout Grid.Column="1" Spacing="1">
+                <Label Text="快捷改价" FontSize="14" FontAttributes="Bold" />
+                <Label Text="同步前台标价与散客默认单价" Style="{StaticResource Caption}" />
+              </VerticalStackLayout>
+              <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource TextTertiary}"
+                     VerticalOptions="Center" />
+            </Grid>
+            <BoxView Style="{StaticResource Divider}" />
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="11" Padding="16,14">
+              <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding OpenLogsCommand}" />
+              </Grid.GestureRecognizers>
+              <Label Text="☷" FontSize="17" TextColor="{StaticResource Primary}" VerticalOptions="Center" />
+              <VerticalStackLayout Grid.Column="1" Spacing="1">
+                <Label Text="操作日志" FontSize="14" FontAttributes="Bold" />
+                <Label Text="查看预定、改价与登录记录" Style="{StaticResource Caption}" />
+              </VerticalStackLayout>
+              <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource TextTertiary}"
+                     VerticalOptions="Center" />
+            </Grid>
+            <BoxView Style="{StaticResource Divider}" />
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="11" Padding="16,14">
+              <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding AboutCommand}" />
+              </Grid.GestureRecognizers>
+              <Label Text="i" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}"
+                     VerticalOptions="Center" />
+              <VerticalStackLayout Grid.Column="1" Spacing="1">
+                <Label Text="关于本应用" FontSize="14" FontAttributes="Bold" />
+                <Label Text="{Binding AppVersion, StringFormat='管理端 {0} · 功能边界说明'}" Style="{StaticResource Caption}" />
+              </VerticalStackLayout>
+              <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource TextTertiary}"
+                     VerticalOptions="Center" />
+            </Grid>
+          </VerticalStackLayout>
+        </Border>
+
+        <Border Style="{StaticResource Card}" Padding="14,12">
+          <VerticalStackLayout Spacing="3">
+            <Label Text="功能边界" Style="{StaticResource SectionTitle}" FontSize="14" />
+            <Label Text="App 只负责经营知情与两个轻决策：取消预定、快捷改价。"
+                   Style="{StaticResource Muted}" LineBreakMode="WordWrap" />
+            <Label Text="入住、退房、收款、证件登记与房态操作请回前台桌面端。"
+                   Style="{StaticResource Caption}" LineBreakMode="WordWrap" />
+          </VerticalStackLayout>
+        </Border>
+
+        <Button Text="退出登录" Command="{Binding LogoutCommand}" Style="{StaticResource GhostButton}"
+                TextColor="{StaticResource Error}" BorderColor="#FECACA" Margin="0,4,0,0" />
+      </VerticalStackLayout>
+    </ScrollView>
+
+    <!-- 快捷改价底部抽屉 -->
+    <Grid IsVisible="{Binding IsPriceSheetOpen}" BackgroundColor="#66000000" ZIndex="10">
+      <Border Style="{StaticResource Sheet}" VerticalOptions="End" MaximumHeightRequest="640">
+        <ScrollView MaximumHeightRequest="620" VerticalOptions="Start">
+          <VerticalStackLayout Spacing="12">
+            <Grid ColumnDefinitions="*,Auto">
+              <VerticalStackLayout Spacing="2">
+                <Label Text="快捷改价" FontSize="20" FontAttributes="Bold" />
+                <Label Text="修改后即时同步前台标价与散客默认单价" Style="{StaticResource Caption}" />
+              </VerticalStackLayout>
+              <Button Grid.Column="1" Text="关闭" Command="{Binding ClosePriceSheetCommand}"
+                      Style="{StaticResource LinkButton}" />
+            </Grid>
+
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding PriceItems}" Spacing="8">
+              <BindableLayout.ItemTemplate>
+                <DataTemplate x:DataType="vm:PriceItemViewModel">
+                  <Border BackgroundColor="#F9FAFB" StrokeThickness="1" Stroke="{StaticResource Split}"
+                          StrokeShape="RoundRectangle 11" Padding="12,10">
+                    <Grid ColumnDefinitions="*,110,Auto" ColumnSpacing="8">
+                      <VerticalStackLayout Spacing="1" VerticalOptions="Center">
+                        <Label Text="{Binding Name}" FontSize="14" FontAttributes="Bold" />
+                        <Label Text="{Binding CurrentPriceText, StringFormat='当前 {0}/晚'}"
+                               Style="{StaticResource Caption}" />
+                      </VerticalStackLayout>
+                      <Entry Grid.Column="1" Text="{Binding NewPriceText}" Keyboard="Numeric"
+                             Style="{StaticResource SearchEntry}" Placeholder="新价格" />
+                      <Button Grid.Column="2" Text="调价" Command="{Binding SaveCommand}"
+                              Style="{StaticResource GhostButton}" Padding="10,0" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Border BackgroundColor="#FFF7ED" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="11,9">
+              <Label Text="影响范围：前台房型标价与散客入住默认单价立即更新；在住订单单价与已生成账单不受影响。"
+                     FontSize="11" TextColor="{StaticResource Warning}" LineBreakMode="WordWrap" />
+            </Border>
+          </VerticalStackLayout>
+        </ScrollView>
+      </Border>
+    </Grid>
+
+    <controls:ToastHost ZIndex="20" />
+  </Grid>
+</ContentPage>

@@ -11,6 +11,7 @@
     <Project Path="src/HospiKeeper.Client/HospiKeeper.Client.csproj" />
     <Project Path="src/Sylvie233.UI/Sylvie233.UI.csproj" />
     <Project Path="src/HospiKeeper.Desktop/HospiKeeper.Desktop.csproj" />
+    <Project Path="src/HospiKeeper.App/HospiKeeper.App.csproj" />
     <Project Path="src/HospiKeeper.Web/HospiKeeper.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HospiKeeper.App.Controls"
+             xmlns:vm="clr-namespace:HospiKeeper.App.ViewModels"
+             x:Class="HospiKeeper.App.Views.DashboardPage"
+             x:DataType="vm:DashboardViewModel"
+             BackgroundColor="{StaticResource AppBg}">
+
+  <Grid RowDefinitions="Auto,*">
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="20,22,20,8">
+      <VerticalStackLayout Spacing="2">
+        <Label Text="经营看板" Style="{StaticResource PageTitle}" />
+        <Label Text="今日营收、入住率与待处理事项" Style="{StaticResource PageSubtitle}" />
+      </VerticalStackLayout>
+      <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="End">
+        <Label Text="{Binding LastSyncText}" Style="{StaticResource Caption}" HorizontalTextAlignment="End" />
+        <Button Text="刷新" Command="{Binding RefreshCommand}" Style="{StaticResource LinkButton}" />
+      </VerticalStackLayout>
+    </Grid>
+
+    <ScrollView Grid.Row="1">
+      <VerticalStackLayout Padding="20,0,20,100" Spacing="14">
+
+          <!-- 今日营收 -->
+          <Border Style="{StaticResource Card}" BackgroundColor="#0F172A" Padding="20,18">
+            <Grid ColumnDefinitions="*,Auto">
+              <VerticalStackLayout Spacing="5">
+                <Label Text="今日营收" FontSize="12" TextColor="#94A3B8" />
+                <Label Text="{Binding TodayRevenueText}" FontSize="36" FontAttributes="Bold" TextColor="#FFFFFF" />
+                <Label Text="按今日退房结算统计" FontSize="11" TextColor="#64748B" />
+              </VerticalStackLayout>
+              <Border Grid.Column="1" BackgroundColor="#1E293B" StrokeThickness="0"
+                      StrokeShape="RoundRectangle 999" Padding="10,5" VerticalOptions="Start">
+                <Label Text="{Binding TodayTrendText}" TextColor="{Binding TodayTrendColor}"
+                       FontSize="11" FontAttributes="Bold" />
+              </Border>
+            </Grid>
+          </Border>
+
+          <!-- 三列指标 -->
+          <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+            <Border Style="{StaticResource Card}" Padding="12,12">
+              <VerticalStackLayout Spacing="3">
+                <Label Text="入住率" Style="{StaticResource Caption}" />
+                <Label Text="{Binding OccupancyRateText}" Style="{StaticResource KpiValue}" FontSize="20" />
+                <Label Text="{Binding OccupancyDetailText}" Style="{StaticResource Caption}" />
+              </VerticalStackLayout>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource Card}" Padding="12,12">
+              <VerticalStackLayout Spacing="3">
+                <Label Text="待到店" Style="{StaticResource Caption}" />
+                <Label Text="{Binding PendingReservationText}" Style="{StaticResource KpiValue}" FontSize="20" />
+                <Label Text="{Binding WebPendingText}" Style="{StaticResource Caption}" />
+              </VerticalStackLayout>
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource Card}" Padding="12,12">
+              <VerticalStackLayout Spacing="3">
+                <Label Text="押金占用" Style="{StaticResource Caption}" />
+                <Label Text="{Binding DepositHoldText}" Style="{StaticResource KpiValue}" FontSize="20" TextColor="{StaticResource Orange}" />
+                <Label Text="{Binding LivingCountText}" Style="{StaticResource Caption}" />
+              </VerticalStackLayout>
+            </Border>
+          </Grid>
+
+          <!-- 7 日营收 -->
+          <Border Style="{StaticResource Card}">
+            <VerticalStackLayout Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <Label Text="近 7 日营收" Style="{StaticResource SectionTitle}" FontSize="15" />
+                <Label Grid.Column="1" Text="{Binding WeekSummary}" Style="{StaticResource Caption}"
+                       VerticalOptions="Center" HorizontalTextAlignment="End" />
+              </Grid>
+              <CollectionView ItemsSource="{Binding WeekBars}" HeightRequest="118" HorizontalScrollBarVisibility="Never">
+                <CollectionView.ItemsLayout>
+                  <LinearItemsLayout Orientation="Horizontal" ItemSpacing="6" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                  <DataTemplate x:DataType="vm:WeekBarViewModel">
+                    <Grid WidthRequest="36" RowDefinitions="*,Auto" RowSpacing="5">
+                      <VerticalStackLayout Grid.Row="0" VerticalOptions="End" Spacing="4">
+                        <Label Text="{Binding ValueText}" FontSize="9" TextColor="{StaticResource TextTertiary}"
+                               HorizontalTextAlignment="Center" />
+                        <Border HeightRequest="{Binding BarHeight}" WidthRequest="26"
+                                BackgroundColor="{Binding BarColor}" StrokeThickness="0"
+                                StrokeShape="RoundRectangle 5,5,0,0" HorizontalOptions="Center" />
+                      </VerticalStackLayout>
+                      <Label Grid.Row="1" Text="{Binding Label}" FontSize="10"
+                             TextColor="{StaticResource TextTertiary}" HorizontalTextAlignment="Center" />
+                    </Grid>
+                  </DataTemplate>
+                </CollectionView.ItemTemplate>
+              </CollectionView>
+            </VerticalStackLayout>
+          </Border>
+
+          <!-- 待处理 -->
+          <Border Style="{StaticResource Card}">
+            <VerticalStackLayout Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <VerticalStackLayout Spacing="2">
+                  <Label Text="待处理" Style="{StaticResource SectionTitle}" FontSize="15" />
+                  <Label Text="{Binding PendingCountText}" Style="{StaticResource Caption}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1" Text="{Binding PendingToggleText}"
+                        Command="{Binding TogglePendingCommand}"
+                        Style="{StaticResource LinkButton}"
+                        IsVisible="{Binding HasMorePending}" VerticalOptions="Center" />
+              </Grid>
+
+              <VerticalStackLayout BindableLayout.ItemsSource="{Binding VisiblePending}" Spacing="8">
+                <BindableLayout.ItemTemplate>
+                  <DataTemplate x:DataType="vm:DashboardPendingItem">
+                    <Border BackgroundColor="#F9FAFB" StrokeThickness="1" Stroke="{StaticResource Split}"
+                            StrokeShape="RoundRectangle 10" Padding="11,10">
+                      <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenCommand}" />
+                      </Border.GestureRecognizers>
+                      <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
+                        <Border WidthRequest="8" HeightRequest="8" StrokeShape="RoundRectangle 4"
+                                BackgroundColor="{Binding DotColor}" StrokeThickness="0" VerticalOptions="Center" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                          <Label Text="{Binding Title}" FontSize="13" FontAttributes="Bold"
+                                 TextColor="{StaticResource TextPrimary}" />
+                          <Label Text="{Binding Detail}" FontSize="11"
+                                 TextColor="{StaticResource TextSecondary}" LineBreakMode="TailTruncation" />
+                        </VerticalStackLayout>
+                        <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource TextTertiary}"
+                               VerticalOptions="Center" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </BindableLayout.ItemTemplate>
+              </VerticalStackLayout>
+
+              <Label Text="暂无待处理事项" Style="{StaticResource Caption}"
+                     HorizontalTextAlignment="Center" Margin="0,10"
+                     IsVisible="{Binding HasPending, Converter={StaticResource InverseBool}}" />
+            </VerticalStackLayout>
+          </Border>
+
+      </VerticalStackLayout>
+    </ScrollView>
+
+    <controls:ToastHost ZIndex="20" Grid.RowSpan="2" />
+  </Grid>
+</ContentPage>

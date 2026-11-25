@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HospiKeeper.App.Controls"
+             xmlns:vm="clr-namespace:HospiKeeper.App.ViewModels"
+             x:Class="HospiKeeper.App.Views.RoomsPage"
+             x:DataType="vm:RoomsViewModel"
+             BackgroundColor="{StaticResource AppBg}">
+
+  <Grid RowDefinitions="Auto,Auto,*">
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="20,22,20,8">
+      <VerticalStackLayout Spacing="2">
+        <Label Text="房态总览" Style="{StaticResource PageTitle}" />
+        <Label Text="{Binding SummaryText}" Style="{StaticResource PageSubtitle}" />
+      </VerticalStackLayout>
+      <Button Grid.Column="1" Text="刷新" Command="{Binding RefreshCommand}"
+              Style="{StaticResource LinkButton}" VerticalOptions="End" />
+    </Grid>
+
+    <VerticalStackLayout Grid.Row="1" Spacing="8" Padding="20,0,20,10">
+      <FlexLayout BindableLayout.ItemsSource="{Binding FloorChips}" Wrap="Wrap" Direction="Row"
+                  AlignItems="Center" JustifyContent="Start">
+        <BindableLayout.ItemTemplate>
+          <DataTemplate x:DataType="vm:FilterChipViewModel">
+            <Border BackgroundColor="{Binding BackgroundColor}" Stroke="{Binding BorderColor}"
+                    StrokeThickness="1" StrokeShape="RoundRectangle 999" Padding="13,6" Margin="0,0,7,7">
+              <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding Command}" />
+              </Border.GestureRecognizers>
+              <Label Text="{Binding Text}" TextColor="{Binding TextColor}" FontSize="12" />
+            </Border>
+          </DataTemplate>
+        </BindableLayout.ItemTemplate>
+      </FlexLayout>
+
+      <FlexLayout BindableLayout.ItemsSource="{Binding StatusChips}" Wrap="Wrap" Direction="Row"
+                  AlignItems="Center" JustifyContent="Start">
+        <BindableLayout.ItemTemplate>
+          <DataTemplate x:DataType="vm:FilterChipViewModel">
+            <Border BackgroundColor="{Binding BackgroundColor}" Stroke="{Binding BorderColor}"
+                    StrokeThickness="1" StrokeShape="RoundRectangle 999" Padding="13,6" Margin="0,0,7,7">
+              <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding Command}" />
+              </Border.GestureRecognizers>
+              <Label Text="{Binding Text}" TextColor="{Binding TextColor}" FontSize="12" />
+            </Border>
+          </DataTemplate>
+        </BindableLayout.ItemTemplate>
+      </FlexLayout>
+    </VerticalStackLayout>
+
+    <ScrollView Grid.Row="2">
+      <VerticalStackLayout Padding="20,0,20,92" Spacing="10">
+        <VerticalStackLayout BindableLayout.ItemsSource="{Binding RoomRows}" Spacing="9">
+          <BindableLayout.ItemTemplate>
+            <DataTemplate x:DataType="vm:RoomRowViewModel">
+              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="9">
+                <controls:RoomCardView BindingContext="{Binding Room1}" />
+                <controls:RoomCardView Grid.Column="1" BindingContext="{Binding Room2}" />
+                <controls:RoomCardView Grid.Column="2" BindingContext="{Binding Room3}" />
+              </Grid>
+            </DataTemplate>
+          </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+
+        <VerticalStackLayout IsVisible="{Binding IsEmpty}" Padding="20,36" Spacing="6"
+                             HorizontalOptions="Center">
+          <Label Text="🌿" FontSize="30" HorizontalTextAlignment="Center" />
+          <Label Text="暂无符合条件的房间" Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <VerticalStackLayout Padding="0,4,0,12" Spacing="6">
+          <BoxView Style="{StaticResource Divider}" />
+          <FlexLayout BindableLayout.ItemsSource="{Binding Legend}" Wrap="Wrap" Direction="Row"
+                      AlignItems="Center" JustifyContent="Start">
+            <BindableLayout.ItemTemplate>
+              <DataTemplate x:DataType="vm:RoomLegendItem">
+                <HorizontalStackLayout Spacing="4" Margin="0,4,14,0">
+                  <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="2"
+                           Color="{Binding Color}" VerticalOptions="Center" />
+                  <Label Text="{Binding Text}" Style="{StaticResource Caption}" />
+                </HorizontalStackLayout>
+              </DataTemplate>
+            </BindableLayout.ItemTemplate>
+          </FlexLayout>
+          <Label Text="管理端只读：打扫、维修、停用等操作请回前台桌面端。"
+                 Style="{StaticResource Caption}" />
+        </VerticalStackLayout>
+      </VerticalStackLayout>
+    </ScrollView>
+
+    <!-- 房间详情底部抽屉 -->
+    <Grid Grid.RowSpan="3" IsVisible="{Binding IsSheetOpen}" BackgroundColor="#66000000" ZIndex="10">
+      <Border Style="{StaticResource Sheet}" VerticalOptions="End" MaximumHeightRequest="640">
+        <ScrollView MaximumHeightRequest="620" VerticalOptions="Start">
+          <VerticalStackLayout Spacing="12">
+            <Grid ColumnDefinitions="*,Auto">
+              <VerticalStackLayout Spacing="2">
+                <Label Text="{Binding SelectedRoom.RoomNo}" FontSize="24" FontAttributes="Bold"
+                       TextColor="{StaticResource TextPrimary}" />
+                <Label Text="{Binding SelectedRoom.TypeName}" Style="{StaticResource Muted}" />
+              </VerticalStackLayout>
+              <Button Grid.Column="1" Text="关闭" Command="{Binding CloseSheetCommand}"
+                      Style="{StaticResource LinkButton}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+              <Border BackgroundColor="#F9FAFB" StrokeThickness="1" Stroke="{StaticResource Split}"
+                      StrokeShape="RoundRectangle 10" Padding="11">
+                <VerticalStackLayout Spacing="2">
+                  <Label Text="楼层 / 床位" Style="{StaticResource Caption}" />
+                  <Label Text="{Binding SelectedRoom.FloorText}" FontSize="13" />
+                </VerticalStackLayout>
+              </Border>
+              <Border Grid.Column="1" BackgroundColor="#F9FAFB" StrokeThickness="1" Stroke="{StaticResource Split}"
+                      StrokeShape="RoundRectangle 10" Padding="11">
+                <VerticalStackLayout Spacing="2">
+                  <Label Text="当前房态" Style="{StaticResource Caption}" />
+                  <Label Text="{Binding SelectedRoom.StatusText}" FontSize="13" FontAttributes="Bold" />
+                </VerticalStackLayout>
+              </Border>
+            </Grid>
+
+            <VerticalStackLayout Spacing="3" IsVisible="{Binding SelectedRoom.HasStay}">
+              <Label Text="在住客人" Style="{StaticResource SectionTitle}" FontSize="14" />
+              <Label Text="{Binding SelectedRoom.StayGuestText}" FontSize="13" />
+              <Label Text="{Binding SelectedRoom.StayTimeText}" Style="{StaticResource Muted}" />
+              <Label Text="{Binding SelectedRoom.StayMoneyText}" Style="{StaticResource Muted}" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="3" IsVisible="{Binding SelectedRoom.HasReservation}">
+              <Label Text="预定信息" Style="{StaticResource SectionTitle}" FontSize="14" />
+              <Label Text="{Binding SelectedRoom.ReservationText}" FontSize="13" />
+            </VerticalStackLayout>
+
+            <Label Text="{Binding SelectedRoom.PriceText, StringFormat='价格：{0}'}" Style="{StaticResource Muted}" />
+            <Border BackgroundColor="#EFF6FF" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="11,9">
+              <Label Text="管理端只读，房态操作回前台桌面端。" FontSize="12"
+                     TextColor="{StaticResource Primary}" />
+            </Border>
+          </VerticalStackLayout>
+        </ScrollView>
+      </Border>
+    </Grid>
+
+    <controls:ToastHost ZIndex="20" Grid.RowSpan="3" />
+  </Grid>
+</ContentPage>

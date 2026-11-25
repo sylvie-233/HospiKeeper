@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HospiKeeper.App.Controls"
+             xmlns:vm="clr-namespace:HospiKeeper.App.ViewModels"
+             x:Class="HospiKeeper.App.Views.ReservationsPage"
+             x:DataType="vm:ReservationsViewModel"
+             BackgroundColor="{StaticResource AppBg}">
+
+  <Grid RowDefinitions="Auto,Auto,*">
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="20,22,20,8">
+      <VerticalStackLayout Spacing="2">
+        <Label Text="预定管理" Style="{StaticResource PageTitle}" />
+        <Label Text="{Binding SummaryText}" Style="{StaticResource PageSubtitle}" />
+      </VerticalStackLayout>
+      <Button Grid.Column="1" Text="刷新" Command="{Binding RefreshCommand}"
+              Style="{StaticResource LinkButton}" VerticalOptions="End" />
+    </Grid>
+
+    <ScrollView Grid.Row="1" Orientation="Horizontal" HorizontalScrollBarVisibility="Never"
+                Padding="20,0,20,10">
+      <HorizontalStackLayout BindableLayout.ItemsSource="{Binding StatusChips}" Spacing="7">
+        <BindableLayout.ItemTemplate>
+          <DataTemplate x:DataType="vm:FilterChipViewModel">
+            <Border BackgroundColor="{Binding BackgroundColor}" Stroke="{Binding BorderColor}"
+                    StrokeThickness="1" StrokeShape="RoundRectangle 999" Padding="13,6">
+              <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding Command}" />
+              </Border.GestureRecognizers>
+              <Label Text="{Binding Text}" TextColor="{Binding TextColor}" FontSize="12" />
+            </Border>
+          </DataTemplate>
+        </BindableLayout.ItemTemplate>
+      </HorizontalStackLayout>
+    </ScrollView>
+
+        <ScrollView Grid.Row="2">
+      <VerticalStackLayout Padding="20,0,20,92" Spacing="9">
+        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Reservations}" Spacing="9">
+          <BindableLayout.ItemTemplate>
+            <DataTemplate x:DataType="vm:ReservationCardViewModel">
+            <Border Style="{StaticResource Card}" Padding="14,12">
+              <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding OpenCommand}" />
+              </Border.GestureRecognizers>
+              <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                  <Label Text="{Binding ResNo}" FontSize="14" FontAttributes="Bold"
+                         TextColor="{StaticResource Primary}" />
+                  <Border Grid.Column="1" BackgroundColor="#F5F3FF" StrokeThickness="0"
+                          StrokeShape="RoundRectangle 999" Padding="8,3">
+                    <Label Text="{Binding StatusText}" TextColor="{Binding StatusColor}" FontSize="10" />
+                  </Border>
+                  <Label Grid.Column="2" Text="›" FontSize="20" TextColor="{StaticResource TextTertiary}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto">
+                  <VerticalStackLayout Spacing="2">
+                    <Label Text="{Binding GuestName}" FontSize="15" FontAttributes="Bold" />
+                    <Label Text="{Binding GuestPhone}" Style="{StaticResource Caption}" />
+                  </VerticalStackLayout>
+                  <Border Grid.Column="1" BackgroundColor="#FFF7ED" StrokeThickness="0"
+                          StrokeShape="RoundRectangle 999" Padding="8,3" VerticalOptions="Start">
+                    <Label Text="{Binding ChannelText}" TextColor="{Binding ChannelColor}" FontSize="10" />
+                  </Border>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                  <Label Text="{Binding RoomTypeName}" Style="{StaticResource Muted}" />
+                  <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                    <Label Text="{Binding RoomText}" FontSize="12" FontAttributes="Bold"
+                           TextColor="{StaticResource TextPrimary}" />
+                    <Label Text="{Binding DateText}" Style="{StaticResource Caption}" />
+                  </HorizontalStackLayout>
+                </Grid>
+              </VerticalStackLayout>
+            </Border>
+          </DataTemplate>
+          </BindableLayout.ItemTemplate>
+        </VerticalStackLayout>
+        <VerticalStackLayout Padding="20,40" Spacing="6" HorizontalOptions="Center" IsVisible="{Binding IsEmpty}">
+            <Label Text="🌿" FontSize="30" HorizontalTextAlignment="Center" />
+            <Label Text="暂无预定记录" Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+          </VerticalStackLayout>
+      </VerticalStackLayout>
+    </ScrollView>
+
+    <!-- 预定详情底部抽屉 -->
+    <Grid Grid.RowSpan="3" IsVisible="{Binding IsSheetOpen}" BackgroundColor="#66000000" ZIndex="10">
+      <Border Style="{StaticResource Sheet}" VerticalOptions="End" MaximumHeightRequest="640">
+        <ScrollView MaximumHeightRequest="620" VerticalOptions="Start">
+          <VerticalStackLayout Spacing="12">
+            <Grid ColumnDefinitions="*,Auto">
+              <VerticalStackLayout Spacing="2">
+                <Label Text="{Binding Selected.ResNo}" FontSize="22" FontAttributes="Bold"
+                       TextColor="{StaticResource Primary}" />
+                <Label Text="{Binding Selected.StatusText}" Style="{StaticResource Muted}" />
+              </VerticalStackLayout>
+              <Button Grid.Column="1" Text="关闭" Command="{Binding CloseSheetCommand}"
+                      Style="{StaticResource LinkButton}" />
+            </Grid>
+
+            <BoxView Style="{StaticResource Divider}" />
+
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="9">
+              <VerticalStackLayout Spacing="1">
+                <Label Text="客人" Style="{StaticResource Caption}" />
+                <Label Text="{Binding Selected.GuestName}" FontSize="13" FontAttributes="Bold" />
+              </VerticalStackLayout>
+              <VerticalStackLayout Grid.Column="1" Spacing="1">
+                <Label Text="联系电话" Style="{StaticResource Caption}" />
+                <Label Text="{Binding Selected.GuestPhone}" FontSize="13" />
+              </VerticalStackLayout>
+              <VerticalStackLayout Grid.Row="1" Spacing="1">
+                <Label Text="房型" Style="{StaticResource Caption}" />
+                <Label Text="{Binding Selected.RoomTypeName}" FontSize="13" />
+              </VerticalStackLayout>
+              <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="1">
+                <Label Text="房号" Style="{StaticResource Caption}" />
+                <Label Text="{Binding Selected.RoomText}" FontSize="13" FontAttributes="Bold" />
+              </VerticalStackLayout>
+              <VerticalStackLayout Grid.Row="2" Spacing="1">
+                <Label Text="入住 → 退房" Style="{StaticResource Caption}" />
+                <Label Text="{Binding Selected.DateText}" FontSize="13" />
+              </VerticalStackLayout>
+              <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="1">
+                <Label Text="渠道 / 到店" Style="{StaticResource Caption}" />
+                <Label Text="{Binding Selected.ChannelText}" FontSize="13" />
+              </VerticalStackLayout>
+            </Grid>
+
+            <Border BackgroundColor="#F9FAFB" StrokeThickness="1" Stroke="{StaticResource Split}"
+                    StrokeShape="RoundRectangle 10" Padding="11,9">
+              <Label Text="{Binding Selected.CheckInText, StringFormat='关联入住单：{0}'}"
+                     Style="{StaticResource Caption}" />
+            </Border>
+
+            <Button Text="取消预定" Command="{Binding Selected.CancelCommand}"
+                    Style="{StaticResource DangerButton}"
+                    IsVisible="{Binding Selected.IsPending}" />
+            <Label Text="取消后房型日期段库存自动回补；已分配房间会释放为空闲。"
+                   Style="{StaticResource Caption}" HorizontalTextAlignment="Center" />
+          </VerticalStackLayout>
+        </ScrollView>
+      </Border>
+    </Grid>
+
+    <controls:ToastHost ZIndex="20" Grid.RowSpan="3" />
+  </Grid>
+</ContentPage>

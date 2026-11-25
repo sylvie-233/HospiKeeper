@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       x:Class="HospiKeeper.App.AppShell"
+       FlyoutBehavior="Disabled"
+       Shell.NavBarIsVisible="False"
+       Shell.TabBarBackgroundColor="#FFFFFF"
+       Shell.TabBarTitleColor="{StaticResource Primary}"
+       Shell.TabBarForegroundColor="{StaticResource Primary}"
+       Shell.TabBarUnselectedColor="{StaticResource TextSecondary}">
+  <TabBar>
+    <ShellContent x:Name="DashboardTab" Icon="tab_dashboard.svg" Title="看板" Route="dashboard" />
+    <ShellContent x:Name="RoomsTab" Icon="tab_rooms.svg" Title="房态" Route="rooms" />
+    <ShellContent x:Name="ReservationsTab" Icon="tab_reservations.svg" Title="预定" Route="reservations" />
+    <ShellContent x:Name="StaysTab" Icon="tab_stays.svg" Title="在住" Route="stays" />
+    <ShellContent x:Name="MineTab" Icon="tab_mine.svg" Title="我的" Route="mine" />
+  </TabBar>
+</Shell>

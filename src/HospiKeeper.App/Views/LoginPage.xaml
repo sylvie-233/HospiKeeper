@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:HospiKeeper.App.Controls"
+             xmlns:vm="clr-namespace:HospiKeeper.App.ViewModels"
+             x:Class="HospiKeeper.App.Views.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             BackgroundColor="{StaticResource AppBg}">
+
+  <Grid RowDefinitions="*,Auto">
+    <ScrollView Grid.Row="0">
+      <VerticalStackLayout Padding="28,72,28,28" Spacing="22" MaximumWidthRequest="460"
+                           HorizontalOptions="Center">
+
+        <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
+          <Image Source="brandicon.png" WidthRequest="64" HeightRequest="64"
+                 HorizontalOptions="Center" />
+          <Label Text="云栖民宿 · 管理端" FontSize="23" FontAttributes="Bold"
+                 TextColor="{StaticResource TextPrimary}" HorizontalTextAlignment="Center" />
+          <Label Text="老板视角 · 经营知情与轻决策" FontSize="12" TextColor="{StaticResource TextSecondary}"
+                 HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <Border Style="{StaticResource Card}" Padding="20,20,20,18">
+          <VerticalStackLayout Spacing="14">
+            <Label Text="管理员登录" FontSize="17" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
+
+            <Border BackgroundColor="#F9FAFB" StrokeThickness="1" Stroke="{StaticResource Split}"
+                    StrokeShape="RoundRectangle 10" Padding="12,0">
+              <Entry Text="{Binding Username}" Placeholder="管理员账号" Style="{StaticResource Input}"
+                     ReturnType="Next" />
+            </Border>
+
+            <Border BackgroundColor="#F9FAFB" StrokeThickness="1" Stroke="{StaticResource Split}"
+                    StrokeShape="RoundRectangle 10" Padding="12,0">
+              <Entry Text="{Binding Password}" Placeholder="登录密码" IsPassword="True"
+                     Style="{StaticResource Input}" ReturnType="Go" ReturnCommand="{Binding LoginCommand}" />
+            </Border>
+
+            <Label Text="{Binding Error}" TextColor="{StaticResource Error}" FontSize="12"
+                   LineBreakMode="WordWrap"
+                   IsVisible="{Binding Error, Converter={StaticResource StringNotEmpty}}" />
+
+            <Grid ColumnDefinitions="*,Auto">
+              <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                 Color="{StaticResource Primary}" HorizontalOptions="Start" />
+            </Grid>
+
+            <Button Text="登录" Command="{Binding LoginCommand}" HeightRequest="46"
+                    BackgroundColor="{StaticResource Primary}" TextColor="#FFFFFF"
+                    CornerRadius="10" FontSize="15" FontAttributes="Bold" />
+
+            <Label Text="仅管理员账号可登录；前台账号请使用桌面端。"
+                   Style="{StaticResource Caption}" HorizontalTextAlignment="Center" />
+          </VerticalStackLayout>
+        </Border>
+
+        <HorizontalStackLayout Spacing="6" HorizontalOptions="Center">
+          <Label Text="服务器" Style="{StaticResource Caption}" VerticalOptions="Center" />
+          <Label Text="{Binding ServerText}" Style="{StaticResource Caption}"
+                 TextColor="{StaticResource Primary}" VerticalOptions="Center" />
+          <Button Text="修改" Command="{Binding ChangeServerCommand}" Style="{StaticResource LinkButton}" />
+        </HorizontalStackLayout>
+
+        <Label Text="管理端只读经营数据；开房、退房、收款等柜台业务仍由桌面端办理。"
+               Style="{StaticResource Caption}" HorizontalTextAlignment="Center"
+               Margin="0,0,0,20" />
+      </VerticalStackLayout>
+    </ScrollView>
+
+    <controls:ToastHost ZIndex="20" Grid.Row="1" Margin="20,0,20,24" />
+  </Grid>
+</ContentPage>
