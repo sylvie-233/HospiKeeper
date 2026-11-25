@@ -32,7 +32,10 @@ public sealed class ReservationRowViewModel
     public string ResNo => Reservation.ResNo;
     public string GuestName => Reservation.GuestName;
     public string GuestPhone => Reservation.GuestPhone;
-    public string RoomText => $"{Reservation.RoomNo} · {Reservation.RoomTypeName}";
+    public string RoomText => string.IsNullOrWhiteSpace(Reservation.RoomNo)
+        ? $"{Reservation.RoomTypeName} · 到店分配"
+        : $"{Reservation.RoomNo} · {Reservation.RoomTypeName}";
+    public string DateText => $"{Reservation.CheckInDate:MM-dd} → {Reservation.CheckOutDate:MM-dd}";
     public string ArriveText => Reservation.ArriveTime.ToString("MM-dd HH:mm");
     public string NoteText => string.IsNullOrWhiteSpace(Reservation.Note) ? "—" : Reservation.Note;
     public string OperatorName => Reservation.OperatorName;
@@ -117,7 +120,7 @@ public sealed partial class ReservationsPageViewModel : PageViewModelBase
                 list = list.Where(r =>
                     r.GuestName.Contains(keyword, StringComparison.OrdinalIgnoreCase)
                     || r.GuestPhone.Contains(keyword, StringComparison.OrdinalIgnoreCase)
-                    || r.RoomNo.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                    || (r.RoomNo?.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false)
                     || r.ResNo.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 

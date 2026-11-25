@@ -24,7 +24,7 @@
     </Border>
 
     <Border Classes="ticket-grid">
-      <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+      <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
         <StackPanel Spacing="1">
           <TextBlock Classes="ticket-label" Text="客人" />
           <TextBlock Classes="ticket-value" FontWeight="SemiBold" Text="{Binding GuestName}" />
@@ -48,6 +48,14 @@
         <StackPanel Grid.Row="2" Grid.Column="1" Spacing="1">
           <TextBlock Classes="ticket-label" Text="关联入住单" />
           <TextBlock Classes="ticket-value" Text="{Binding CheckInText}" />
+        </StackPanel>
+        <StackPanel Grid.Row="3" Spacing="1">
+          <TextBlock Classes="ticket-label" Text="入住 / 退房" />
+          <TextBlock Classes="ticket-value" Text="{Binding DateText}" />
+        </StackPanel>
+        <StackPanel Grid.Row="3" Grid.Column="1" Spacing="1">
+          <TextBlock Classes="ticket-label" Text="预订渠道" />
+          <TextBlock Classes="ticket-value" Text="{Binding ChannelText}" />
         </StackPanel>
       </Grid>
     </Border>

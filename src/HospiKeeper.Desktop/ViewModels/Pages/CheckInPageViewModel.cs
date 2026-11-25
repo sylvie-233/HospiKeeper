@@ -225,15 +225,18 @@ public sealed partial class CheckInPageViewModel : PageViewModelBase
                 _applying = true;
                 GuestName = reservation.GuestName;
                 GuestPhone = reservation.GuestPhone;
-                ReservationBanner =
-                    $"来自预定 {reservation.ResNo} · {reservation.GuestName} · {reservation.ArriveTime:MM-dd HH:mm} 到店";
+                ReservationBanner = reservation.RoomId is null
+                    ? $"来自游客预订 {reservation.ResNo} · {reservation.RoomTypeName} · {reservation.CheckInDate:MM-dd} → {reservation.CheckOutDate:MM-dd} · 请选择该房型空闲房"
+                    : $"来自预定 {reservation.ResNo} · {reservation.GuestName} · {reservation.ArriveTime:MM-dd HH:mm} 到店";
                 OnPropertyChanged(nameof(HasReservation));
 
                 var arrival = reservation.ArriveTime <= DateTime.Now
                     ? DateTime.Now
                     : reservation.ArriveTime;
                 CheckInTimeText = arrival.ToString("yyyy-MM-dd HH:mm");
-                PlanOutTimeText = arrival.Date.AddDays(1).AddHours(12).ToString("yyyy-MM-dd HH:mm");
+                PlanOutTimeText = reservation.CheckOutDate.Date > reservation.CheckInDate.Date
+                    ? reservation.CheckOutDate.Date.AddHours(12).ToString("yyyy-MM-dd HH:mm")
+                    : arrival.Date.AddDays(1).AddHours(12).ToString("yyyy-MM-dd HH:mm");
                 SelectedRoom = RoomOptions.FirstOrDefault(r => r.Room.Id == reservation.RoomId)
                                ?? SelectedRoom;
                 _applying = false;
@@ -252,8 +255,10 @@ public sealed partial class CheckInPageViewModel : PageViewModelBase
         {
             var allRooms = await Api.GetRoomsAsync();
             var options = allRooms
-                .Where(r => r.Status == RoomStatus.Free
-                            || (reservation is not null && r.Id == reservation.RoomId))
+                .Where(r => reservation is not null && reservation.RoomId is null
+                    ? r.Status == RoomStatus.Free && r.TypeId == reservation.TypeId
+                    : r.Status == RoomStatus.Free
+                      || (reservation is not null && r.Id == reservation.RoomId))
                 .OrderBy(r => r.Floor)
                 .ThenBy(r => r.RoomNo, StringComparer.OrdinalIgnoreCase)
                 .Select(r => new CheckInRoomOption(

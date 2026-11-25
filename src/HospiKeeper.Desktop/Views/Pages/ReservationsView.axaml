@@ -50,7 +50,7 @@
           <controls:AntTableColumn Header="客人" Binding="GuestName" Width="0.9*" />
           <controls:AntTableColumn Header="电话" Binding="GuestPhone" Width="1.1*" />
           <controls:AntTableColumn Header="房间" Binding="RoomText" Width="1.1*" />
-          <controls:AntTableColumn Header="到店时间" Binding="ArriveText" Width="1*" />
+          <controls:AntTableColumn Header="入住 / 退房" Binding="DateText" Width="1.2*" />
           <controls:AntTableColumn Header="状态" Width="86">
             <controls:AntTableColumn.CellTemplate>
               <DataTemplate x:DataType="pages:ReservationRowViewModel">

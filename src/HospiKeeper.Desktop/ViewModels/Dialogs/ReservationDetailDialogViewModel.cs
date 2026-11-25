@@ -22,7 +22,11 @@ public sealed class ReservationDetailDialogViewModel : DialogViewModelBase
     public string ResNo => _reservation.ResNo;
     public string GuestName => _reservation.GuestName;
     public string GuestPhone => _reservation.GuestPhone;
-    public string RoomText => $"{_reservation.RoomNo} · {_reservation.RoomTypeName}";
+    public string RoomText => string.IsNullOrWhiteSpace(_reservation.RoomNo)
+        ? $"{_reservation.RoomTypeName} · 到店分配"
+        : $"{_reservation.RoomNo} · {_reservation.RoomTypeName}";
+    public string DateText => $"{_reservation.CheckInDate:yyyy-MM-dd} → {_reservation.CheckOutDate:yyyy-MM-dd}";
+    public string ChannelText => _reservation.Channel == ReservationChannel.Web ? "游客 Web 预订" : "前台代客";
     public string ArriveText => _reservation.ArriveTime.ToString("yyyy-MM-dd HH:mm");
     public string CreatedText => _reservation.CreatedAt.ToString("yyyy-MM-dd HH:mm");
     public string OperatorName => _reservation.OperatorName;
