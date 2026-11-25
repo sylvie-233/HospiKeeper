@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\HospiKeeper.Client\HospiKeeper.Client.csproj" />
     <ProjectReference Include="..\HospiKeeper.Contracts\HospiKeeper.Contracts.csproj" />
+    <ProjectReference Include="..\Sylvie233.Logging\Sylvie233.Logging.csproj" />
     <ProjectReference Include="..\Sylvie233.UI\Sylvie233.UI.csproj" />
   </ItemGroup>
 

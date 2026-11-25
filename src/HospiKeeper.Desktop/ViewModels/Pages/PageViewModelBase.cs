@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using HospiKeeper.Client;
 using HospiKeeper.Desktop.Messages;
 using HospiKeeper.Desktop.Services;
+using Sylvie233.Logging;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
@@ -73,8 +74,8 @@ public abstract class PageViewModelBase : ObservableObject
         }
     }
 
-    private static void LogError(Exception ex)
-        => System.Diagnostics.Debug.WriteLine(ex);
+    private void LogError(Exception ex)
+        => Sylvie233Log.ForContext(GetType()).Error(ex, "页面操作失败：{Page}", Title);
 
     protected async Task<bool> TryLoadAsync(Func<Task> load)
     {
