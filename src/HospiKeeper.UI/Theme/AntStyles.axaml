@@ -1,0 +1,445 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- ============ 通用文本 ============ -->
+  <Style Selector="TextBlock.muted, TextBlock.text-secondary">
+    <Setter Property="Foreground" Value="{DynamicResource AntTextTertiaryBrush}" />
+  </Style>
+  <Style Selector="TextBlock.text-strong">
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="TextBlock.text-money">
+    <Setter Property="Foreground" Value="{DynamicResource AntOrangeBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="TextBlock.text-danger">
+    <Setter Property="Foreground" Value="{DynamicResource AntErrorBrush}" />
+  </Style>
+  <Style Selector="TextBlock.text-success">
+    <Setter Property="Foreground" Value="{DynamicResource AntSuccessBrush}" />
+  </Style>
+  <Style Selector="TextBlock.text-primary">
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+  <Style Selector="TextBlock.page-hint">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextTertiaryBrush}" />
+  </Style>
+
+  <!-- ============ 输入控件 ============ -->
+  <Style Selector="TextBox">
+    <Setter Property="Height" Value="{DynamicResource AntControlHeight}" />
+    <Setter Property="Padding" Value="9,0" />
+    <Setter Property="FontSize" Value="{DynamicResource AntFontSize}" />
+    <Setter Property="FontFamily" Value="{DynamicResource AntFontFamily}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AntCornerRadius}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntBorderBrush}" />
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextBrush}" />
+    <Setter Property="PlaceholderForeground" Value="{DynamicResource AntTextTertiaryBrush}" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource AntPrimaryBrush}" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="TextBox:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource AntPrimaryHoverBrush}" />
+  </Style>
+  <Style Selector="TextBox:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+  <Style Selector="TextBox.error">
+    <Setter Property="BorderBrush" Value="{DynamicResource AntErrorBrush}" />
+  </Style>
+  <Style Selector="TextBox:disabled">
+    <Setter Property="Background" Value="{DynamicResource AntBgPanelBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextTertiaryBrush}" />
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="Height" Value="{DynamicResource AntControlHeight}" />
+    <Setter Property="MinWidth" Value="110" />
+    <Setter Property="Padding" Value="9,0" />
+    <Setter Property="FontSize" Value="{DynamicResource AntFontSize}" />
+    <Setter Property="FontFamily" Value="{DynamicResource AntFontFamily}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AntCornerRadius}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextBrush}" />
+  </Style>
+  <Style Selector="ComboBox:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource AntPrimaryHoverBrush}" />
+  </Style>
+  <Style Selector="ComboBox:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+  <Style Selector="ComboBoxItem">
+    <Setter Property="FontSize" Value="{DynamicResource AntFontSize}" />
+    <Setter Property="FontFamily" Value="{DynamicResource AntFontFamily}" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="Padding" Value="10,0" />
+  </Style>
+  <Style Selector="ComboBoxItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource AntPrimaryBgBrush}" />
+  </Style>
+  <Style Selector="ComboBoxItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+    <Setter Property="Background" Value="{DynamicResource AntPrimaryBgBrush}" />
+  </Style>
+
+  <Style Selector="NumericUpDown">
+    <Setter Property="Height" Value="{DynamicResource AntControlHeight}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AntCornerRadius}" />
+    <Setter Property="FontSize" Value="{DynamicResource AntFontSize}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Background" Value="#FFFFFF" />
+  </Style>
+
+  <Style Selector="CalendarDatePicker">
+    <Setter Property="Height" Value="{DynamicResource AntControlHeight}" />
+    <Setter Property="MinWidth" Value="130" />
+    <Setter Property="FontSize" Value="{DynamicResource AntFontSize}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource AntCornerRadius}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="CalendarDatePicker:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="CheckBox">
+    <Setter Property="FontSize" Value="{DynamicResource AntFontSize}" />
+    <Setter Property="FontFamily" Value="{DynamicResource AntFontFamily}" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextBrush}" />
+    <Setter Property="MinHeight" Value="26" />
+  </Style>
+  <Style Selector="RadioButton">
+    <Setter Property="FontSize" Value="{DynamicResource AntFontSize}" />
+    <Setter Property="FontFamily" Value="{DynamicResource AntFontFamily}" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextBrush}" />
+    <Setter Property="MinHeight" Value="26" />
+  </Style>
+
+  <Style Selector="ProgressBar">
+    <Setter Property="Height" Value="7" />
+    <Setter Property="MinHeight" Value="7" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Background" Value="{DynamicResource AntFillSecondaryBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="ToolTip">
+    <Setter Property="Background" Value="#1F1F1F" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="7,5" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
+  <!-- ============ 菜单栏与下拉 ============ -->
+  <Style Selector="Button.ant-menu-item">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextSecondaryBrush}" />
+  </Style>
+  <Style Selector="Button.ant-menu-item:pointerover">
+    <Setter Property="Background" Value="#EBF5FF" />
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+
+  <Style Selector="MenuFlyoutPresenter">
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntSplitBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="4" />
+    <Setter Property="FontFamily" Value="{DynamicResource AntFontFamily}" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+  <Style Selector="MenuItem">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontFamily" Value="{DynamicResource AntFontFamily}" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextBrush}" />
+  </Style>
+  <Style Selector="MenuItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource AntPrimaryBgBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+
+  <!-- ============ 左侧导航 ============ -->
+  <Style Selector="TextBlock.ant-nav-group">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextTertiaryBrush}" />
+    <Setter Property="Margin" Value="10,12,10,6" />
+  </Style>
+  <Style Selector="Button.ant-nav">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextSecondaryBrush}" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Margin" Value="0,1" />
+  </Style>
+  <Style Selector="Button.ant-nav:pointerover">
+    <Setter Property="Background" Value="#F0F7FF" />
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+  <Style Selector="Button.ant-nav.active">
+    <Setter Property="Background" Value="{DynamicResource AntPrimaryBgBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Border.ant-badge">
+    <Setter Property="Background" Value="{DynamicResource AntErrorBrush}" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Height" Value="16" />
+    <Setter Property="MinWidth" Value="16" />
+    <Setter Property="Padding" Value="5,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Border.ant-badge TextBlock">
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- ============ 窗口标题栏按钮 ============ -->
+  <Style Selector="Button.win-btn">
+    <Setter Property="Width" Value="46" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Foreground" Value="#E6FFFFFF" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="Button.win-btn:pointerover">
+    <Setter Property="Background" Value="#2EFFFFFF" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+  </Style>
+  <Style Selector="Button.win-btn.close:pointerover">
+    <Setter Property="Background" Value="#E81123" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+  </Style>
+
+  <!-- ============ 弹窗关闭按钮 ============ -->
+  <Style Selector="Button.ant-modal-close">
+    <Setter Property="Width" Value="28" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextTertiaryBrush}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.ant-modal-close:pointerover">
+    <Setter Property="Background" Value="{DynamicResource AntFillSecondaryBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextBrush}" />
+  </Style>
+
+  <!-- ============ 页签 / 链接 ============ -->
+  <Style Selector="Button.ant-tab">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Height" Value="34" />
+    <Setter Property="Padding" Value="16,0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextSecondaryBrush}" />
+  </Style>
+  <Style Selector="Button.ant-tab:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+  <Style Selector="Button.ant-tab.active">
+    <Setter Property="Background" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- ============ 表格 ============ -->
+  <Style Selector="TextBlock.ant-table-header-text">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextSecondaryBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ant-table-cell">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextBrush}" />
+  </Style>
+  <Style Selector="Border.ant-table-row">
+    <Setter Property="Background" Value="#FFFFFF" />
+  </Style>
+  <Style Selector="Border.ant-table-row:pointerover">
+    <Setter Property="Background" Value="#F5F8FF" />
+  </Style>
+  <Style Selector="TextBlock.ant-table-cell.text-money">
+    <Setter Property="Foreground" Value="{DynamicResource AntOrangeBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="TextBlock.ant-table-cell.text-danger">
+    <Setter Property="Foreground" Value="{DynamicResource AntErrorBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ant-table-cell.text-success">
+    <Setter Property="Foreground" Value="{DynamicResource AntSuccessBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ant-table-cell.text-secondary">
+    <Setter Property="Foreground" Value="{DynamicResource AntTextTertiaryBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ant-table-cell.text-strong">
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="TextBlock.ant-table-empty">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextTertiaryBrush}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,30" />
+  </Style>
+
+  <!-- ============ 提示条 / 票据 ============ -->
+  <Style Selector="Border.ant-alert-error">
+    <Setter Property="Background" Value="{DynamicResource AntErrorBgBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntErrorBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="9,7" />
+  </Style>
+  <Style Selector="Border.ant-alert-info">
+    <Setter Property="Background" Value="{DynamicResource AntPrimaryBgBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntPrimaryBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="9,7" />
+  </Style>
+
+  <Style Selector="Border.ticket-head">
+    <Setter Property="Background" Value="#F0F7FF" />
+    <Setter Property="BorderBrush" Value="#BAE0FF" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="14,16" />
+  </Style>
+  <Style Selector="TextBlock.ticket-no">
+    <Setter Property="FontSize" Value="17" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ticket-sub">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextSecondaryBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ticket-room-no">
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ticket-room-type">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextSecondaryBrush}" />
+  </Style>
+  <Style Selector="Border.ticket-grid">
+    <Setter Property="Background" Value="{DynamicResource AntBgPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntSplitBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="12,14" />
+  </Style>
+  <Style Selector="TextBlock.ticket-label">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextTertiaryBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ticket-value">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ticket-section">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource AntTextSecondaryBrush}" />
+  </Style>
+  <Style Selector="Border.ticket-line">
+    <Setter Property="BorderBrush" Value="{DynamicResource AntSplitBrush}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+  <Style Selector="Border.ticket-total">
+    <Setter Property="Background" Value="#FFF7E6" />
+    <Setter Property="BorderBrush" Value="#FFD591" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="10,14" />
+  </Style>
+  <Style Selector="Border.ticket-result">
+    <Setter Property="Background" Value="{DynamicResource AntErrorBgBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntErrorBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="10,14" />
+  </Style>
+  <Style Selector="Border.ticket-result.refund">
+    <Setter Property="Background" Value="{DynamicResource AntSuccessBgBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntSuccessBorderBrush}" />
+  </Style>
+  <Style Selector="Border.ticket-result.even">
+    <Setter Property="Background" Value="{DynamicResource AntPrimaryBgBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntPrimaryBorderBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ticket-big">
+    <Setter Property="FontSize" Value="19" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource AntOrangeBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ticket-big.pay">
+    <Setter Property="Foreground" Value="{DynamicResource AntErrorBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ticket-big.refund">
+    <Setter Property="Foreground" Value="{DynamicResource AntSuccessBrush}" />
+  </Style>
+  <Style Selector="TextBlock.ticket-big.even">
+    <Setter Property="Foreground" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+  <Style Selector="Border.ticket-note">
+    <Setter Property="Background" Value="{DynamicResource AntBgPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AntSplitBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="9,7" />
+  </Style>
+
+  <!-- ============ 杂项 ============ -->
+  <Style Selector="Border.ant-divider">
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource AntSplitBrush}" />
+    <Setter Property="Margin" Value="0,12" />
+  </Style>
+  <Style Selector="Border.status-dot">
+    <Setter Property="Width" Value="7" />
+    <Setter Property="Height" Value="7" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Background" Value="{DynamicResource AntSuccessBrush}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Border.ant-logo">
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Background" Value="{DynamicResource AntPrimaryBrush}" />
+  </Style>
+
+</Styles>
