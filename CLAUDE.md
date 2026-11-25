@@ -40,13 +40,13 @@ HospiKeeper（云栖民宿管理系统）是面向中小型民宿 / 小旅馆的
 
 ```
 HospiKeeper.Domain          实体 / 枚举 / 计费领域服务，无框架依赖
-HospiKeeper.Contracts       前后端共享请求、响应、DTO（API 契约）
-HospiKeeper.Application     业务服务、仓储接口、工作单元 / 缓存端口、缓存失效协调、会话
+HospiKeeper.Contracts       请求 / 响应 DTO、DataAnnotations 校验、动作常量（API 契约）
+HospiKeeper.Application     用例接口与实现、仓储抽象、缓存协调、实体→DTO 映射、会话
 Sylvie233.Caching           ICacheService 端口 + Memory / Redis 实现（无业务依赖，可独立复用）
 Sylvie233.Logging           Serilog 统一配置：控制台 / 滚动文件（无业务依赖，可独立复用）
 Sylvie233.Database          MySQL 连接配置 / DbContext 注册 / 迁移执行（无业务依赖）
 HospiKeeper.Infrastructure  EF Core DbContext / 配置 / 仓储 / 迁移 / 种子
-HospiKeeper.Api             独立 Web API（控制器、鉴权、OpenAPI / Scalar）
+HospiKeeper.Api             独立 Web API（组合根、控制器、鉴权、OpenAPI / Scalar）
 HospiKeeper.Client          桌面端 HTTP 客户端
 Sylvie233.UI                Avalonia 设计系统与自研控件（不依赖业务模块）
 HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
@@ -58,16 +58,49 @@ HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
 - `Infrastructure → Application / Contracts / Sylvie233.Database`
 - `Application → Sylvie233.Caching`（业务层使用共享缓存端口）
 - `Application → Contracts → Domain`
-- `Desktop → Client / Contracts / Sylvie233.UI / Sylvie233.Logging`
+- `Desktop → Client / Contracts / Sylvie233.UI / Sylvie233.Logging`（只消费 DTO；Domain 仅用于枚举 / 计费结果）
 - `Api → Sylvie233.Logging`
 - `Sylvie233.UI` 不得引用 `Domain` / `Application` / `Api` / `Caching` / `Logging`
 - `Sylvie233.Caching` 不得引用任何 HospiKeeper 业务模块
 - `Sylvie233.Logging` 不得引用任何 HospiKeeper 业务模块
 - `Sylvie233.Database` 不得引用任何 HospiKeeper 业务模块（业务 DbContext 由业务模块自己定义）
+- `Contracts` 不得依赖 EF Core / ASP.NET Core；不得返回 Domain 实体，只能返回 DTO
 
 新增 Blazor 等客户端时：引用 `Contracts` + `Client`，只通过 API 访问业务，不直连数据库。
 
-## 4. 常用命令
+## 4. 组合根与契约约定
+
+### API 组合根
+
+- `Program.cs` 只保留：日志初始化 → 构建宿主 → 数据库初始化 → 请求管道 → 运行。
+- 依赖注册放在 `src/HospiKeeper.Api/Configuration/ApiServiceCollectionExtensions.cs`：
+  - 数据库 / 缓存配置绑定；
+  - `AddApplication()`、`AddInfrastructure()`、`AddCaching()`；
+  - MVC、JSON、模型校验、OpenAPI、CORS。
+- 管道与端点放在 `Configuration/WebApplicationExtensions.cs`；新增中间件必须在该文件调整顺序。
+- 健康检查等端点放在 `Endpoints/`；OpenAPI 相关放在 `OpenApi/`。
+- 新增注册不要写回 `Program.cs`。
+
+### Contracts
+
+- 目录按业务特性划分（Auth / Rooms / FrontDesk / Reservations / Records / Reports / Common），
+  命名空间统一为 `HospiKeeper.Contracts`。
+- 请求类型以 `Request` / `Input` 结尾，响应类型以 `Dto` 结尾；不要返回 EF 实体。
+- 记录类型（record）的校验特性必须标在构造参数上，例如
+  `[param: Required(ErrorMessage = "...")] string Name`；
+  标在 `[property:]` 上会被 MVC 忽略并抛异常。
+- 校验特性只做格式 / 必填 / 范围等“入口约束”；跨字段、唯一性、状态流转仍在业务服务中用 `InputGuard` 校验。
+- 实体 → DTO 映射统一放在 `Application/Mapping/ContractMappings.cs`；新增字段时同步 DTO 与映射。
+- 修改 DTO 会同时影响 API、Client 与 Desktop，必须同步更新并跑通桌面端。
+
+### Application
+
+- 用例接口位于 `Application/Abstractions/Services`，实现位于 `Application/Services`；不要在实现文件里再声明接口。
+- 依赖注册统一走 `AddApplication()`；新增服务在此注册。
+- 业务异常：`DomainException` 映射 400，`ForbiddenException` 映射 403；不要再用消息字符串判断权限。
+- 应用层返回 Contracts DTO；仓储返回领域实体，映射在应用层完成。
+
+## 5. 常用命令
 
 ```bash
 # 构建 / 测试
@@ -116,7 +149,7 @@ dotnet ef database update \
 - `Docs/民宿管理系统-数据库设计-v1.sql` 仅作为表结构设计参考，EF 模型为唯一事实来源。
 - `Scripts/docker-compose.yml` 不再挂载 SQL 初始化脚本。
 
-## 5. 持久化架构
+## 6. 持久化架构
 
 - 共享部件：`src/Sylvie233.Database`
   - `DatabaseOptions` / `DatabaseEnvironmentOverrides`：连接配置与环境变量；
@@ -143,7 +176,7 @@ dotnet ef database update \
 共享模块边界：**迁移文件、DbContext、映射、仓储、种子始终留在 Infrastructure**；
 `Sylvie233.Database` 只放与具体表结构无关的连接、注册、迁移执行逻辑。
 
-## 6. 缓存约定
+## 7. 缓存约定
 
 - 端口：`ICacheService`（`src/Sylvie233.Caching/ICacheService.cs`）。
 - 实现：`src/Sylvie233.Caching`
@@ -159,7 +192,7 @@ dotnet ef database update \
 - 新增读多写少接口时：在 Application 服务中调用 `_cache.GetOrCreateAsync`，并在相关写操作中补失效逻辑；不要直接在 Controller 中写缓存。
 - Redis 服务由 compose 管理：`hospikeeper-redis`，`localhost:6379`，不持久化缓存数据。
 
-## 7. 日志约定
+## 8. 日志约定
 
 - 模块：`src/Sylvie233.Logging`（Serilog 4）。
 - API 启动顺序：`Sylvie233Log.Initialize(options)`（宿主构建前兜底）→ `builder.Host.UseSylvie233Logging(options)`（接管 ILogger）→ `finally { await Log.CloseAndFlushAsync(); }`。
@@ -175,7 +208,7 @@ dotnet ef database update \
 - 请求日志模板：`HTTP {RequestMethod} {RequestPath} -> {StatusCode} in {Elapsed:0.0} ms`。
 - 新增日志不要使用 `Console.WriteLine` / `Debug.WriteLine`。
 
-## 8. 业务规则
+## 9. 业务规则
 
 - **房态**：`Free / Occupied / Reserved / Cleaning / Repair / Disabled`；看板颜色与文案由 UI 映射。
 - **计费**：
@@ -196,12 +229,13 @@ dotnet ef database update \
 - **房型改名**：同步所有房间冗余 `TypeName`；改价写「改价」日志。
 - **账号**：不能停用 / 删除当前登录账号；至少保留一名启用管理员。
 
-## 9. API 约定
+## 10. API 约定
 
-- 路由统一 `api/<resource>`，返回领域实体或 `Contracts` DTO；JSON 枚举以字符串输出。
+- 路由统一 `api/<resource>`，返回 `Contracts` DTO；JSON 枚举以字符串输出。
 - 登录：`POST /api/auth/login` 返回 Bearer Token；除 `/health`、`/scalar`、`/openapi`、登录接口外均需 `Authorization: Bearer`。
 - Token 为内存会话（12 小时）；服务端每次请求重新加载用户，角色 / 停用状态即时生效。
-- 业务异常 `DomainException` 由 `ExceptionHandlingMiddleware` 转为 400 / 403；未处理异常返回 500。
+- 业务异常 `DomainException` 由 `ExceptionHandlingMiddleware` 转为 400；`ForbiddenException` 转为 403；未处理异常返回 500。
+- 请求 DTO 的 DataAnnotations 校验失败由 `ApiBehaviorOptions.InvalidModelStateResponseFactory` 转为 400 `ApiErrorResponse`。
 - 控制器保持轻薄：参数绑定 → 调用 Application 服务 → 返回结果；不要在控制器写业务逻辑。
 - 桌面端接入点：`HospiKeeper.Client/IHospiKeeperApi` / `HospiKeeperApiClient`。
 
@@ -220,7 +254,7 @@ dotnet ef database update \
 - 错误响应统一引用 `ApiErrorResponse`；不要为每个接口重复定义错误 schema。
 - 改动鉴权、公开路径或安全方案时同步更新 README 的「接口文档」章节。
 
-## 10. UI 约定
+## 11. UI 约定
 
 - 设计系统在 `Sylvie233.UI`：
   - 控件：`AntButton / AntTag / AntCard / AntStatCard / AntPageHeader / AntFormItem / AntSectionTitle / AntModal / AntRoomCard / AntBarChart / AntEmpty / AntToast / AntTable / AntIcons`
@@ -228,11 +262,12 @@ dotnet ef database update \
 - 页面统一使用 `AntPageHeader` + `AntCard` + `AntTable` 的组合，风格参考 Ant Design（主色 `#1677FF`，28-32px 紧凑控件）。
 - Avalonia 12 已废弃 `DataGrid`；表格统一使用自研 `AntTable`。
 - Desktop 使用 MVVM：View 只绑定 ViewModel，业务调用全部经 `IHospiKeeperApi`。
+- `Desktop/GlobalUsings.cs` 用别名把 `RoomDto` 等契约类型映射回旧名称；不要新增 `using HospiKeeper.Domain.Entities;`。
 - 弹窗统一由 `DialogService` 管理；成功 / 失败提示统一走 `ToastService`。
 - 页面不展示演示账号、测试口令等演示信息。
 - 新控件需同时提供 C# 属性与 `ControlTheme`，并在 `AntControls.axaml` / `AntStyles.axaml` 中注册。
 
-## 11. 代码风格
+## 12. 代码风格
 
 - 命名空间与类型命名使用英文；用户可见文案使用中文。
 - 使用 `Directory.Build.props` 中的 `Nullable`、`ImplicitUsings`；不要关闭可空检查。
@@ -242,14 +277,14 @@ dotnet ef database update \
 - 不要在 Application / Domain 引入 EF Core、Avalonia 或 ASP.NET Core 依赖。
 - 删除不再使用的代码、图标、样式与包；不要保留“以后可能用到”的空实现。
 
-## 12. 测试
+## 13. 测试
 
 - 位置：`tests/HospiKeeper.Tests`
 - `ServiceTestContext` 使用 EF Core InMemory + `DemoDataSeeder` 构造完整业务栈，并默认登录 `admin`。
-- 新增业务规则必须补充测试；当前覆盖 29 个用例。
+- 新增业务规则必须补充测试；当前覆盖 30 个用例。
 - 不要用测试去连接真实 MySQL；需要集成验证时直接启动 API 进行手工 / curl 冒烟。
 
-## 13. Git 与协作
+## 14. Git 与协作
 
 - 项目按阶段 / 模块提交，**直接在 `main` 分支操作**（该项目的约定）。
 - 提交信息建议使用：
@@ -273,7 +308,7 @@ dotnet test
 - 不提交 `bin/`、`obj/`、本地日志、数据库文件或密钥。
 - `appsettings.json` 中为本地开发默认口令，生产部署必须改为环境变量 / 密钥管理。
 
-## 14. 后续 Blazor 模块
+## 15. 后续 Blazor 模块
 
 计划新增 `src/HospiKeeper.Blazor` 时：
 

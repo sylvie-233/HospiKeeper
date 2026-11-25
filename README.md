@@ -17,7 +17,7 @@
 | 缓存 | 自研 `Sylvie233.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
 | 日志 | 自研 `Sylvie233.Logging`：Serilog 4 · 控制台 + 按天滚动文件 · 结构化字段 |
 | 基础设施 | MySQL 8 · Redis 7（`Scripts/docker-compose.yml`，3306 / 6379） |
-| 测试 | xUnit · EF Core InMemory（29 个用例） |
+| 测试 | xUnit · EF Core InMemory（30 个用例） |
 
 ## 解决方案结构
 
@@ -25,13 +25,13 @@
 HospiKeeper.slnx
 ├─ src/
 │  ├─ HospiKeeper.Domain/          # 实体、枚举、计费领域服务（无框架依赖）
-│  ├─ HospiKeeper.Contracts/       # 客户端/API 共享请求、响应与 API DTO
-│  ├─ HospiKeeper.Application/     # 业务服务 + 仓储/工作单元 + 缓存失效协调
+│  ├─ HospiKeeper.Contracts/       # 请求 / 响应 DTO、校验规则、动作常量（API 契约）
+│  ├─ HospiKeeper.Application/     # 用例接口与实现 + 仓储抽象 + 缓存协调 + 实体→DTO 映射
 │  ├─ Sylvie233.Caching/           # ICacheService 端口 + Memory / Redis 实现（无业务依赖）
 │  ├─ Sylvie233.Logging/           # Serilog 统一配置：控制台 / 滚动文件（无业务依赖）
 │  ├─ Sylvie233.Database/          # 连接配置、MySQL DbContext 注册、迁移执行（无业务依赖）
 │  ├─ HospiKeeper.Infrastructure/  # EF Core DbContext、映射、仓储、迁移、演示数据
-│  ├─ HospiKeeper.Api/             # 独立 Web API（Token 鉴权 + REST + OpenAPI / Scalar）
+│  ├─ HospiKeeper.Api/             # 独立 Web API（组合根、Token 鉴权、OpenAPI / Scalar）
 │  ├─ HospiKeeper.Client/          # 桌面端 HTTP 客户端（IHospiKeeperApi）
 │  ├─ Sylvie233.UI/              # 可复用 UI 设计系统与自研控件
 │  └─ HospiKeeper.Desktop/         # Avalonia 桌面应用（MVVM 页面 + 弹窗）
@@ -44,7 +44,54 @@ HospiKeeper.slnx
 └─ dotnet-tools.json               # 本地 dotnet-ef 工具清单
 ```
 
-依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI` 与 `Sylvie233.Logging`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`，并引用 `Sylvie233.Database`；`Application → Sylvie233.Caching`（使用共享缓存端口）。`Sylvie233.UI`、`Sylvie233.Caching`、`Sylvie233.Logging`、`Sylvie233.Database` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Sylvie233.Logging` / `Api`。
+依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI` 与 `Sylvie233.Logging`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`，并引用 `Sylvie233.Database`；`Application → Sylvie233.Caching`（使用共享缓存端口）。桌面端只消费 `Contracts` 中的 DTO，不直接使用 EF 实体。`Sylvie233.UI`、`Sylvie233.Caching`、`Sylvie233.Logging`、`Sylvie233.Database` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Sylvie233.Logging` / `Api`。
+
+## 分层与契约
+
+### Contracts
+
+`HospiKeeper.Contracts` 是前后端共享的 API 契约层，按业务特性分目录：
+
+```text
+Contracts/
+├─ Auth/          登录、用户、改密、账号
+├─ Rooms/         房间 / 房型输入与 DTO
+├─ FrontDesk/     入住、退房、看板、在住 DTO
+├─ Reservations/  预定输入与 DTO
+├─ Records/       记录查询与操作日志 DTO
+├─ Reports/       报表快照与区间营收
+└─ Common/        错误响应、健康检查、动作常量、校验正则
+```
+
+约定：
+
+- 请求类型以 `Request` / `Input` 结尾，响应类型以 `Dto` 结尾；不再直接返回 EF 实体；
+- 请求 DTO 使用 `System.ComponentModel.DataAnnotations` 标注必填、长度、范围与正则，
+  `[ApiController]` 会在进入业务层前完成校验，错误统一为 `ApiErrorResponse`；
+- 命名空间保持 `HospiKeeper.Contracts`（目录只用于组织文件），避免调用方大量改 using；
+- 领域实体 → DTO 的映射集中在 `HospiKeeper.Application/Mapping/ContractMappings.cs`；
+- Contracts 只引用 Domain 中的枚举等基础类型，不依赖 EF Core / ASP.NET Core。
+
+### Application
+
+- 用例接口位于 `Application/Abstractions/Services`，实现位于 `Application/Services`；
+- 依赖注册统一由 `ApplicationServiceCollectionExtensions.AddApplication()` 完成，
+  API 组合根不再逐个 `AddScoped`；
+- 业务异常分两类：`DomainException` → 400，`ForbiddenException`（如非管理员）→ 403；
+- 应用层负责把实体转换为 Contracts DTO，控制器只做参数绑定与返回。
+
+### API 组合根
+
+`Program.cs` 只保留启动骨架，其余拆分为：
+
+| 文件 | 职责 |
+|------|------|
+| `Configuration/ApiServiceCollectionExtensions.cs` | 数据库 / 缓存 / 业务服务 / MVC / 校验 / OpenAPI / CORS 注册 |
+| `Configuration/WebApplicationExtensions.cs` | 数据库初始化、中间件顺序、端点映射 |
+| `Endpoints/HealthEndpoints.cs` | `/health` |
+| `OpenApi/*` | 文档信息、Bearer 方案、错误响应 |
+
+新增依赖时优先扩展 `AddHospiKeeperApi`，不要继续堆到 `Program.cs`。
 
 ## 自研 UI 控件库
 
@@ -365,7 +412,7 @@ HotelDataInitializer
 dotnet test
 ```
 
-当前覆盖：计费口径、登录 / 停用 / 越权、账号唯一性、改密、入住校验、预定 / 取消 / 转入住、追加消费、退房结算、房间历史保护、前台数据隔离、报表指标与区间统计、缓存读写 / 防击穿 / 前缀失效 / 入住后房态缓存失效。
+当前覆盖：计费口径、登录 / 停用 / 越权、账号唯一性、改密、入住校验、预定 / 取消 / 转入住、追加消费、退房结算、房间历史保护、前台数据隔离、报表指标与区间统计、缓存读写 / 防击穿 / 前缀失效 / 入住后房态缓存失效、契约 DTO 反序列化。
 
 ## 后续 Blazor 模块
 
