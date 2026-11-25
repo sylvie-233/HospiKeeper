@@ -11,6 +11,7 @@
 | 运行时 | .NET 10（LTS） |
 | 桌面客户端 | Avalonia 12.2 · CommunityToolkit.Mvvm 8.4 |
 | 游客 Web | Blazor Web App（Interactive Server SSR）· HttpClient 调用 Web API |
+| 管理 App | .NET MAUI 10（Android）· 原生 XAML · 调用 Web API |
 | UI 设计系统 | 自研 Ant 风格控件库 `Sylvie233.UI`（TemplatedControl / ControlTheme） |
 | API | ASP.NET Core 10 · Controllers · OpenAPI 3.1 · Scalar |
 | 持久化 | EF Core 10.0.12 · MySql.EntityFrameworkCore 10.0.12（官方 MySQL Provider） |
@@ -18,7 +19,7 @@
 | 缓存 | 自研 `Sylvie233.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
 | 日志 | 自研 `Sylvie233.Logging`：Serilog 4 · 控制台 + 按天滚动文件 · 结构化字段 |
 | 基础设施 | MySQL 8 · Redis 7（`Scripts/docker-compose.yml`，3306 / 6379） |
-| 测试 | xUnit · EF Core InMemory（37 个用例） |
+| 测试 | xUnit · EF Core InMemory（38 个用例） |
 
 ## 解决方案结构
 
@@ -46,7 +47,7 @@ HospiKeeper.slnx
 └─ dotnet-tools.json               # 本地 dotnet-ef 工具清单
 ```
 
-依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI` 与 `Sylvie233.Logging`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`，并引用 `Sylvie233.Database`；`Application → Sylvie233.Caching`（使用共享缓存端口）。桌面端只消费 `Contracts` 中的 DTO，不直接使用 EF 实体。`HospiKeeper.Web → Client / Contracts`（只通过公开 API 访问业务，不直连数据库）。`Sylvie233.UI`、`Sylvie233.Caching`、`Sylvie233.Logging`、`Sylvie233.Database` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Sylvie233.Logging` / `Api`。
+依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI` 与 `Sylvie233.Logging`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`，并引用 `Sylvie233.Database`；`Application → Sylvie233.Caching`（使用共享缓存端口）。桌面端只消费 `Contracts` 中的 DTO，不直接使用 EF 实体。`HospiKeeper.Web → Client / Contracts`（只通过公开 API 访问业务，不直连数据库）。`Sylvie233.UI`、`Sylvie233.Caching`、`Sylvie233.Logging`、`Sylvie233.Database` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Sylvie233.Logging` / `Api`。`HospiKeeper.App → Client / Contracts / Domain`，不直连数据库。
 
 ## 分层与契约
 
@@ -552,3 +553,21 @@ dotnet test
 - 引用 `HospiKeeper.Contracts` 与 `HospiKeeper.Client`，通过现有 API 访问业务，不在 Web 端直连数据库；
 - 继续由 `HospiKeeper.Api` 承担鉴权、权限与业务规则；
 - 若需要共享视觉规范，可将 Ant Design Token 移植为 Blazor CSS 变量，业务契约无需改动。
+
+## 管理 App（Android）
+
+`src/HospiKeeper.App` 是仅管理员可登录的 Android 管理端，使用 MAUI 原生 XAML（不是 Blazor Hybrid），复用 `HospiKeeper.Client` 调用 API。
+
+- 底部 Tab：看板 / 房态 / 预定 / 在住 / 我的；操作日志为二级页。
+- 能力：经营指标、房态只读、预定查询与取消、在住只读、快捷改价、日志、关于。
+- 不做：入住、退房、收款、押金、证件、房态操作与后台管理。
+
+构建 / 安装：
+
+```bash
+dotnet build src/HospiKeeper.App/HospiKeeper.App.csproj -f net10.0-android
+dotnet publish src/HospiKeeper.App/HospiKeeper.App.csproj -f net10.0-android -c Release   -p:AndroidKeyStore=false -p:AndroidPackageFormat=apk
+adb install -r src/HospiKeeper.App/bin/Release/net10.0-android/publish/com.sylvie233.hospikeeper-Signed.apk
+```
+
+默认 API 地址为 `http://10.0.2.2:5080`（Android 模拟器访问宿主机）；登录页可点击「服务器 / 修改」切换为 LDPlayer 宿主机网关（本机为 `172.16.1.2:5080`）或局域网 IP。Android 本地调试允许 cleartext HTTP，生产环境应改为 HTTPS。

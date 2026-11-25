@@ -34,6 +34,7 @@ HospiKeeper（云栖民宿管理系统）是面向中小型民宿 / 小旅馆的
 | 测试 | xUnit 2.9 + EF Core InMemory |
 | 客户端 | `HospiKeeper.Client` 内手写 `HttpClient` 封装 |
 | 游客 Web | Blazor Web App（Interactive Server SSR）· `HospiKeeper.Web` |
+| 管理 App | .NET MAUI 10（`net10.0-android`）· XAML + CommunityToolkit.Mvvm |
 
 版本统一由根目录 `Directory.Packages.props` 管理；不要在子项目中硬编码版本。
 
@@ -52,6 +53,7 @@ HospiKeeper.Client          桌面端 HTTP 客户端
 Sylvie233.UI                Avalonia 设计系统与自研控件（不依赖业务模块）
 HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
 HospiKeeper.Web             Blazor Web App 游客预订门户（只调用 API，不直连数据库）
+HospiKeeper.App             MAUI Android 管理端（XAML，只调用 API，不直连数据库）
 ```
 
 依赖方向必须保持：
@@ -62,6 +64,7 @@ HospiKeeper.Web             Blazor Web App 游客预订门户（只调用 API，
 - `Application → Contracts → Domain`
 - `Desktop → Client / Contracts / Sylvie233.UI / Sylvie233.Logging`（只消费 DTO；Domain 仅用于枚举 / 计费结果）
 - `Web → Client / Contracts / Sylvie233.Logging`（Blazor 服务端渲染，只通过公开 API 访问业务）
+- `App → Client / Contracts / Domain`（MAUI 原生 XAML，只通过 API 访问业务；不引用 EF Core / ASP.NET Core）
 - `Api → Sylvie233.Logging`
 - `Sylvie233.UI` 不得引用 `Domain` / `Application` / `Api` / `Caching` / `Logging`
 - `Sylvie233.Caching` 不得引用任何 HospiKeeper 业务模块
@@ -134,6 +137,12 @@ dotnet run --project src/HospiKeeper.Desktop
 # 启动游客预订 Web（先启动 API）
 dotnet run --project src/HospiKeeper.Web
 # http://localhost:5081
+
+# 管理 App（MAUI Android）
+dotnet build src/HospiKeeper.App/HospiKeeper.App.csproj -f net10.0-android
+dotnet publish src/HospiKeeper.App/HospiKeeper.App.csproj -f net10.0-android -c Release   -p:AndroidKeyStore=false -p:AndroidPackageFormat=apk
+# APK：src/HospiKeeper.App/bin/Release/net10.0-android/publish/com.sylvie233.hospikeeper-Signed.apk
+adb install -r src/HospiKeeper.App/bin/Release/net10.0-android/publish/com.sylvie233.hospikeeper-Signed.apk
 
 # 本地运维（根目录 manage.ps1）
 pwsh ./manage.ps1 up
@@ -347,7 +356,7 @@ dotnet ef database update \
 
 - 位置：`tests/HospiKeeper.Tests`
 - `ServiceTestContext` 使用 EF Core InMemory + `DemoDataSeeder` 构造完整业务栈，并默认登录 `admin`。
-- 新增业务规则必须补充测试；当前覆盖 37 个用例。
+- 新增业务规则必须补充测试；当前覆盖 38 个用例。
 - 不要用测试去连接真实 MySQL；需要集成验证时直接启动 API 进行手工 / curl 冒烟。
 
 ## 15. Git 与协作
@@ -395,3 +404,18 @@ dotnet test
 1. 引用 `Contracts` 与 `Client`，不要新增数据库访问；
 2. 新增公开 API 时同步更新 `PublicBookingController`、`ApiAuthMiddleware.IsPublic` 与 OpenAPI 公开路径；
 3. 新增页面后更新本文件与 README。
+
+## 17. 管理 App（MAUI Android）
+
+`src/HospiKeeper.App` 是面向老板 / 管理员的 Android 管理端，使用 **MAUI 原生 XAML**（不使用 Blazor Hybrid），只通过 `HospiKeeper.Client` 调用 API。
+
+- 页面：登录 / 看板 / 房态 / 预定 / 在住 / 我的；操作日志为二级页面；底部 Tab 使用 Shell。
+- 角色：仅 ADMIN 可登录（`LoginViewModel` 校验，非管理员立即登出）；所有业务权限仍由 API 服务端校验。
+- 只读边界：不提供入住、退房、收款、押金、证件、房态操作、房间 / 房型 / 账号管理。
+- App 内写操作仅两个：取消预定（`CancelReservationAsync`）与快捷改价（`UpdateRoomTypeAsync`）。
+- 快捷改价通过 `RoomService.UpdateRoomTypeAsync` 同步所有同房型房间的 `Price`，并写入「改价」日志；新增测试 `RoomTypeTests` 覆盖。
+- API 地址：默认 `http://10.0.2.2:5080`（标准 Android 模拟器访问宿主机）；登录页「服务器 / 修改」可改为 LDPlayer 宿主机网关（本机当前为 `172.16.1.2`）或电脑局域网 IP，保存在 `Preferences`。
+- Android 本地调试允许 cleartext HTTP（`AndroidManifest.xml` 的 `usesCleartextTraffic`），生产环境应改为 HTTPS。
+- 包名 `com.sylvie233.hospikeeper`；`Resources/Styles/Colors.xaml` 与 `AppStyles.xaml` 定义 Ant 风格主色 `#2563EB`、卡片、底部抽屉和 Toast。
+- 页面列表统一使用 `ScrollView` + `BindableLayout`（数据量小，避免 CollectionView 在 Shell 下测量异常）；房态三列网格由 `RoomControls/RoomCardView` 复用。
+- 新增页面时：在 `MauiProgram` 注册 Page / ViewModel，更新 `AppShell` 的 Tab；写操作必须二次确认、Toast 提示并刷新相关数据。
