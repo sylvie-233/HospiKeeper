@@ -9,6 +9,7 @@ using HospiKeeper.Application.Services;
 using HospiKeeper.Infrastructure.Persistence;
 using Serilog;
 using Sylvie233.Caching;
+using Sylvie233.Database;
 using Sylvie233.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,7 +29,7 @@ try
 {
     var dbOptions = new DatabaseOptions();
     builder.Configuration.GetSection("Database").Bind(dbOptions);
-    ApplyEnvironmentOverrides(dbOptions);
+    DatabaseEnvironmentOverrides.Apply(dbOptions, "HOSPITKEEPER");
 
     var cacheOptions = new CacheOptions();
     builder.Configuration.GetSection("Cache").Bind(cacheOptions);
@@ -67,7 +68,7 @@ try
     try
     {
         await using var scope = app.Services.CreateAsyncScope();
-        await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>().InitializeAsync();
+        await scope.ServiceProvider.GetRequiredService<HotelDataInitializer>().InitializeAsync();
         app.Logger.LogInformation("HospiKeeper EF Core / MySQL ready: {Database}", dbOptions.SafeDisplay);
     }
     catch (Exception ex)
@@ -108,30 +109,4 @@ catch (Exception ex)
 finally
 {
     await Log.CloseAndFlushAsync();
-}
-
-static void ApplyEnvironmentOverrides(DatabaseOptions options)
-{
-    options.Host = Environment.GetEnvironmentVariable("HOSPITKEEPER_DB_HOST")
-                   ?? Environment.GetEnvironmentVariable("MYSQL_HOST")
-                   ?? options.Host;
-
-    var port = Environment.GetEnvironmentVariable("HOSPITKEEPER_DB_PORT")
-               ?? Environment.GetEnvironmentVariable("MYSQL_PORT");
-    if (int.TryParse(port, out var parsedPort))
-    {
-        options.Port = parsedPort;
-    }
-
-    options.Name = Environment.GetEnvironmentVariable("HOSPITKEEPER_DB_NAME")
-                   ?? Environment.GetEnvironmentVariable("MYSQL_DATABASE")
-                   ?? options.Name;
-
-    options.User = Environment.GetEnvironmentVariable("HOSPITKEEPER_DB_USER")
-                   ?? Environment.GetEnvironmentVariable("MYSQL_USER")
-                   ?? options.User;
-
-    options.Password = Environment.GetEnvironmentVariable("HOSPITKEEPER_DB_PASSWORD")
-                       ?? Environment.GetEnvironmentVariable("MYSQL_PASSWORD")
-                       ?? options.Password;
 }
