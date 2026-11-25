@@ -14,6 +14,7 @@
 | API | ASP.NET Core 10 · Controllers · Swagger |
 | 持久化 | EF Core 10.0.12 · MySql.EntityFrameworkCore 10.0.12（官方 MySQL Provider） |
 | 缓存 | 自研 `Sylvie233.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
+| 日志 | 自研 `Sylvie233.Logging`：Serilog 4 · 控制台 + 按天滚动文件 · 结构化字段 |
 | 基础设施 | MySQL 8 · Redis 7（`Scripts/docker-compose.yml`，3306 / 6379） |
 | 测试 | xUnit · EF Core InMemory（29 个用例） |
 
@@ -25,7 +26,8 @@ HospiKeeper.slnx
 │  ├─ HospiKeeper.Domain/          # 实体、枚举、计费领域服务（无框架依赖）
 │  ├─ HospiKeeper.Contracts/       # 客户端/API 共享请求、响应与 API DTO
 │  ├─ HospiKeeper.Application/     # 业务服务 + 仓储/工作单元 + 缓存失效协调
-│  ├─ Sylvie233.Caching/         # ICacheService 端口 + Memory / Redis 实现（无业务依赖）
+│  ├─ Sylvie233.Caching/           # ICacheService 端口 + Memory / Redis 实现（无业务依赖）
+│  ├─ Sylvie233.Logging/           # Serilog 统一配置：控制台 / 滚动文件（无业务依赖）
 │  ├─ HospiKeeper.Infrastructure/  # EF Core DbContext、映射、仓储、迁移、演示数据
 │  ├─ HospiKeeper.Api/             # 独立 Web API（Token 鉴权 + REST + Swagger）
 │  ├─ HospiKeeper.Client/          # 桌面端 HTTP 客户端（IHospiKeeperApi）
@@ -35,11 +37,12 @@ HospiKeeper.slnx
 │  └─ HospiKeeper.Tests/           # 领域与业务流程测试（EF Core InMemory）
 ├─ Docs/                           # 原型、功能设计、MySQL 数据库设计参考
 ├─ Scripts/                        # docker compose 与开发启动脚本
+├─ logs/                           # 运行日志（api-*.log / desktop-*.log，已 gitignore）
 ├─ CLAUDE.md                       # 项目开发规范与 Claude Code 指引
 └─ dotnet-tools.json               # 本地 dotnet-ef 工具清单
 ```
 
-依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`；`Application → Sylvie233.Caching`（使用共享缓存端口）。`Sylvie233.UI` 与 `Sylvie233.Caching` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Api`。
+依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI` 与 `Sylvie233.Logging`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`；`Application → Sylvie233.Caching`（使用共享缓存端口）。`Sylvie233.UI`、`Sylvie233.Caching`、`Sylvie233.Logging` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Sylvie233.Logging` / `Api`。
 
 ## 自研 UI 控件库
 
@@ -244,6 +247,51 @@ FLUSH PRIVILEGES;"
 | 房间列表 / 空闲房 / 楼层 | `rooms:*` | 60s | 房间 / 房型 / 房态变更 |
 | 房型列表 | `roomtypes:all` | 60s | 房型变更 |
 | 报表快照 / 区间营收 | `reports:*` | 60s | 房间或前台业务变更 |
+
+## 日志模块
+
+`Sylvie233.Logging` 基于 **Serilog 4**，对 API 与桌面端提供统一的日志能力，不依赖任何业务模块：
+
+- 输出：控制台（可选）+ 按天滚动文件（`logs/<prefix>-yyyyMMdd.log`），文件写入使用异步 sink；
+- 结构化：默认附带 `Application`、`MachineName`、`EnvironmentName`、`ThreadId`，配合 `SourceContext` 定位模块；
+- 滚动策略：按天 + 单文件上限（默认 20MB），保留 30 个历史文件；
+- 启动兜底：宿主构建前初始化静态 `Log.Logger`，数据库等启动失败也能落盘；
+- 宿主集成：`builder.Host.UseSylvie233Logging(options)` 接管 `ILogger`，并启用 HTTP 请求日志；
+- 桌面端：启动、未处理异常、未观察任务异常与页面操作失败统一写入 `logs/desktop-*.log`；
+- 框架日志降噪：`Microsoft` / EF Core 默认压制到 Warning，业务日志保持 Information。
+
+配置位置（API 与桌面端各自的 `appsettings.json`）：
+
+```json
+{
+  "Logging": {
+    "Sylvie233": {
+      "ApplicationName": "HospiKeeper.Api",
+      "FileNamePrefix": "api",
+      "EnableConsole": true,
+      "EnableFile": true,
+      "MinimumLevel": "Information",
+      "RetainedFileCountLimit": 30
+    }
+  }
+}
+```
+
+环境变量覆盖（无需改配置）：
+
+| 变量 | 作用 |
+|------|------|
+| `SYLVIE233_LOG_DIRECTORY` | 日志目录（默认自动定位仓库根目录下的 `logs/`） |
+| `SYLVIE233_LOG_LEVEL` | 最低级别（Debug / Information / Warning / Error ...） |
+| `SYLVIE233_LOG_CONSOLE` | 是否输出控制台（true / false） |
+| `SYLVIE233_LOG_FILE` | 是否写文件（true / false） |
+
+查看日志：
+
+```powershell
+pwsh ./manage.ps1 logs -Target api -Follow   # 优先读取 logs/api-*.log
+Get-Content logs/desktop-*.log -Tail 100
+```
 
 ## 权限约定
 

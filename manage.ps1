@@ -408,7 +408,26 @@ function Start-Api {
     Wait-ApiHealthy
 }
 
+function Get-SerilogFile {
+    param([Parameter(Mandatory)][string]$Prefix)
+
+    if (-not (Test-Path -LiteralPath $LogDir)) {
+        return $null
+    }
+
+    return Get-ChildItem -LiteralPath $LogDir -Filter "$Prefix-*.log" -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1 -ExpandProperty FullName
+}
+
 function Show-ApiLogs {
+    $serilog = Get-SerilogFile -Prefix 'api'
+    if ($null -ne $serilog) {
+        Write-Host "--- $serilog ---" -ForegroundColor DarkGray
+        Get-Content -LiteralPath $serilog -Tail $Tail
+        return
+    }
+
     if (-not (Test-Path -LiteralPath $ApiOutLog) -and -not (Test-Path -LiteralPath $ApiErrLog)) {
         Write-Warn "暂无 API 日志，日志目录：$LogDir"
         return
@@ -518,7 +537,9 @@ function Show-Status {
     Write-Host "    Swagger    $ApiBaseUrl/swagger"
     Write-Host "    MySQL      127.0.0.1:3306/hospikeeper"
     Write-Host "    Redis      localhost:6379"
-    Write-Host "    API 日志   $ApiOutLog"
+    $apiLogFile = Get-SerilogFile -Prefix 'api'
+    if ($null -eq $apiLogFile) { $apiLogFile = $ApiOutLog }
+    Write-Host "    API 日志   $apiLogFile"
 }
 
 function Open-Desktop {
@@ -603,10 +624,13 @@ switch ($Action) {
     'logs' {
         switch ($Target) {
             'api' {
+                $apiLogFile = Get-SerilogFile -Prefix 'api'
+                if ($null -eq $apiLogFile) { $apiLogFile = $ApiOutLog }
+
                 if ($Follow) {
-                    Write-Step "持续跟踪 API 日志（Ctrl+C 退出）：$ApiOutLog"
-                    if (Test-Path -LiteralPath $ApiOutLog) {
-                        Get-Content -LiteralPath $ApiOutLog -Tail $Tail -Wait
+                    Write-Step "持续跟踪 API 日志（Ctrl+C 退出）：$apiLogFile"
+                    if (Test-Path -LiteralPath $apiLogFile) {
+                        Get-Content -LiteralPath $apiLogFile -Tail $Tail -Wait
                     }
                     else {
                         Show-ApiLogs
