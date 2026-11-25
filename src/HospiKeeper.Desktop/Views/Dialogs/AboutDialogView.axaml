@@ -13,7 +13,7 @@
         <PathIcon Data="{x:Static icons:AntIcons.Home}" Width="28" Height="28" Foreground="#FFFFFF" />
       </Border>
       <StackPanel HorizontalAlignment="Center" Spacing="2">
-        <TextBlock Text="云栖民宿管理系统" FontSize="18" FontWeight="SemiBold"
+        <TextBlock Text="{Binding AppName}" FontSize="18" FontWeight="SemiBold"
                    Foreground="{DynamicResource AntTextBrush}" HorizontalAlignment="Center" />
         <TextBlock Text="{Binding Version}" FontSize="12"
                    Foreground="{DynamicResource AntTextTertiaryBrush}" HorizontalAlignment="Center" />

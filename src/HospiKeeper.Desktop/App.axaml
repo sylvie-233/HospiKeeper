@@ -49,6 +49,9 @@
       <DataTemplate DataType="pages:AccountsPageViewModel">
         <pageViews:AccountsView />
       </DataTemplate>
+      <DataTemplate DataType="pages:SystemSettingsPageViewModel">
+        <pageViews:SystemSettingsView />
+      </DataTemplate>
 
       <!-- 弹窗 -->
       <DataTemplate DataType="dialogs:ConfirmDialogViewModel">

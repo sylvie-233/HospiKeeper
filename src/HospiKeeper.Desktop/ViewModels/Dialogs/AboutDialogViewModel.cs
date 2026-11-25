@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using HospiKeeper.Contracts;
 using HospiKeeper.Desktop.Services;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
@@ -6,8 +7,11 @@ namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 /// <summary>关于弹窗。</summary>
 public sealed class AboutDialogViewModel : DialogViewModelBase
 {
-    public AboutDialogViewModel(DialogService host) : base(host)
+    private readonly SiteSettings _settings;
+
+    public AboutDialogViewModel(DialogService host, SiteSettings settings) : base(host)
     {
+        _settings = settings;
         CloseCommand = new RelayCommand(Host.Close);
     }
 
@@ -15,9 +19,11 @@ public sealed class AboutDialogViewModel : DialogViewModelBase
 
     public override double Width => 460;
 
-    public string Version => "v1.0";
+    public string AppName => _settings.DesktopAppName;
 
-    public string Description => "面向中小型民宿 / 小旅馆的单机经营管理软件，聚焦房态、入住、预定、结算与报表。";
+    public string Version => _settings.DesktopVersion;
+
+    public string Description => _settings.AboutDescription;
 
     public string Architecture => "Avalonia 12 · .NET 10 · ASP.NET Core API · MySQL";
 

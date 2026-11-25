@@ -1,0 +1,206 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
+             xmlns:controls="using:Sylvie233.UI.Controls"
+             xmlns:icons="using:Sylvie233.UI.Icons"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="HospiKeeper.Desktop.Views.Pages.SystemSettingsView"
+             x:DataType="pages:SystemSettingsPageViewModel">
+
+  <Grid Margin="16" RowDefinitions="Auto,*">
+
+    <controls:AntPageHeader Title="系统配置" Subtitle="配置游客 Web 与桌面端静态信息；保存后写入 Redis 持久 key">
+      <controls:AntPageHeader.Extra>
+        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <TextBlock Text="{Binding StatusText}" FontSize="12"
+                     Foreground="{DynamicResource AntTextTertiaryBrush}"
+                     VerticalAlignment="Center" MaxWidth="360" TextTrimming="CharacterEllipsis" />
+          <controls:AntButton Command="{Binding ReloadCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Data="{x:Static icons:AntIcons.Refresh}" Width="13" Height="13" />
+              <TextBlock Text="重新读取" />
+            </StackPanel>
+          </controls:AntButton>
+          <controls:AntButton Variant="Primary" Command="{Binding SaveCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Data="{x:Static icons:AntIcons.Check}" Width="13" Height="13" />
+              <TextBlock Text="保存配置" />
+            </StackPanel>
+          </controls:AntButton>
+        </StackPanel>
+      </controls:AntPageHeader.Extra>
+    </controls:AntPageHeader>
+
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="12" MaxWidth="1120" HorizontalAlignment="Center">
+
+        <Border Classes="ant-alert-info">
+          <TextBlock Text="配置存储于 Redis（AOF 持久化），Web 端刷新后生效；桌面端品牌 / 版本 / 关于文案保存后即时刷新。"
+                     FontSize="12" TextWrapping="Wrap"
+                     Foreground="{DynamicResource AntPrimaryBrush}" />
+        </Border>
+
+        <Border Classes="ant-alert-error"
+                IsVisible="{Binding ValidationError, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+          <TextBlock Text="{Binding ValidationError}" FontSize="12" TextWrapping="Wrap"
+                     Foreground="{DynamicResource AntErrorBrush}" />
+        </Border>
+
+        <controls:AntCard Header="品牌与首页">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+              <controls:AntFormItem Label="品牌名称" Required="True">
+                <TextBox Text="{Binding BrandName}" MaxLength="40" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="英文品牌名" Required="True">
+                <TextBox Text="{Binding BrandEnglishName}" MaxLength="40" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="2" Label="Logo 标识字" Required="True">
+                <TextBox Text="{Binding BrandMark}" MaxLength="2" />
+              </controls:AntFormItem>
+            </Grid>
+
+            <controls:AntFormItem Label="位置标语">
+              <TextBox Text="{Binding LocationTagline}" MaxLength="60" />
+            </controls:AntFormItem>
+
+            <Grid ColumnDefinitions="1.2*,*,0.8*,0.7*" ColumnSpacing="10">
+              <controls:AntFormItem Label="Hero 主标题前缀" Required="True">
+                <TextBox Text="{Binding HeroTitlePrefix}" MaxLength="40" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="高亮词" Required="True">
+                <TextBox Text="{Binding HeroAccent}" MaxLength="20" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="2" Label="标题后缀" Required="True">
+                <TextBox Text="{Binding HeroTitleSuffix}" MaxLength="20" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="3" Label="住客评分">
+                <TextBox Text="{Binding RatingText}" />
+              </controls:AntFormItem>
+            </Grid>
+
+            <controls:AntFormItem Label="首页副标题" Required="True">
+              <TextBox Text="{Binding HeroSubtitle}" MaxLength="120" />
+            </controls:AntFormItem>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+              <controls:AntFormItem Label="步行至湖边（分钟）">
+                <TextBox Text="{Binding WalkMinutesText}" />
+              </controls:AntFormItem>
+            </Grid>
+          </StackPanel>
+        </controls:AntCard>
+
+        <controls:AntCard Header="联系方式">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="1.1*,1.4*,1.2*" ColumnSpacing="10">
+              <controls:AntFormItem Label="前台热线" Required="True">
+                <TextBox Text="{Binding Hotline}" MaxLength="32" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="地址" Required="True">
+                <TextBox Text="{Binding Address}" MaxLength="100" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="2" Label="联系邮箱" Required="True">
+                <TextBox Text="{Binding Email}" MaxLength="80" />
+              </controls:AntFormItem>
+            </Grid>
+          </StackPanel>
+        </controls:AntCard>
+
+        <controls:AntCard Header="入住与支付">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+              <controls:AntFormItem Label="入住时间" Required="True">
+                <TextBox Text="{Binding CheckInTime}" MaxLength="40" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="退房时间" Required="True">
+                <TextBox Text="{Binding CheckOutTime}" MaxLength="40" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="2" Label="到店截止" Required="True">
+                <TextBox Text="{Binding ArrivalDeadline}" MaxLength="40" />
+              </controls:AntFormItem>
+            </Grid>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+              <controls:AntFormItem Label="支付说明" Required="True">
+                <TextBox Text="{Binding PaymentNote}" MaxLength="120" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="押金说明" Required="True">
+                <TextBox Text="{Binding DepositNote}" MaxLength="120" />
+              </controls:AntFormItem>
+            </Grid>
+          </StackPanel>
+        </controls:AntCard>
+
+        <controls:AntCard Header="页脚与桌面端">
+          <StackPanel Spacing="10">
+            <controls:AntFormItem Label="页脚品牌介绍" Required="True">
+              <TextBox Text="{Binding FooterDescription}" MaxLength="300" Height="64"
+                       AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" />
+            </controls:AntFormItem>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+              <controls:AntFormItem Label="页脚文案" Required="True">
+                <TextBox Text="{Binding FooterText}" MaxLength="120" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="桌面端状态栏" Required="True">
+                <TextBox Text="{Binding DesktopFooterText}" MaxLength="80" />
+              </controls:AntFormItem>
+            </Grid>
+            <Grid ColumnDefinitions="1.4*,0.7*" ColumnSpacing="10">
+              <controls:AntFormItem Label="桌面端系统名称" Required="True">
+                <TextBox Text="{Binding DesktopAppName}" MaxLength="40" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="版本号" Required="True">
+                <TextBox Text="{Binding DesktopVersion}" MaxLength="20" />
+              </controls:AntFormItem>
+            </Grid>
+            <controls:AntFormItem Label="关于本系统描述" Required="True">
+              <TextBox Text="{Binding AboutDescription}" MaxLength="300" Height="58"
+                       AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" />
+            </controls:AntFormItem>
+          </StackPanel>
+        </controls:AntCard>
+
+        <controls:AntCard Header="特色介绍">
+          <controls:AntCard.Extra>
+            <controls:AntButton Size="Small" Command="{Binding AddFeatureCommand}" Content="+ 添加特色" />
+          </controls:AntCard.Extra>
+          <ItemsControl ItemsSource="{Binding Features}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="pages:SiteFeatureEditViewModel">
+                <Grid ColumnDefinitions="64,170,*,Auto" ColumnSpacing="8" Margin="0,0,0,8">
+                  <TextBox Text="{Binding Icon}" MaxLength="8" PlaceholderText="图标" />
+                  <TextBox Grid.Column="1" Text="{Binding Title}" MaxLength="20" PlaceholderText="标题" />
+                  <TextBox Grid.Column="2" Text="{Binding Description}" MaxLength="80" PlaceholderText="说明" />
+                  <controls:AntButton Grid.Column="3" Variant="Link" Size="Small" Content="删除"
+                                      Foreground="{DynamicResource AntErrorBrush}"
+                                      Command="{Binding RemoveCommand}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </controls:AntCard>
+
+        <controls:AntCard Header="入住须知">
+          <controls:AntCard.Extra>
+            <controls:AntButton Size="Small" Command="{Binding AddNoticeCommand}" Content="+ 添加须知" />
+          </controls:AntCard.Extra>
+          <ItemsControl ItemsSource="{Binding Notices}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="pages:SiteNoticeEditViewModel">
+                <Grid ColumnDefinitions="170,*,*,Auto" ColumnSpacing="8" Margin="0,0,0,8">
+                  <TextBox Text="{Binding Title}" MaxLength="20" PlaceholderText="标题" />
+                  <TextBox Grid.Column="1" Text="{Binding Line1}" MaxLength="80" PlaceholderText="内容一" />
+                  <TextBox Grid.Column="2" Text="{Binding Line2}" MaxLength="80" PlaceholderText="内容二（选填）" />
+                  <controls:AntButton Grid.Column="3" Variant="Link" Size="Small" Content="删除"
+                                      Foreground="{DynamicResource AntErrorBrush}"
+                                      Command="{Binding RemoveCommand}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </controls:AntCard>
+
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

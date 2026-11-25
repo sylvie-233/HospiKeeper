@@ -13,6 +13,7 @@ public static class PageKeys
     public const string Rooms = "rooms";
     public const string RoomTypes = "roomtypes";
     public const string Accounts = "accounts";
+    public const string Settings = "settings";
 }
 
 /// <summary>页面间导航（采用事件而非直接引用 MainViewModel，避免循环依赖）。</summary>

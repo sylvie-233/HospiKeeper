@@ -59,6 +59,7 @@ public partial class App : Application
         services.AddSingleton<PageViewModelBase, RoomsPageViewModel>();
         services.AddSingleton<PageViewModelBase, RoomTypesPageViewModel>();
         services.AddSingleton<PageViewModelBase, AccountsPageViewModel>();
+        services.AddSingleton<PageViewModelBase, SystemSettingsPageViewModel>();
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainWindow>();

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using HospiKeeper.Client;
+using HospiKeeper.Contracts;
 using HospiKeeper.Desktop.Messages;
 using HospiKeeper.Desktop.Services;
 using HospiKeeper.Desktop.ViewModels.Dialogs;
@@ -23,6 +24,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly Dictionary<string, PageViewModelBase> _pages;
     private readonly Dictionary<string, NavigationItemViewModel> _navItems = new();
     private readonly DispatcherTimer _clockTimer;
+    private SiteSettings _siteSettings = new();
 
     public MainViewModel(
         ClientSession session,
@@ -57,6 +59,8 @@ public sealed partial class MainViewModel : ObservableObject
         navigation.Requested += OnNavigationRequested;
         WeakReferenceMessenger.Default.Register<DataChangedMessage>(
             this, (_, _) => _ = RefreshCountsAsync());
+        WeakReferenceMessenger.Default.Register<SiteSettingsChangedMessage>(
+            this, (_, _) => _ = LoadSiteSettingsAsync());
 
         UpdateClock();
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
@@ -78,6 +82,15 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _windowTitle = "云栖民宿管理系统 v1.0　—　[房态看板]";
+
+    [ObservableProperty]
+    private string _appName = "云栖民宿管理系统";
+
+    [ObservableProperty]
+    private string _appVersion = "v1.0";
+
+    [ObservableProperty]
+    private string _appFooterText = "HospiKeeper · v1.0";
 
     [ObservableProperty]
     private string _clockText = string.Empty;
@@ -105,8 +118,25 @@ public sealed partial class MainViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
+        await LoadSiteSettingsAsync();
         await NavigateAsync(PageKeys.Dashboard);
         await RefreshCountsAsync();
+    }
+
+    private async Task LoadSiteSettingsAsync()
+    {
+        try
+        {
+            _siteSettings = await _api.GetPublicSiteSettingsAsync();
+            AppName = _siteSettings.DesktopAppName;
+            AppVersion = _siteSettings.DesktopVersion;
+            AppFooterText = _siteSettings.DesktopFooterText;
+            WindowTitle = $"{AppName} {AppVersion}　—　[{PageTitle}]";
+        }
+        catch
+        {
+            // 配置接口不可用时使用内置默认品牌，不阻断登录后的主界面。
+        }
     }
 
     public async Task RefreshCountsAsync()
@@ -166,7 +196,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         CurrentPage = page;
         PageTitle = page.Title;
-        WindowTitle = $"云栖民宿管理系统 v1.0　—　[{page.Title}]";
+        WindowTitle = $"{AppName} {AppVersion}　—　[{page.Title}]";
 
         foreach (var item in _navItems.Values)
         {
@@ -198,7 +228,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void ShowAbout()
     {
-        _dialog.Show(new AboutDialogViewModel(_dialog));
+        _dialog.Show(new AboutDialogViewModel(_dialog, _siteSettings));
     }
 
     private async Task LogoutAsync()

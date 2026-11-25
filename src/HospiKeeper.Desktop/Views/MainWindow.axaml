@@ -43,13 +43,13 @@
             <Border Width="26" Height="26" CornerRadius="6" Background="#2EFFFFFF">
               <PathIcon Data="{x:Static icons:AntIcons.Home}" Width="15" Height="15" Foreground="#FFFFFF" />
             </Border>
-            <TextBlock Text="云栖民宿管理系统"
+            <TextBlock Text="{Binding AppName}"
                        FontSize="13"
                        FontWeight="SemiBold"
                        Foreground="#FFFFFF"
                        VerticalAlignment="Center" />
             <Border Background="#33FFFFFF" CornerRadius="3" Padding="5,1" VerticalAlignment="Center">
-              <TextBlock Text="v1.0" FontSize="10" Foreground="#FFFFFF" />
+              <TextBlock Text="{Binding AppVersion}" FontSize="10" Foreground="#FFFFFF" />
             </Border>
             <TextBlock Text="{Binding PageTitle, StringFormat='—  [{0}]'}"
                        FontSize="12"
@@ -123,6 +123,7 @@
                   <MenuItem Header="房间管理" Tag="rooms" Click="OnNavigateMenuClick" />
                   <MenuItem Header="房型管理" Tag="roomtypes" Click="OnNavigateMenuClick" />
                   <MenuItem Header="操作员账号" Tag="accounts" Click="OnNavigateMenuClick" />
+                  <MenuItem Header="系统配置" Tag="settings" Click="OnNavigateMenuClick" />
                 </MenuFlyout>
               </Button.Flyout>
             </Button>
@@ -170,7 +171,7 @@
                        VerticalAlignment="Center" />
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-            <TextBlock Text="HospiKeeper · v1.0"
+            <TextBlock Text="{Binding AppFooterText}"
                        FontSize="11"
                        Foreground="{DynamicResource AntTextTertiaryBrush}" />
           </StackPanel>
