@@ -112,6 +112,7 @@ HospiKeeper.Web             Blazor Web App 游客预订门户（只调用 API，
 - 容器内端口 `8080`，宿主机 `5080` / `5081`；Web 通过 `Api__BaseUrl=http://api:8080` 访问 API；
 - 容器日志输出到 stdout（`SYLVIE233_LOG_FILE=false`），使用 `docker logs` / `manage.ps1 image:logs` 查看；
 - 修改 Dockerfile / compose 后同步更新 README 与 `manage.ps1` 帮助；
+- 修改 API / Web 源码后必须 `image:build` + `image:up`；`image:up` 会强制重建容器，避免运行旧镜像；
 - `.dockerignore` 排除 `bin/`、`obj/`、`logs/`、`tests/`、`Docs/`，保持构建上下文精简。
 
 ## 5. 常用命令

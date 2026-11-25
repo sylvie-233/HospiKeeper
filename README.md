@@ -275,6 +275,9 @@ pwsh ./manage.ps1 image:down
 docker compose -f Scripts/docker-compose.yml --profile apps up -d --wait api web
 ```
 
+> 修改 API / Web 源码后：先执行 `image:build`，再执行 `image:up`。
+> `image:up` 会强制重建运行中的 API / Web 容器，确保使用最新镜像。
+
 容器内环境：
 
 | 变量 | 值 |

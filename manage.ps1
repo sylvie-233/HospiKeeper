@@ -306,17 +306,19 @@ function Start-AppContainers {
         throw "缺少应用镜像，请先执行：pwsh ./manage.ps1 image:build"
     }
 
+    # 容器已运行时允许 image:up 直接重建；仅当 5081 被本地 Web 进程占用时提示。
+    $webContainerRunning = (Get-ContainerStatus $WebContainer) -eq 'running'
     $webPortInUse = Get-NetTCPConnection -LocalPort 5081 -State Listen -ErrorAction SilentlyContinue
-    if ($null -ne $webPortInUse) {
-        throw '端口 5081 已被占用，请先停止本地 Web 进程（dotnet run --project src/HospiKeeper.Web）。'
+    if (-not $webContainerRunning -and $null -ne $webPortInUse) {
+        throw '端口 5081 已被本地 Web 进程占用，请先停止：dotnet run --project src/HospiKeeper.Web。'
     }
 
     Stop-Api
     Start-MySql
     Start-Redis
 
-    Write-Step '启动 API / Web 容器...'
-    Invoke-Compose -ComposeArgs @('--profile', 'apps', 'up', '-d', '--wait', 'api', 'web')
+    Write-Step '启动 API / Web 容器（强制使用最新镜像）...'
+    Invoke-Compose -ComposeArgs @('--profile', 'apps', 'up', '-d', '--wait', '--force-recreate', 'api', 'web')
     Wait-HttpReady -Url "$ApiBaseUrl/health" -Name 'API 容器' -TimeoutSeconds $TimeoutSeconds
     Wait-HttpReady -Url $WebBaseUrl -Name 'Web 容器' -TimeoutSeconds $TimeoutSeconds
 }
