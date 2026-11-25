@@ -31,6 +31,7 @@ public sealed class RevenueDayRowViewModel
     public string RevenueText { get; init; } = string.Empty;
     public string DayOverDayText { get; init; } = string.Empty;
     public string ShareText { get; init; } = string.Empty;
+    public double ShareValue { get; init; }
     public bool IsUp { get; init; }
     public bool IsDown { get; init; }
 }
@@ -44,20 +45,12 @@ public sealed partial class ReportPageViewModel : PageViewModelBase
         ToastService toast,
         NavigationService navigation) : base(api, dialog, toast, navigation)
     {
-        QueryRangeCommand = new AsyncRelayCommand(QueryRangeAsync);
-        RefreshCommand = new AsyncRelayCommand(RefreshAllAsync);
-        Last7Command = new AsyncRelayCommand(async () =>
-        {
-            DateFrom = DateTime.Today.AddDays(-6);
-            DateTo = DateTime.Today;
-            await QueryRangeAsync();
-        });
-        Last30Command = new AsyncRelayCommand(async () =>
-        {
-            DateFrom = DateTime.Today.AddDays(-29);
-            DateTo = DateTime.Today;
-            await QueryRangeAsync();
-        });
+        QueryRangeCommand = new AsyncRelayCommand(() => RunLoadingAsync(QueryRangeAsync));
+        RefreshCommand = new AsyncRelayCommand(() => RunLoadingAsync(RefreshAllAsync));
+        TodayCommand = new AsyncRelayCommand(() => SetRangeAsync(1));
+        Last3Command = new AsyncRelayCommand(() => SetRangeAsync(3));
+        Last7Command = new AsyncRelayCommand(() => SetRangeAsync(7));
+        Last30Command = new AsyncRelayCommand(() => SetRangeAsync(30));
         DateFrom = DateTime.Today.AddDays(-6);
         DateTo = DateTime.Today;
     }
@@ -100,23 +93,42 @@ public sealed partial class ReportPageViewModel : PageViewModelBase
     private IBrush _rangeChangeBrush = AntPalette.TextSecondary;
 
     [ObservableProperty]
-    private IReadOnlyList<ChartBar> _rangeBars = Array.Empty<ChartBar>();
+    private string _rangeDayCountText = "共 0 天";
+
+    [ObservableProperty]
+    private bool _isLoading;
 
     public IAsyncRelayCommand QueryRangeCommand { get; }
     public IAsyncRelayCommand RefreshCommand { get; }
+    public IAsyncRelayCommand TodayCommand { get; }
+    public IAsyncRelayCommand Last3Command { get; }
     public IAsyncRelayCommand Last7Command { get; }
     public IAsyncRelayCommand Last30Command { get; }
 
-    public override async Task OnNavigatedToAsync(object? argument)
-    {
-        await LoadSnapshotAsync();
-        await QueryRangeAsync();
-    }
+    public override Task OnNavigatedToAsync(object? argument)
+        => RunLoadingAsync(async () =>
+        {
+            await LoadSnapshotAsync();
+            await QueryRangeAsync();
+        });
 
     private async Task RefreshAllAsync()
     {
         await LoadSnapshotAsync();
         await QueryRangeAsync();
+    }
+
+    private async Task RunLoadingAsync(Func<Task> action)
+    {
+        IsLoading = true;
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private async Task LoadSnapshotAsync()
@@ -225,6 +237,13 @@ public sealed partial class ReportPageViewModel : PageViewModelBase
         });
     }
 
+    private async Task SetRangeAsync(int days)
+    {
+        DateFrom = DateTime.Today.AddDays(-(days - 1));
+        DateTo = DateTime.Today;
+        await RunLoadingAsync(QueryRangeAsync);
+    }
+
     private async Task QueryRangeAsync()
     {
         var start = DateFrom ?? DateTime.Today.AddDays(-6);
@@ -253,11 +272,8 @@ public sealed partial class ReportPageViewModel : PageViewModelBase
                 RangeChangeBrush = AntPalette.TextSecondary;
             }
 
-            RangeBars = result.Days
-                .Select(d => new ChartBar(d.Date.ToString("MM-dd"), (double)d.Revenue))
-                .ToList();
-
             RangeRows.Clear();
+            RangeDayCountText = $"共 {result.Rows.Count} 天";
             foreach (var row in result.Rows)
             {
                 var d = row.DayOverDay;
@@ -267,6 +283,7 @@ public sealed partial class ReportPageViewModel : PageViewModelBase
                     RevenueText = Money(row.Revenue),
                     DayOverDayText = d is null ? "—" : d >= 0 ? $"↑ +{d:0.0}%" : $"↓ {d:0.0}%",
                     ShareText = $"{row.Share:0.0}%",
+                    ShareValue = (double)row.Share,
                     IsUp = d > 0,
                     IsDown = d < 0
                 });
