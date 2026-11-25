@@ -5,27 +5,23 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using HospiKeeper.Contracts;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using HospiKeeper.Domain.Services;
 
 namespace HospiKeeper.Client;
 
+/// <summary>
+/// <see cref="IHospiKeeperApi"/> 的 HTTP 实现：统一处理 JSON、Bearer 令牌、
+/// 404 可选结果与错误消息解析。
+/// </summary>
 public sealed class HospiKeeperApiClient : IHospiKeeperApi
 {
+    private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
+
     private readonly HttpClient _http;
-    private readonly JsonSerializerOptions _json;
     private string? _token;
 
-    public HospiKeeperApiClient(HttpClient http)
-    {
-        _http = http;
-        _json = new JsonSerializerOptions(JsonSerializerDefaults.Web)
-        {
-            PropertyNameCaseInsensitive = true
-        };
-        _json.Converters.Add(new JsonStringEnumConverter());
-    }
+    public HospiKeeperApiClient(HttpClient http) => _http = http;
 
     public UserDto? CurrentUser { get; private set; }
 
@@ -84,7 +80,7 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
     public Task DeleteUserAsync(int userId, CancellationToken cancellationToken = default)
         => DeleteNoContentAsync($"api/users/{userId}", cancellationToken);
 
-    public async Task<IReadOnlyList<Room>> GetRoomsAsync(
+    public async Task<IReadOnlyList<RoomDto>> GetRoomsAsync(
         int? floor = null,
         int? typeId = null,
         RoomStatus? status = null,
@@ -94,20 +90,20 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
             ("floor", floor?.ToString()),
             ("typeId", typeId?.ToString()),
             ("status", status?.ToString()));
-        return await GetAsync<List<Room>>(url, cancellationToken);
+        return await GetAsync<List<RoomDto>>(url, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Room>> GetFreeRoomsAsync(CancellationToken cancellationToken = default)
-        => await GetAsync<List<Room>>("api/rooms/free", cancellationToken);
+    public async Task<IReadOnlyList<RoomDto>> GetFreeRoomsAsync(CancellationToken cancellationToken = default)
+        => await GetAsync<List<RoomDto>>("api/rooms/free", cancellationToken);
 
     public async Task<IReadOnlyList<int>> GetFloorsAsync(CancellationToken cancellationToken = default)
         => await GetAsync<List<int>>("api/rooms/floors", cancellationToken);
 
-    public async Task<IReadOnlyList<RoomType>> GetRoomTypesAsync(CancellationToken cancellationToken = default)
-        => await GetAsync<List<RoomType>>("api/room-types", cancellationToken);
+    public async Task<IReadOnlyList<RoomTypeDto>> GetRoomTypesAsync(CancellationToken cancellationToken = default)
+        => await GetAsync<List<RoomTypeDto>>("api/room-types", cancellationToken);
 
-    public async Task<Room> CreateRoomAsync(RoomInput input, CancellationToken cancellationToken = default)
-        => await PostAsync<Room>("api/rooms", input, cancellationToken);
+    public async Task<RoomDto> CreateRoomAsync(RoomInput input, CancellationToken cancellationToken = default)
+        => await PostAsync<RoomDto>("api/rooms", input, cancellationToken);
 
     public Task UpdateRoomAsync(int roomId, RoomInput input, CancellationToken cancellationToken = default)
         => PutNoContentAsync($"api/rooms/{roomId}", input, cancellationToken);
@@ -128,8 +124,8 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
         CancellationToken cancellationToken = default)
         => PostNoContentAsync($"api/rooms/{roomId}/maintenance", new MaintenanceRequest(status, note), cancellationToken);
 
-    public async Task<RoomType> CreateRoomTypeAsync(RoomTypeInput input, CancellationToken cancellationToken = default)
-        => await PostAsync<RoomType>("api/room-types", input, cancellationToken);
+    public async Task<RoomTypeDto> CreateRoomTypeAsync(RoomTypeInput input, CancellationToken cancellationToken = default)
+        => await PostAsync<RoomTypeDto>("api/room-types", input, cancellationToken);
 
     public Task UpdateRoomTypeAsync(int roomTypeId, RoomTypeInput input, CancellationToken cancellationToken = default)
         => PutNoContentAsync($"api/room-types/{roomTypeId}", input, cancellationToken);
@@ -154,19 +150,19 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
     public Task<StayInfo?> GetStayAsync(int checkInId, CancellationToken cancellationToken = default)
         => GetOrDefaultAsync<StayInfo>($"api/stays/{checkInId}", cancellationToken);
 
-    public async Task<IReadOnlyList<Reservation>> GetReservationsAsync(
+    public async Task<IReadOnlyList<ReservationDto>> GetReservationsAsync(
         ReservationStatus? status = null,
         CancellationToken cancellationToken = default)
     {
         var url = "api/reservations" + Query(("status", status?.ToString()));
-        return await GetAsync<List<Reservation>>(url, cancellationToken);
+        return await GetAsync<List<ReservationDto>>(url, cancellationToken);
     }
 
-    public Task<Reservation?> GetReservationAsync(int reservationId, CancellationToken cancellationToken = default)
-        => GetOrDefaultAsync<Reservation>($"api/reservations/{reservationId}", cancellationToken);
+    public Task<ReservationDto?> GetReservationAsync(int reservationId, CancellationToken cancellationToken = default)
+        => GetOrDefaultAsync<ReservationDto>($"api/reservations/{reservationId}", cancellationToken);
 
-    public async Task<CheckInRecord> CheckInAsync(CheckInRequest request, CancellationToken cancellationToken = default)
-        => await PostAsync<CheckInRecord>("api/checkins", request, cancellationToken);
+    public async Task<CheckInRecordDto> CheckInAsync(CheckInRequest request, CancellationToken cancellationToken = default)
+        => await PostAsync<CheckInRecordDto>("api/checkins", request, cancellationToken);
 
     public async Task<BillingResult> QuoteCheckoutAsync(
         int checkInId,
@@ -174,8 +170,8 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
         CancellationToken cancellationToken = default)
         => await PostAsync<BillingResult>($"api/checkins/{checkInId}/quote", request, cancellationToken);
 
-    public async Task<CheckoutBill> CheckoutAsync(CheckoutRequest request, CancellationToken cancellationToken = default)
-        => await PostAsync<CheckoutBill>("api/checkouts", request, cancellationToken);
+    public async Task<CheckoutBillDto> CheckoutAsync(CheckoutRequest request, CancellationToken cancellationToken = default)
+        => await PostAsync<CheckoutBillDto>("api/checkouts", request, cancellationToken);
 
     public Task AddExtraChargeAsync(
         int checkInId,
@@ -184,15 +180,15 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
         CancellationToken cancellationToken = default)
         => PostNoContentAsync($"api/checkins/{checkInId}/extras", new ExtraChargeInput(item, amount), cancellationToken);
 
-    public async Task<Reservation> CreateReservationAsync(
+    public async Task<ReservationDto> CreateReservationAsync(
         ReservationRequest request,
         CancellationToken cancellationToken = default)
-        => await PostAsync<Reservation>("api/reservations", request, cancellationToken);
+        => await PostAsync<ReservationDto>("api/reservations", request, cancellationToken);
 
     public Task CancelReservationAsync(int reservationId, CancellationToken cancellationToken = default)
         => PostNoContentAsync($"api/reservations/{reservationId}/cancel", null, cancellationToken);
 
-    public async Task<IReadOnlyList<CheckInRecord>> QueryCheckInsAsync(
+    public async Task<IReadOnlyList<CheckInRecordDto>> QueryCheckInsAsync(
         RecordQuery query,
         CancellationToken cancellationToken = default)
     {
@@ -201,10 +197,10 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
             ("keyword", query.Keyword),
             ("from", query.From?.ToString("yyyy-MM-dd")),
             ("to", query.To?.ToString("yyyy-MM-dd")));
-        return await GetAsync<List<CheckInRecord>>(url, cancellationToken);
+        return await GetAsync<List<CheckInRecordDto>>(url, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<CheckoutBill>> QueryBillsAsync(
+    public async Task<IReadOnlyList<CheckoutBillDto>> QueryBillsAsync(
         RecordQuery query,
         CancellationToken cancellationToken = default)
     {
@@ -213,22 +209,22 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
             ("keyword", query.Keyword),
             ("from", query.From?.ToString("yyyy-MM-dd")),
             ("to", query.To?.ToString("yyyy-MM-dd")));
-        return await GetAsync<List<CheckoutBill>>(url, cancellationToken);
+        return await GetAsync<List<CheckoutBillDto>>(url, cancellationToken);
     }
 
-    public Task<CheckInRecord?> GetCheckInAsync(int checkInId, CancellationToken cancellationToken = default)
-        => GetOrDefaultAsync<CheckInRecord>($"api/records/checkins/{checkInId}", cancellationToken);
+    public Task<CheckInRecordDto?> GetCheckInAsync(int checkInId, CancellationToken cancellationToken = default)
+        => GetOrDefaultAsync<CheckInRecordDto>($"api/records/checkins/{checkInId}", cancellationToken);
 
-    public Task<CheckoutBill?> GetBillAsync(int billId, CancellationToken cancellationToken = default)
-        => GetOrDefaultAsync<CheckoutBill>($"api/records/bills/{billId}", cancellationToken);
+    public Task<CheckoutBillDto?> GetBillAsync(int billId, CancellationToken cancellationToken = default)
+        => GetOrDefaultAsync<CheckoutBillDto>($"api/records/bills/{billId}", cancellationToken);
 
-    public async Task<IReadOnlyList<OperationLog>> QueryLogsAsync(
+    public async Task<IReadOnlyList<OperationLogDto>> QueryLogsAsync(
         string? action = null,
         string? keyword = null,
         CancellationToken cancellationToken = default)
     {
         var url = "api/logs" + Query(("action", action), ("keyword", keyword));
-        return await GetAsync<List<OperationLog>>(url, cancellationToken);
+        return await GetAsync<List<OperationLogDto>>(url, cancellationToken);
     }
 
     public async Task<ReportSnapshot> GetReportSnapshotAsync(CancellationToken cancellationToken = default)
@@ -259,7 +255,7 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
         }
 
         await EnsureSuccessAsync(response, cancellationToken);
-        return await response.Content.ReadFromJsonAsync<T>(_json, cancellationToken);
+        return await response.Content.ReadFromJsonAsync<T>(JsonOptions, cancellationToken);
     }
 
     private async Task<T> PostAsync<T>(string url, object? body, CancellationToken cancellationToken)
@@ -292,7 +288,7 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
     {
         using var response = await _http.SendAsync(request, cancellationToken);
         await EnsureSuccessAsync(response, cancellationToken);
-        var result = await response.Content.ReadFromJsonAsync<T>(_json, cancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<T>(JsonOptions, cancellationToken);
         return result ?? throw new ApiException("服务端返回内容为空。", response.StatusCode);
     }
 
@@ -336,8 +332,6 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
             .ToList();
         return parts.Count == 0 ? string.Empty : "?" + string.Join("&", parts);
     }
-
-    private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
 
     private static JsonSerializerOptions CreateJsonOptions()
     {
