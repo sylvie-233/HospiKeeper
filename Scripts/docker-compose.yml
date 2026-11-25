@@ -53,6 +53,58 @@ services:
       retries: 20
       start_period: 5s
 
+  # --------------------------------------------------------------------------
+  # 应用容器（profile: apps，仅 `manage.ps1 image:*` 或显式 profile 启动）
+  # 镜像由 manage.ps1 image:build 使用本机 .NET 10 基础镜像构建。
+  # --------------------------------------------------------------------------
+  api:
+    image: hospikeeper-api:local
+    container_name: hospikeeper-api
+    profiles: ["apps"]
+    restart: unless-stopped
+    build:
+      context: ..
+      dockerfile: src/HospiKeeper.Api/Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Urls: http://+:8080
+      HOSPITKEEPER_DB_HOST: mysql
+      HOSPITKEEPER_DB_PORT: "3306"
+      HOSPITKEEPER_DB_NAME: ${MYSQL_DATABASE:-hospikeeper}
+      HOSPITKEEPER_DB_USER: ${MYSQL_USER:-hospikeeper}
+      HOSPITKEEPER_DB_PASSWORD: ${MYSQL_PASSWORD:-123456}
+      Cache__RedisConnectionString: redis:6379
+      SYLVIE233_LOG_CONSOLE: "true"
+      SYLVIE233_LOG_FILE: "false"
+    ports:
+      - '${API_PORT:-5080}:8080'
+
+  web:
+    image: hospikeeper-web:local
+    container_name: hospikeeper-web
+    profiles: ["apps"]
+    restart: unless-stopped
+    build:
+      context: ..
+      dockerfile: src/HospiKeeper.Web/Dockerfile
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Api__BaseUrl: http://api:8080
+      SYLVIE233_LOG_CONSOLE: "true"
+      SYLVIE233_LOG_FILE: "false"
+    ports:
+      - '${WEB_PORT:-5081}:8080'
+
 volumes:
   mysql_data:
     name: hospikeeper_mysql_data

@@ -1,0 +1,14 @@
+.git
+.gitignore
+.vs
+.vscode
+.run
+logs
+**/bin
+**/obj
+**/TestResults
+Docs
+tests
+README.md
+CLAUDE.md
+*.user

@@ -28,13 +28,19 @@
       pull       拉取 MySQL / Redis 镜像
       desktop    启动 Avalonia 桌面端
       dev        启动整套环境后打开桌面端
+      image:build  构建 API / Web 容器镜像（使用本机 .NET 10 基础镜像）
+      image:up     启动 API / Web 容器（自动确保 MySQL / Redis）
+      image:down   停止并移除 API / Web 容器（保留 MySQL / Redis）
+      image:logs   查看 API / Web 容器日志
+      image:status 查看 API / Web 容器状态
 
 .PARAMETER Target
     操作目标，默认 all（仅部分操作使用）：
       mysql  仅 MySQL
       redis  仅 Redis
       api    仅 API（会自动确保 MySQL 与 Redis 已启动）
-      all    MySQL + Redis + API
+      web    仅 Web（image:build / image:logs 使用）
+      all    MySQL + Redis + API（image:build 时构建 API + Web）
 
 .PARAMETER Force
     reset / init 跳过二次确认；build 使用 --no-incremental。
@@ -85,6 +91,18 @@
     pwsh ./manage.ps1 ef:add -MigrationName AddRoomBalcony
 
 .EXAMPLE
+    pwsh ./manage.ps1 image:build
+
+.EXAMPLE
+    pwsh ./manage.ps1 image:build -Target web -Force
+
+.EXAMPLE
+    pwsh ./manage.ps1 image:up
+
+.EXAMPLE
+    pwsh ./manage.ps1 image:logs -Target web -Follow
+
+.EXAMPLE
     pwsh ./manage.ps1 test
 #>
 #Requires -Version 7.0
@@ -93,11 +111,12 @@ param(
     [Parameter(Position = 0)]
     [ValidateSet(
         'up', 'down', 'restart', 'reset', 'build', 'test', 'logs', 'cli', 'status',
-        'init', 'migrate', 'ef:add', 'pull', 'desktop', 'dev'
+        'init', 'migrate', 'ef:add', 'pull', 'desktop', 'dev',
+        'image:build', 'image:up', 'image:down', 'image:logs', 'image:status'
     )]
     [string]$Action = 'status',
 
-    [ValidateSet('mysql', 'redis', 'api', 'all')]
+    [ValidateSet('mysql', 'redis', 'api', 'web', 'all')]
     [string]$Target = 'all',
 
     [switch]$Force,
@@ -136,6 +155,11 @@ $ApiOutLog = Join-Path $LogDir 'api.log'
 $ApiErrLog = Join-Path $LogDir 'api.error.log'
 $MysqlContainer = 'hospikeeper-mysql'
 $RedisContainer = 'hospikeeper-redis'
+$WebBaseUrl = 'http://localhost:5081'
+$ApiImage = 'hospikeeper-api:local'
+$WebImage = 'hospikeeper-web:local'
+$ApiContainer = 'hospikeeper-api'
+$WebContainer = 'hospikeeper-web'
 
 function Write-Step {
     param([string]$Message)
@@ -205,6 +229,117 @@ function Get-TargetIncludes {
     }
 
     return $services -contains $Service
+}
+
+function Get-ContainerStatus {
+    param([Parameter(Mandatory)][string]$Name)
+
+    $state = & docker inspect --format '{{.State.Status}}' $Name 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        return $null
+    }
+
+    return ($state | Select-Object -First 1)
+}
+
+function Test-ImageExists {
+    param([Parameter(Mandatory)][string]$Image)
+
+    & docker image inspect $Image *> $null
+    return $LASTEXITCODE -eq 0
+}
+
+function Build-AppImages {
+    if ($Target -notin @('api', 'web', 'all')) {
+        throw 'image:build 仅支持 -Target api / web / all。'
+    }
+
+    $images = if ($Target -eq 'all') { @('api', 'web') } else { @($Target) }
+    foreach ($name in $images) {
+        $dockerfile = Join-Path $ScriptRoot "src/HospiKeeper.$($name.Substring(0,1).ToUpper() + $name.Substring(1))/Dockerfile"
+        $image = if ($name -eq 'api') { $ApiImage } else { $WebImage }
+
+        $buildArgs = @('build', '--pull=false', '--progress=plain', '--file', $dockerfile, '--tag', $image)
+        if ($Force) {
+            $buildArgs += '--no-cache'
+        }
+        $buildArgs += $ScriptRoot
+
+        Write-Step "构建镜像 $image..."
+        & docker @buildArgs
+        if ($LASTEXITCODE -ne 0) {
+            throw "镜像 $image 构建失败（退出码 $LASTEXITCODE）。"
+        }
+        Write-Ok "镜像 $image 已生成。"
+    }
+}
+
+function Wait-HttpReady {
+    param(
+        [Parameter(Mandatory)][string]$Url,
+        [Parameter(Mandatory)][string]$Name,
+        [int]$TimeoutSeconds = 90
+    )
+
+    Write-Step "等待 $Name 就绪：$Url"
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        try {
+            $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 3
+            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 400) {
+                Write-Ok "$Name 已就绪。"
+                return
+            }
+        }
+        catch {
+            # 继续等待
+        }
+
+        Start-Sleep -Seconds 1
+    }
+
+    throw "$Name 在规定时间内未就绪：$Url"
+}
+
+function Start-AppContainers {
+    if (-not (Test-ImageExists $ApiImage) -or -not (Test-ImageExists $WebImage)) {
+        throw "缺少应用镜像，请先执行：pwsh ./manage.ps1 image:build"
+    }
+
+    $webPortInUse = Get-NetTCPConnection -LocalPort 5081 -State Listen -ErrorAction SilentlyContinue
+    if ($null -ne $webPortInUse) {
+        throw '端口 5081 已被占用，请先停止本地 Web 进程（dotnet run --project src/HospiKeeper.Web）。'
+    }
+
+    Stop-Api
+    Start-MySql
+    Start-Redis
+
+    Write-Step '启动 API / Web 容器...'
+    Invoke-Compose -ComposeArgs @('--profile', 'apps', 'up', '-d', '--wait', 'api', 'web')
+    Wait-HttpReady -Url "$ApiBaseUrl/health" -Name 'API 容器' -TimeoutSeconds $TimeoutSeconds
+    Wait-HttpReady -Url $WebBaseUrl -Name 'Web 容器' -TimeoutSeconds $TimeoutSeconds
+}
+
+function Stop-AppContainers {
+    Write-Step '停止并移除 API / Web 容器...'
+    Invoke-Compose -ComposeArgs @('--profile', 'apps', 'rm', '--stop', '--force', 'api', 'web')
+    Write-Ok 'API / Web 容器已移除（MySQL / Redis 保留）。'
+}
+
+function Show-AppContainers {
+    Write-Step '应用容器状态'
+    foreach ($container in @($ApiContainer, $WebContainer)) {
+        $status = Get-ContainerStatus $container
+        if ($null -eq $status) {
+            Write-Host "    $container：未运行" -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "    $container：$status" -ForegroundColor Green
+        }
+    }
+    Write-Host "    API    $ApiBaseUrl"
+    Write-Host "    Web    $WebBaseUrl"
 }
 
 function Ensure-RunDirs {
@@ -539,11 +674,28 @@ function Show-Status {
         Write-Host '    API  ：未运行' -ForegroundColor Yellow
     }
 
+    $apiContainerStatus = Get-ContainerStatus $ApiContainer
+    if ($null -ne $apiContainerStatus) {
+        Write-Host "    API 容器：$apiContainerStatus" -ForegroundColor Green
+    }
+    else {
+        Write-Host '    API 容器：未运行' -ForegroundColor Yellow
+    }
+
+    $webContainerStatus = Get-ContainerStatus $WebContainer
+    if ($null -ne $webContainerStatus) {
+        Write-Host "    Web 容器：$webContainerStatus" -ForegroundColor Green
+    }
+    else {
+        Write-Host '    Web 容器：未运行' -ForegroundColor Yellow
+    }
+
     Write-Host ''
     Write-Host '访问地址：' -ForegroundColor Cyan
     Write-Host "    API        $ApiBaseUrl"
     Write-Host "    Scalar     $ApiBaseUrl/scalar/v1"
     Write-Host "    OpenAPI    $ApiBaseUrl/openapi/v1.json"
+    Write-Host "    Web        $WebBaseUrl"
     Write-Host "    MySQL      127.0.0.1:3306/hospikeeper"
     Write-Host "    Redis      localhost:6379"
     $apiLogFile = Get-SerilogFile -Prefix 'api'
@@ -565,7 +717,7 @@ function Open-Desktop {
 
 Assert-DotNetPrerequisites
 
-$dockerActions = @('up', 'down', 'restart', 'reset', 'logs', 'cli', 'status', 'init', 'migrate', 'pull', 'dev')
+$dockerActions = @('up', 'down', 'restart', 'reset', 'logs', 'cli', 'status', 'init', 'migrate', 'pull', 'dev', 'image:build', 'image:up', 'image:down', 'image:logs', 'image:status')
 if ($dockerActions -contains $Action) {
     Assert-DockerPrerequisites
 }
@@ -579,7 +731,7 @@ switch ($Action) {
     'down' {
         Stop-Api
         Write-Step '停止 compose 容器（保留数据卷）...'
-        Invoke-Compose -ComposeArgs @('down')
+        Invoke-Compose -ComposeArgs @('--profile', 'apps', 'down')
         Write-Ok '环境已停止。'
     }
 
@@ -612,7 +764,7 @@ switch ($Action) {
         Confirm-Destructive -Message '将删除 MySQL 数据卷，数据库与全部业务数据都会丢失。'
         Stop-Api
         Write-Step '移除容器与数据卷...'
-        Invoke-Compose -ComposeArgs @('down', '-v')
+        Invoke-Compose -ComposeArgs @('--profile', 'apps', 'down', '-v')
         Invoke-StackUp
         Show-Status
     }
@@ -726,6 +878,38 @@ switch ($Action) {
         Write-Step '拉取 MySQL / Redis 镜像...'
         Invoke-Compose -ComposeArgs @('pull', 'mysql', 'redis')
         Write-Ok '镜像已更新。'
+    }
+
+    'image:build' {
+        Build-AppImages
+    }
+
+    'image:up' {
+        Start-AppContainers
+        Show-AppContainers
+    }
+
+    'image:down' {
+        Stop-AppContainers
+    }
+
+    'image:logs' {
+        $logArgs = @('--profile', 'apps', 'logs', '--tail', "$Tail")
+        if ($Follow) { $logArgs += '-f' }
+        if ($Target -eq 'web') {
+            $logArgs += 'web'
+        }
+        elseif ($Target -eq 'api') {
+            $logArgs += 'api'
+        }
+        else {
+            $logArgs += @('api', 'web')
+        }
+        Invoke-Compose -ComposeArgs $logArgs
+    }
+
+    'image:status' {
+        Show-AppContainers
     }
 
     'desktop' {
