@@ -1,3 +1,5 @@
+using HospiKeeper.Application.Abstractions.Services;
+using HospiKeeper.Application.Mapping;
 using HospiKeeper.Application.Abstractions;
 using HospiKeeper.Application.Abstractions.Caching;
 using HospiKeeper.Application.Caching;
@@ -10,45 +12,7 @@ using HospiKeeper.Domain.Enums;
 
 namespace HospiKeeper.Application.Services;
 
-public interface IRoomService
-{
-    Task<IReadOnlyList<Room>> GetRoomsAsync(
-        int? floor = null,
-        int? typeId = null,
-        RoomStatus? status = null,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<Room>> GetFreeRoomsAsync(CancellationToken cancellationToken = default);
-
-    Task<Room?> GetRoomAsync(int roomId, CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<int>> GetFloorsAsync(CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<RoomType>> GetRoomTypesAsync(CancellationToken cancellationToken = default);
-
-    Task<Room> CreateRoomAsync(RoomInput input, CancellationToken cancellationToken = default);
-
-    Task UpdateRoomAsync(int roomId, RoomInput input, CancellationToken cancellationToken = default);
-
-    Task DeleteRoomAsync(int roomId, CancellationToken cancellationToken = default);
-
-    Task MarkCleaningCompleteAsync(int roomId, CancellationToken cancellationToken = default);
-
-    Task RestoreRoomAsync(int roomId, CancellationToken cancellationToken = default);
-
-    Task SetMaintenanceAsync(
-        int roomId,
-        RoomStatus status,
-        string? note,
-        CancellationToken cancellationToken = default);
-
-    Task<RoomType> CreateRoomTypeAsync(RoomTypeInput input, CancellationToken cancellationToken = default);
-
-    Task UpdateRoomTypeAsync(int roomTypeId, RoomTypeInput input, CancellationToken cancellationToken = default);
-
-    Task DeleteRoomTypeAsync(int roomTypeId, CancellationToken cancellationToken = default);
-}
-
+/// <summary>房间、房型与房态维护用例实现。</summary>
 public sealed class RoomService : IRoomService
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -74,7 +38,7 @@ public sealed class RoomService : IRoomService
         _cacheInvalidator = cacheInvalidator;
     }
 
-    public async Task<IReadOnlyList<Room>> GetRoomsAsync(
+    public async Task<IReadOnlyList<RoomDto>> GetRoomsAsync(
         int? floor = null,
         int? typeId = null,
         RoomStatus? status = null,
@@ -83,20 +47,27 @@ public sealed class RoomService : IRoomService
         var key = CacheKeys.Rooms(floor, typeId, status);
         return await _cache.GetOrCreateAsync(
             key,
-            async ct => (await _unitOfWork.Rooms.GetAllAsync(floor, typeId, status, ct)).ToList(),
+            async ct => (await _unitOfWork.Rooms.GetAllAsync(floor, typeId, status, ct))
+                .Select(r => r.ToDto())
+                .ToList(),
             CacheDurations.Rooms,
             cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Room>> GetFreeRoomsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RoomDto>> GetFreeRoomsAsync(CancellationToken cancellationToken = default)
         => await _cache.GetOrCreateAsync(
             CacheKeys.FreeRooms,
-            async ct => (await _unitOfWork.Rooms.GetFreeAsync(ct)).ToList(),
+            async ct => (await _unitOfWork.Rooms.GetFreeAsync(ct))
+                .Select(r => r.ToDto())
+                .ToList(),
             CacheDurations.Rooms,
             cancellationToken);
 
-    public Task<Room?> GetRoomAsync(int roomId, CancellationToken cancellationToken = default)
-        => _unitOfWork.Rooms.GetByIdAsync(roomId, cancellationToken);
+    public async Task<RoomDto?> GetRoomAsync(int roomId, CancellationToken cancellationToken = default)
+    {
+        var room = await _unitOfWork.Rooms.GetByIdAsync(roomId, cancellationToken);
+        return room?.ToDto();
+    }
 
     public async Task<IReadOnlyList<int>> GetFloorsAsync(CancellationToken cancellationToken = default)
         => await _cache.GetOrCreateAsync(
@@ -105,14 +76,16 @@ public sealed class RoomService : IRoomService
             CacheDurations.Rooms,
             cancellationToken);
 
-    public async Task<IReadOnlyList<RoomType>> GetRoomTypesAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<RoomTypeDto>> GetRoomTypesAsync(CancellationToken cancellationToken = default)
         => await _cache.GetOrCreateAsync(
             CacheKeys.RoomTypes,
-            async ct => (await _unitOfWork.RoomTypes.GetAllAsync(ct)).ToList(),
+            async ct => (await _unitOfWork.RoomTypes.GetAllAsync(ct))
+                .Select(t => t.ToDto())
+                .ToList(),
             CacheDurations.RoomTypes,
             cancellationToken);
 
-    public async Task<Room> CreateRoomAsync(RoomInput input, CancellationToken cancellationToken = default)
+    public async Task<RoomDto> CreateRoomAsync(RoomInput input, CancellationToken cancellationToken = default)
     {
         _session.RequireAdmin();
         var roomNo = InputGuard.Text(input.RoomNo, "房号", 16);
@@ -148,7 +121,7 @@ public sealed class RoomService : IRoomService
             $"新增房间 {room.RoomNo}，标价 ¥{room.Price:0.00}");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
-        return room;
+        return room.ToDto();
     }
 
     public async Task UpdateRoomAsync(
@@ -278,7 +251,7 @@ public sealed class RoomService : IRoomService
         await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
     }
 
-    public async Task<RoomType> CreateRoomTypeAsync(
+    public async Task<RoomTypeDto> CreateRoomTypeAsync(
         RoomTypeInput input,
         CancellationToken cancellationToken = default)
     {
@@ -304,7 +277,7 @@ public sealed class RoomService : IRoomService
             $"新增房型，基础定价 ¥{type.BasePrice:0.00}");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
-        return type;
+        return type.ToDto();
     }
 
     public async Task UpdateRoomTypeAsync(

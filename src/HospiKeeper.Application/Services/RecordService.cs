@@ -1,3 +1,5 @@
+using HospiKeeper.Application.Abstractions.Services;
+using HospiKeeper.Application.Mapping;
 using HospiKeeper.Application.Abstractions;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Contracts;
@@ -6,26 +8,7 @@ using HospiKeeper.Domain.Entities;
 
 namespace HospiKeeper.Application.Services;
 
-public interface IRecordService
-{
-    Task<IReadOnlyList<CheckInRecord>> QueryCheckInsAsync(
-        RecordQuery query,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<CheckoutBill>> QueryBillsAsync(
-        RecordQuery query,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<OperationLog>> QueryLogsAsync(
-        string? action = null,
-        string? keyword = null,
-        CancellationToken cancellationToken = default);
-
-    Task<CheckInRecord?> GetCheckInAsync(int checkInId, CancellationToken cancellationToken = default);
-
-    Task<CheckoutBill?> GetBillAsync(int billId, CancellationToken cancellationToken = default);
-}
-
+/// <summary>入住 / 账单 / 日志查询实现，含前台数据隔离。</summary>
 public sealed class RecordService : IRecordService
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -37,45 +20,48 @@ public sealed class RecordService : IRecordService
         _session = session;
     }
 
-    public Task<IReadOnlyList<CheckInRecord>> QueryCheckInsAsync(
+    public async Task<IReadOnlyList<CheckInRecordDto>> QueryCheckInsAsync(
         RecordQuery query,
         CancellationToken cancellationToken = default)
     {
         var user = _session.RequireUser();
-        return _unitOfWork.CheckIns.QueryAsync(
+        var records = await _unitOfWork.CheckIns.QueryAsync(
             query,
             _session.IsAdmin ? null : user.Id,
             _session.IsAdmin,
             cancellationToken);
+        return records.Select(r => r.ToDto()).ToList();
     }
 
-    public Task<IReadOnlyList<CheckoutBill>> QueryBillsAsync(
+    public async Task<IReadOnlyList<CheckoutBillDto>> QueryBillsAsync(
         RecordQuery query,
         CancellationToken cancellationToken = default)
     {
         var user = _session.RequireUser();
-        return _unitOfWork.Bills.QueryAsync(
+        var bills = await _unitOfWork.Bills.QueryAsync(
             query,
             _session.IsAdmin ? null : user.Id,
             _session.IsAdmin,
             cancellationToken);
+        return bills.Select(b => b.ToDto()).ToList();
     }
 
-    public Task<IReadOnlyList<OperationLog>> QueryLogsAsync(
+    public async Task<IReadOnlyList<OperationLogDto>> QueryLogsAsync(
         string? action = null,
         string? keyword = null,
         CancellationToken cancellationToken = default)
     {
         var user = _session.RequireUser();
-        return _unitOfWork.Logs.QueryAsync(
+        var logs = await _unitOfWork.Logs.QueryAsync(
             action,
             keyword,
             _session.IsAdmin ? null : user.Id,
             _session.IsAdmin,
             cancellationToken);
+        return logs.Select(l => l.ToDto()).ToList();
     }
 
-    public async Task<CheckInRecord?> GetCheckInAsync(
+    public async Task<CheckInRecordDto?> GetCheckInAsync(
         int checkInId,
         CancellationToken cancellationToken = default)
     {
@@ -88,13 +74,13 @@ public sealed class RecordService : IRecordService
 
         if (!_session.IsAdmin && record.OpUserId != user.Id)
         {
-            throw new DomainException("无权查看其他操作员经办的单据。");
+            throw new ForbiddenException("无权查看其他操作员经办的单据。");
         }
 
-        return record;
+        return record.ToDto();
     }
 
-    public async Task<CheckoutBill?> GetBillAsync(int billId, CancellationToken cancellationToken = default)
+    public async Task<CheckoutBillDto?> GetBillAsync(int billId, CancellationToken cancellationToken = default)
     {
         var user = _session.RequireUser();
         var bill = await _unitOfWork.Bills.GetByIdAsync(billId, cancellationToken);
@@ -105,9 +91,9 @@ public sealed class RecordService : IRecordService
 
         if (!_session.IsAdmin && bill.OpUserId != user.Id)
         {
-            throw new DomainException("无权查看其他操作员经办的账单。");
+            throw new ForbiddenException("无权查看其他操作员经办的账单。");
         }
 
-        return bill;
+        return bill.ToDto();
     }
 }

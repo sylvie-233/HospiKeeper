@@ -1,3 +1,5 @@
+using HospiKeeper.Application.Abstractions.Services;
+using HospiKeeper.Application.Mapping;
 using HospiKeeper.Application.Abstractions;
 using HospiKeeper.Application.Abstractions.Caching;
 using HospiKeeper.Application.Caching;
@@ -11,39 +13,7 @@ using HospiKeeper.Domain.Services;
 
 namespace HospiKeeper.Application.Services;
 
-public interface IBookingService
-{
-    Task<IReadOnlyList<BoardRoom>> GetBoardAsync(CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<StayInfo>> GetLivingStaysAsync(
-        string? keyword = null,
-        CancellationToken cancellationToken = default);
-
-    Task<StayInfo?> GetStayAsync(int checkInId, CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<Reservation>> GetReservationsAsync(
-        ReservationStatus? status = null,
-        CancellationToken cancellationToken = default);
-
-    Task<Reservation?> GetReservationAsync(int reservationId, CancellationToken cancellationToken = default);
-
-    Task<FrontDeskCounts> GetCountsAsync(CancellationToken cancellationToken = default);
-
-    Task<CheckInRecord> CheckInAsync(CheckInRequest request, CancellationToken cancellationToken = default);
-
-    BillingResult QuoteCheckout(CheckInRecord record, DateTime actualOutTime, decimal damage, BillingMode mode);
-
-    Task<CheckoutBill> CheckoutAsync(CheckoutRequest request, CancellationToken cancellationToken = default);
-
-    Task AddExtraChargeAsync(ExtraChargeRequest request, CancellationToken cancellationToken = default);
-
-    Task<Reservation> CreateReservationAsync(
-        ReservationRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task CancelReservationAsync(int reservationId, CancellationToken cancellationToken = default);
-}
-
+/// <summary>前台核心流程实现：看板、在住、入住、退房与预定。</summary>
 public sealed class BookingService : IBookingService
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -91,9 +61,9 @@ public sealed class BookingService : IBookingService
 
         return rooms
             .Select(r => new BoardRoom(
-                r,
-                livingByRoom.GetValueOrDefault(r.Id),
-                reservedByRoom.GetValueOrDefault(r.Id)))
+                r.ToDto(),
+                livingByRoom.GetValueOrDefault(r.Id)?.ToDto(),
+                reservedByRoom.GetValueOrDefault(r.Id)?.ToDto()))
             .ToList();
     }
 
@@ -135,19 +105,24 @@ public sealed class BookingService : IBookingService
         return record is null || record.Status != CheckInStatus.Living ? null : ToStayInfo(record);
     }
 
-    public async Task<IReadOnlyList<Reservation>> GetReservationsAsync(
+    public async Task<IReadOnlyList<ReservationDto>> GetReservationsAsync(
         ReservationStatus? status = null,
         CancellationToken cancellationToken = default)
         => await _cache.GetOrCreateAsync(
             CacheKeys.Reservations(status),
-            async ct => (await _unitOfWork.Reservations.GetAllAsync(status, ct)).ToList(),
+            async ct => (await _unitOfWork.Reservations.GetAllAsync(status, ct))
+                .Select(r => r.ToDto())
+                .ToList(),
             CacheDurations.Reservations,
             cancellationToken);
 
-    public Task<Reservation?> GetReservationAsync(
+    public async Task<ReservationDto?> GetReservationAsync(
         int reservationId,
         CancellationToken cancellationToken = default)
-        => _unitOfWork.Reservations.GetByIdAsync(reservationId, cancellationToken);
+    {
+        var reservation = await _unitOfWork.Reservations.GetByIdAsync(reservationId, cancellationToken);
+        return reservation?.ToDto();
+    }
 
     public async Task<FrontDeskCounts> GetCountsAsync(CancellationToken cancellationToken = default)
         => await _cache.GetOrCreateAsync(
@@ -164,7 +139,7 @@ public sealed class BookingService : IBookingService
         return new FrontDeskCounts(living, pending, cleaning);
     }
 
-    public async Task<CheckInRecord> CheckInAsync(
+    public async Task<CheckInRecordDto> CheckInAsync(
         CheckInRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -263,11 +238,11 @@ public sealed class BookingService : IBookingService
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await _cacheInvalidator.InvalidateFrontDeskAsync(cancellationToken);
-        return record;
+        return record.ToDto();
     }
 
     public BillingResult QuoteCheckout(
-        CheckInRecord record,
+        CheckInRecordDto record,
         DateTime actualOutTime,
         decimal damage,
         BillingMode mode)
@@ -283,7 +258,7 @@ public sealed class BookingService : IBookingService
             mode);
     }
 
-    public async Task<CheckoutBill> CheckoutAsync(
+    public async Task<CheckoutBillDto> CheckoutAsync(
         CheckoutRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -356,7 +331,7 @@ public sealed class BookingService : IBookingService
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await _cacheInvalidator.InvalidateFrontDeskAsync(cancellationToken);
-        return bill;
+        return bill.ToDto();
     }
 
     public async Task AddExtraChargeAsync(
@@ -392,7 +367,7 @@ public sealed class BookingService : IBookingService
         await _cacheInvalidator.InvalidateFrontDeskAsync(cancellationToken);
     }
 
-    public async Task<Reservation> CreateReservationAsync(
+    public async Task<ReservationDto> CreateReservationAsync(
         ReservationRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -432,7 +407,7 @@ public sealed class BookingService : IBookingService
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await _cacheInvalidator.InvalidateFrontDeskAsync(cancellationToken);
-        return reservation;
+        return reservation.ToDto();
     }
 
     public async Task CancelReservationAsync(
@@ -466,7 +441,7 @@ public sealed class BookingService : IBookingService
 
     private static StayInfo ToStayInfo(CheckInRecord record)
         => new(
-            record,
+            record.ToDto(),
             record.ExtraTotal,
             BillingCalculator.CountNights(record.CheckInTime, record.PlanOutTime) * record.Price);
 

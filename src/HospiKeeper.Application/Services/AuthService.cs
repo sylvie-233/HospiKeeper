@@ -1,3 +1,5 @@
+using HospiKeeper.Application.Abstractions.Services;
+using HospiKeeper.Application.Mapping;
 using HospiKeeper.Application.Abstractions;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Contracts;
@@ -7,32 +9,7 @@ using HospiKeeper.Domain.Enums;
 
 namespace HospiKeeper.Application.Services;
 
-public interface IAuthService
-{
-    Task<LoginResult> LoginAsync(string username, string password, CancellationToken cancellationToken = default);
-
-    Task LogoutAsync(CancellationToken cancellationToken = default);
-
-    Task ChangeOwnPasswordAsync(
-        string oldPassword,
-        string newPassword,
-        string confirmPassword,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<AppUser>> GetUsersAsync(CancellationToken cancellationToken = default);
-
-    Task<AppUser> CreateUserAsync(AccountInput input, CancellationToken cancellationToken = default);
-
-    Task UpdateUserAsync(int userId, AccountInput input, CancellationToken cancellationToken = default);
-
-    Task SetUserStatusAsync(int userId, AccountStatus status, CancellationToken cancellationToken = default);
-
-    Task DeleteUserAsync(int userId, CancellationToken cancellationToken = default);
-
-    /// <summary>供 API 鉴权中间件按令牌还原用户。</summary>
-    Task<AppUser?> FindUserByIdAsync(int userId, CancellationToken cancellationToken = default);
-}
-
+/// <summary>登录、会话与账号管理用例实现。</summary>
 public sealed class AuthService : IAuthService
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -88,7 +65,7 @@ public sealed class AuthService : IAuthService
             throw;
         }
 
-        return LoginResult.Ok(user);
+        return LoginResult.Ok(user.ToDto());
     }
 
     public async Task LogoutAsync(CancellationToken cancellationToken = default)
@@ -131,17 +108,18 @@ public sealed class AuthService : IAuthService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<AppUser>> GetUsersAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<UserDto>> GetUsersAsync(CancellationToken cancellationToken = default)
     {
         _session.RequireAdmin();
         var users = await _unitOfWork.Users.GetAllAsync(cancellationToken);
         return users
             .OrderByDescending(u => u.Role)
             .ThenBy(u => u.Username, StringComparer.OrdinalIgnoreCase)
+            .Select(u => u.ToDto())
             .ToList();
     }
 
-    public async Task<AppUser> CreateUserAsync(AccountInput input, CancellationToken cancellationToken = default)
+    public async Task<UserDto> CreateUserAsync(AccountInput input, CancellationToken cancellationToken = default)
     {
         _session.RequireAdmin();
         var username = InputGuard.Text(input.Username, "登录账号", 32);
@@ -163,7 +141,7 @@ public sealed class AuthService : IAuthService
         _unitOfWork.Users.Add(user);
         _logger.Append(OperationActions.Account, username, $"新增账号 {realName}（{user.RoleDisplay}）");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        return user;
+        return user.ToDto();
     }
 
     public async Task UpdateUserAsync(
@@ -224,7 +202,10 @@ public sealed class AuthService : IAuthService
         var user = await _unitOfWork.Users.GetByIdAsync(userId, cancellationToken)
                    ?? throw new DomainException("账号不存在。");
 
-        InputGuard.Ensure(user.Id != _session.UserId, "不能停用当前登录账号。");
+        if (user.Id == _session.UserId)
+        {
+            throw new ForbiddenException("不能停用当前登录账号。");
+        }
 
         if (status == user.Status)
         {
@@ -248,7 +229,10 @@ public sealed class AuthService : IAuthService
         var user = await _unitOfWork.Users.GetByIdAsync(userId, cancellationToken)
                    ?? throw new DomainException("账号不存在。");
 
-        InputGuard.Ensure(user.Id != _session.UserId, "不能删除当前登录账号。");
+        if (user.Id == _session.UserId)
+        {
+            throw new ForbiddenException("不能删除当前登录账号。");
+        }
         if (user.Role == UserRole.Admin && user.Status == AccountStatus.Active)
         {
             await EnsureAnotherActiveAdminAsync(user.Id, cancellationToken);

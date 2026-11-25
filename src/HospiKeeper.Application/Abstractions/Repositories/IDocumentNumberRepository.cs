@@ -1,5 +1,6 @@
 namespace HospiKeeper.Application.Abstractions.Repositories;
 
+/// <summary>业务单号生成端口。</summary>
 public interface IDocumentNumberRepository
 {
     /// <summary>

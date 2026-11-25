@@ -4,6 +4,7 @@ using HospiKeeper.Domain.Entities;
 
 namespace HospiKeeper.Application.Services;
 
+/// <summary>操作日志写入实现，复用当前工作单元保证原子性。</summary>
 public sealed class OperationLogger : IOperationLogger
 {
     private readonly IUnitOfWork _unitOfWork;

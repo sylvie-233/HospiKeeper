@@ -1,3 +1,4 @@
+using HospiKeeper.Application.Abstractions.Services;
 using HospiKeeper.Application.Abstractions;
 using Sylvie233.Caching;
 using HospiKeeper.Application.Caching;
@@ -8,16 +9,7 @@ using HospiKeeper.Domain.Enums;
 
 namespace HospiKeeper.Application.Services;
 
-public interface IReportService
-{
-    Task<ReportSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default);
-
-    Task<RevenueRangeResult> GetRevenueRangeAsync(
-        DateTime start,
-        DateTime end,
-        CancellationToken cancellationToken = default);
-}
-
+/// <summary>经营统计报表实现，读多写少并带缓存。</summary>
 public sealed class ReportService : IReportService
 {
     private readonly IUnitOfWork _unitOfWork;

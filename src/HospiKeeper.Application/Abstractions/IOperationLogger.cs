@@ -1,5 +1,6 @@
 namespace HospiKeeper.Application.Abstractions;
 
+/// <summary>操作日志写入端口；实现可选择加入当前工作单元或独立提交。</summary>
 public interface IOperationLogger
 {
     /// <summary>把日志加入当前工作单元，由调用方统一保存。</summary>
