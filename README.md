@@ -182,7 +182,11 @@ pwsh ./manage.ps1 build           # 构建解决方案
 pwsh ./manage.ps1 test            # 运行测试
 pwsh ./manage.ps1 migrate         # 应用 EF Core 迁移
 pwsh ./manage.ps1 reset -Force    # 清空数据卷后重建环境
-pwsh ./manage.ps1 down            # 停止 API 与容器
+pwsh ./manage.ps1 down            # 停止本地 API 与全部容器
+pwsh ./manage.ps1 image:build     # 构建 API / Web 容器镜像
+pwsh ./manage.ps1 image:up        # 启动 API / Web 容器
+pwsh ./manage.ps1 image:down      # 移除 API / Web 容器
+pwsh ./manage.ps1 image:logs -Target web -Follow
 ```
 
 ## 接口文档（OpenAPI / Scalar）
@@ -235,6 +239,48 @@ API 使用 ASP.NET Core 10 内置的 `Microsoft.AspNetCore.OpenApi` 生成 **Ope
 > 数据库 v1.1：`reservation` 增加 `type_id / check_in_date / check_out_date / channel / guest_id_card / unit_price`，
 > `room_id` 与 `room_no` 允许为空。按项目约定，本次结构变更**直接维护 `Docs/民宿管理系统-数据库设计-v1.sql`**，
 > 不生成 EF 迁移；API 启动时由 `ReservationSchemaUpgrader` 做幂等结构检查与旧数据回填。
+
+## 容器化运行（API / Web）
+
+API 与游客 Web 都提供多阶段 Dockerfile，使用本机已有的 .NET 10 基础镜像：
+
+- `mcr.microsoft.com/dotnet/sdk:10.0`（构建阶段）
+- `mcr.microsoft.com/dotnet/aspnet:10.0`（运行阶段）
+- 镜像标签：`hospikeeper-api:local`、`hospikeeper-web:local`
+- 容器端口统一 `8080`，宿主机默认映射 `5080`（API）/ `5081`（Web）
+- Compose 使用 `apps` profile，不干扰默认的 MySQL / Redis 启动
+
+```powershell
+# 构建两个镜像（-Target api / web 可只构建其中一个；-Force 无缓存重建）
+pwsh ./manage.ps1 image:build
+
+# 启动 MySQL / Redis + API / Web 容器
+pwsh ./manage.ps1 image:up
+
+# 查看状态 / 日志
+pwsh ./manage.ps1 image:status
+pwsh ./manage.ps1 image:logs -Target web -Follow
+
+# 只移除 API / Web 容器，保留 MySQL / Redis
+pwsh ./manage.ps1 image:down
+```
+
+等价 Compose 命令：
+
+```bash
+docker compose -f Scripts/docker-compose.yml --profile apps up -d --wait api web
+```
+
+容器内环境：
+
+| 变量 | 值 |
+|------|----|
+| `HOSPITKEEPER_DB_HOST` | `mysql` |
+| `Cache__RedisConnectionString` | `redis:6379` |
+| `Api__BaseUrl`（Web） | `http://api:8080` |
+| `SYLVIE233_LOG_FILE` | `false`（日志输出到容器 stdout） |
+
+镜像构建上下文由根目录 `.dockerignore` 控制，排除 `bin/`、`obj/`、`logs/`、`tests/` 等。
 
 ## 初始账号
 

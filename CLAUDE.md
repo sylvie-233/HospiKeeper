@@ -103,6 +103,17 @@ HospiKeeper.Web             Blazor Web App 游客预订门户（只调用 API，
 - 业务异常：`DomainException` 映射 400，`ForbiddenException` 映射 403；不要再用消息字符串判断权限。
 - 应用层返回 Contracts DTO；仓储返回领域实体，映射在应用层完成。
 
+### 容器镜像
+
+- Dockerfile：`src/HospiKeeper.Api/Dockerfile`、`src/HospiKeeper.Web/Dockerfile`；
+- 运行基础镜像：本机 `mcr.microsoft.com/dotnet/sdk:10.0` / `aspnet:10.0`，构建时不要拉取外网基础镜像；
+- 镜像标签：`hospikeeper-api:local`、`hospikeeper-web:local`；
+- Compose：`Scripts/docker-compose.yml` 的 `apps` profile，服务名 `api` / `web`，容器名 `hospikeeper-api` / `hospikeeper-web`；
+- 容器内端口 `8080`，宿主机 `5080` / `5081`；Web 通过 `Api__BaseUrl=http://api:8080` 访问 API；
+- 容器日志输出到 stdout（`SYLVIE233_LOG_FILE=false`），使用 `docker logs` / `manage.ps1 image:logs` 查看；
+- 修改 Dockerfile / compose 后同步更新 README 与 `manage.ps1` 帮助；
+- `.dockerignore` 排除 `bin/`、`obj/`、`logs/`、`tests/`、`Docs/`，保持构建上下文精简。
+
 ## 5. 常用命令
 
 ```bash
@@ -132,6 +143,13 @@ pwsh ./manage.ps1 logs -Target redis -Follow
 pwsh ./manage.ps1 cli -Target redis
 pwsh ./manage.ps1 reset -Force
 pwsh ./manage.ps1 migrate
+
+# 容器镜像（API / Web）
+pwsh ./manage.ps1 image:build          # 构建两个镜像；-Target api|web 可单独构建
+pwsh ./manage.ps1 image:up             # 启动 MySQL / Redis + API / Web 容器
+pwsh ./manage.ps1 image:status
+pwsh ./manage.ps1 image:logs -Target web -Follow
+pwsh ./manage.ps1 image:down           # 只移除 API / Web 容器
 ```
 
 ### EF Core 迁移
