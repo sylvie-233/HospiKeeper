@@ -50,7 +50,7 @@
             <controls:AntTableColumn Header="客人" Binding="GuestName" Width="0.9*" />
             <controls:AntTableColumn Header="入住时间" Binding="CheckInText" Width="1.1*" />
             <controls:AntTableColumn Header="退房时间" Binding="OutText" Width="1.1*" />
-            <controls:AntTableColumn Header="房费" Binding="FeeText" Width="0.9*" CellClasses="text-money" />
+            <controls:AntTableColumn Header="房费" Binding="FeeText" Width="0.9*" CellClasses="text-money" Alignment="Right" />
             <controls:AntTableColumn Header="状态" Width="82">
               <controls:AntTableColumn.CellTemplate>
                 <DataTemplate x:DataType="pages:CheckInRowViewModel">
@@ -76,10 +76,10 @@
             </controls:AntTableColumn>
             <controls:AntTableColumn Header="房号" Binding="RoomNo" Width="0.7*" CellClasses="text-strong" />
             <controls:AntTableColumn Header="客人" Binding="GuestName" Width="0.9*" />
-            <controls:AntTableColumn Header="房费" Binding="RoomFeeText" Width="0.9*" CellClasses="text-money" />
+            <controls:AntTableColumn Header="房费" Binding="RoomFeeText" Width="0.9*" CellClasses="text-money" Alignment="Right" />
             <controls:AntTableColumn Header="追加 / 损坏" Binding="ExtraText" Width="1*" />
-            <controls:AntTableColumn Header="押金" Binding="DepositText" Width="0.9*" />
-            <controls:AntTableColumn Header="结算差额" Width="1*">
+            <controls:AntTableColumn Header="押金" Binding="DepositText" Width="0.9*" Alignment="Right" />
+            <controls:AntTableColumn Header="结算差额" Width="1*" Alignment="Right">
               <controls:AntTableColumn.CellTemplate>
                 <DataTemplate x:DataType="pages:BillRowViewModel">
                   <TextBlock Text="{Binding DiffText}"

@@ -112,7 +112,7 @@
           <controls:AntTable ItemsSource="{Binding RangeRows}" Height="320" PageSize="5" EmptyText="暂无区间数据">
             <controls:AntTable.Columns>
               <controls:AntTableColumn Header="日期" Binding="DateText" Width="1*" />
-              <controls:AntTableColumn Header="营收（元）" Binding="RevenueText" Width="1.2*" CellClasses="text-money" />
+              <controls:AntTableColumn Header="营收（元）" Binding="RevenueText" Width="1.2*" CellClasses="text-money" Alignment="Right" />
               <controls:AntTableColumn Header="环比前日" Width="1.1*">
                 <controls:AntTableColumn.CellTemplate>
                   <DataTemplate x:DataType="pages:RevenueDayRowViewModel">
@@ -122,7 +122,7 @@
                   </DataTemplate>
                 </controls:AntTableColumn.CellTemplate>
               </controls:AntTableColumn>
-              <controls:AntTableColumn Header="区间占比" Binding="ShareText" Width="1*" CellClasses="text-secondary" />
+              <controls:AntTableColumn Header="区间占比" Binding="ShareText" Width="1*" CellClasses="text-secondary" Alignment="Right" />
             </controls:AntTable.Columns>
           </controls:AntTable>
         </StackPanel>
@@ -136,7 +136,7 @@
         <controls:AntTable ItemsSource="{Binding RoomTypes}" Height="230" EmptyText="暂无房型数据">
           <controls:AntTable.Columns>
             <controls:AntTableColumn Header="房型" Binding="TypeName" Width="1.2*" CellClasses="text-strong" />
-            <controls:AntTableColumn Header="标价" Width="1*">
+            <controls:AntTableColumn Header="标价" Width="1*" Alignment="Right">
               <controls:AntTableColumn.CellTemplate>
                 <DataTemplate x:DataType="contracts:RoomTypeStat">
                   <TextBlock Text="{Binding BasePrice, StringFormat='¥{0:0.00}'}" Classes="text-money" />

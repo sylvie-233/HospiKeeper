@@ -33,7 +33,7 @@
       <controls:AntTable ItemsSource="{Binding Rows}" EmptyText="暂无房型">
         <controls:AntTable.Columns>
           <controls:AntTableColumn Header="房型名称" Binding="Name" Width="1.2*" CellClasses="text-strong" />
-          <controls:AntTableColumn Header="基础定价" Binding="PriceText" Width="1*" CellClasses="text-money" />
+          <controls:AntTableColumn Header="基础定价" Binding="PriceText" Width="1*" CellClasses="text-money" Alignment="Right" />
           <controls:AntTableColumn Header="房间数" Binding="RoomCountText" Width="0.8*" />
           <controls:AntTableColumn Header="备注" Binding="NoteText" Width="2.6*" CellClasses="text-secondary" />
           <controls:AntTableColumn Header="操作" Width="150">
