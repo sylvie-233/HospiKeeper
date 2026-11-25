@@ -1,6 +1,5 @@
-using HospiKeeper.Application.Services;
+using HospiKeeper.Application.Abstractions.Services;
 using HospiKeeper.Contracts;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,7 +17,7 @@ public sealed class CheckInsController : ControllerBase
 
 /// <summary>办理入住。</summary>
     [HttpPost]
-    public async Task<ActionResult<CheckInRecord>> Create(
+    public async Task<ActionResult<CheckInRecordDto>> Create(
         [FromBody] CheckInRequest request,
         CancellationToken cancellationToken)
         => Ok(await _booking.CheckInAsync(request, cancellationToken));

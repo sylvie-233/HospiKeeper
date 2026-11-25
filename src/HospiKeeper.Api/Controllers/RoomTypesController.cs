@@ -1,6 +1,5 @@
-using HospiKeeper.Application.Services;
+using HospiKeeper.Application.Abstractions.Services;
 using HospiKeeper.Contracts;
-using HospiKeeper.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospiKeeper.Api.Controllers;
@@ -17,12 +16,12 @@ public sealed class RoomTypesController : ControllerBase
 
 /// <summary>查询全部房型。</summary>
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<RoomType>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<RoomTypeDto>>> GetAll(CancellationToken cancellationToken)
         => Ok(await _rooms.GetRoomTypesAsync(cancellationToken));
 
 /// <summary>创建房型。</summary>
     [HttpPost]
-    public async Task<ActionResult<RoomType>> Create(
+    public async Task<ActionResult<RoomTypeDto>> Create(
         [FromBody] RoomTypeInput input,
         CancellationToken cancellationToken)
         => Ok(await _rooms.CreateRoomTypeAsync(input, cancellationToken));

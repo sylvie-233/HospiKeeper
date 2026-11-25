@@ -1,6 +1,5 @@
-using HospiKeeper.Application.Services;
+using HospiKeeper.Application.Abstractions.Services;
 using HospiKeeper.Contracts;
-using HospiKeeper.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospiKeeper.Api.Controllers;
@@ -17,7 +16,7 @@ public sealed class RecordsController : ControllerBase
 
 /// <summary>查询入住记录。</summary>
     [HttpGet("checkins")]
-    public async Task<ActionResult<IReadOnlyList<CheckInRecord>>> GetCheckIns(
+    public async Task<ActionResult<IReadOnlyList<CheckInRecordDto>>> GetCheckIns(
         [FromQuery] string? roomNo,
         [FromQuery] string? keyword,
         [FromQuery] DateTime? from,
@@ -28,7 +27,7 @@ public sealed class RecordsController : ControllerBase
 
 /// <summary>获取入住记录详情。</summary>
     [HttpGet("checkins/{id:int}")]
-    public async Task<ActionResult<CheckInRecord>> GetCheckIn(
+    public async Task<ActionResult<CheckInRecordDto>> GetCheckIn(
         int id,
         CancellationToken cancellationToken)
     {
@@ -38,7 +37,7 @@ public sealed class RecordsController : ControllerBase
 
 /// <summary>查询结算账单。</summary>
     [HttpGet("bills")]
-    public async Task<ActionResult<IReadOnlyList<CheckoutBill>>> GetBills(
+    public async Task<ActionResult<IReadOnlyList<CheckoutBillDto>>> GetBills(
         [FromQuery] string? roomNo,
         [FromQuery] string? keyword,
         [FromQuery] DateTime? from,
@@ -49,7 +48,7 @@ public sealed class RecordsController : ControllerBase
 
 /// <summary>获取账单详情。</summary>
     [HttpGet("bills/{id:int}")]
-    public async Task<ActionResult<CheckoutBill>> GetBill(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<CheckoutBillDto>> GetBill(int id, CancellationToken cancellationToken)
     {
         var bill = await _records.GetBillAsync(id, cancellationToken);
         return bill is null ? NotFound() : Ok(bill);

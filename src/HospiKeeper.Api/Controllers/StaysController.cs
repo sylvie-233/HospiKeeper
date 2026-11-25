@@ -1,4 +1,4 @@
-using HospiKeeper.Application.Services;
+using HospiKeeper.Application.Abstractions.Services;
 using HospiKeeper.Contracts;
 using Microsoft.AspNetCore.Mvc;
 

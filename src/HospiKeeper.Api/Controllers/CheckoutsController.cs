@@ -1,6 +1,5 @@
-using HospiKeeper.Application.Services;
+using HospiKeeper.Application.Abstractions.Services;
 using HospiKeeper.Contracts;
-using HospiKeeper.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HospiKeeper.Api.Controllers;
@@ -17,7 +16,7 @@ public sealed class CheckoutsController : ControllerBase
 
 /// <summary>办理退房并生成结算单。</summary>
     [HttpPost]
-    public async Task<ActionResult<CheckoutBill>> Create(
+    public async Task<ActionResult<CheckoutBillDto>> Create(
         [FromBody] CheckoutRequest request,
         CancellationToken cancellationToken)
         => Ok(await _booking.CheckoutAsync(request, cancellationToken));

@@ -4,6 +4,7 @@ using HospiKeeper.Domain.Common;
 
 namespace HospiKeeper.Api.Middleware;
 
+/// <summary>把业务异常转换为统一的 <c>ApiErrorResponse</c>：403 / 400 / 500。</summary>
 public sealed class ExceptionHandlingMiddleware
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -22,17 +23,26 @@ public sealed class ExceptionHandlingMiddleware
         {
             await _next(context);
         }
-        catch (DomainException ex)
+        catch (ForbiddenException ex)
         {
-            var forbidden = ex.Message.Contains("仅管理员", StringComparison.Ordinal)
-                            || ex.Message.Contains("无权", StringComparison.Ordinal)
-                            || ex.Message.Contains("不能停用当前", StringComparison.Ordinal);
-            _logger.LogWarning("业务校验失败 {Method} {Path} -> {StatusCode}: {Message}",
-                context.Request.Method, context.Request.Path,
-                forbidden ? StatusCodes.Status403Forbidden : StatusCodes.Status400BadRequest,
+            _logger.LogWarning(
+                "权限校验失败 {Method} {Path} -> 403: {Message}",
+                context.Request.Method,
+                context.Request.Path,
                 ex.Message);
 
-            context.Response.StatusCode = forbidden ? StatusCodes.Status403Forbidden : StatusCodes.Status400BadRequest;
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await WriteAsync(context, ex.Message);
+        }
+        catch (DomainException ex)
+        {
+            _logger.LogWarning(
+                "业务校验失败 {Method} {Path} -> 400: {Message}",
+                context.Request.Method,
+                context.Request.Path,
+                ex.Message);
+
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
             await WriteAsync(context, ex.Message);
         }
         catch (Exception ex)

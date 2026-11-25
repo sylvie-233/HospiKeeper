@@ -1,6 +1,7 @@
 using HospiKeeper.Api.Security;
 using HospiKeeper.Application.Common;
-using HospiKeeper.Application.Services;
+using HospiKeeper.Application.Abstractions.Services;
+using HospiKeeper.Application.Mapping;
 using HospiKeeper.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,7 +35,7 @@ public sealed class AuthController : ControllerBase
         }
 
         var (token, expiresAt) = _tokens.Issue(result.User.Id);
-        return Ok(new LoginResponse(token, expiresAt, result.User.ToDto()));
+        return Ok(new LoginResponse(token, expiresAt, result.User));
     }
 
 /// <summary>获取当前登录用户。</summary>

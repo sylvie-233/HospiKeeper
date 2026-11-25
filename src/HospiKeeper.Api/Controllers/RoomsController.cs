@@ -1,6 +1,5 @@
-using HospiKeeper.Application.Services;
+using HospiKeeper.Application.Abstractions.Services;
 using HospiKeeper.Contracts;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,7 +17,7 @@ public sealed class RoomsController : ControllerBase
 
 /// <summary>按楼层、房型、房态查询房间。</summary>
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<Room>>> GetAll(
+    public async Task<ActionResult<IReadOnlyList<RoomDto>>> GetAll(
         [FromQuery] int? floor,
         [FromQuery] int? typeId,
         [FromQuery] RoomStatus? status,
@@ -27,7 +26,7 @@ public sealed class RoomsController : ControllerBase
 
 /// <summary>查询空闲房间。</summary>
     [HttpGet("free")]
-    public async Task<ActionResult<IReadOnlyList<Room>>> GetFree(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<RoomDto>>> GetFree(CancellationToken cancellationToken)
         => Ok(await _rooms.GetFreeRoomsAsync(cancellationToken));
 
 /// <summary>查询已有楼层。</summary>
@@ -37,7 +36,7 @@ public sealed class RoomsController : ControllerBase
 
 /// <summary>获取房间详情。</summary>
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Room>> Get(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<RoomDto>> Get(int id, CancellationToken cancellationToken)
     {
         var room = await _rooms.GetRoomAsync(id, cancellationToken);
         return room is null ? NotFound() : Ok(room);
@@ -45,7 +44,7 @@ public sealed class RoomsController : ControllerBase
 
 /// <summary>创建房间。</summary>
     [HttpPost]
-    public async Task<ActionResult<Room>> Create(
+    public async Task<ActionResult<RoomDto>> Create(
         [FromBody] RoomInput input,
         CancellationToken cancellationToken)
         => Ok(await _rooms.CreateRoomAsync(input, cancellationToken));

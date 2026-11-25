@@ -1,6 +1,5 @@
-using HospiKeeper.Application.Services;
+using HospiKeeper.Application.Abstractions.Services;
 using HospiKeeper.Contracts;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,14 +17,14 @@ public sealed class ReservationsController : ControllerBase
 
 /// <summary>查询预定列表。</summary>
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<Reservation>>> Get(
+    public async Task<ActionResult<IReadOnlyList<ReservationDto>>> Get(
         [FromQuery] ReservationStatus? status,
         CancellationToken cancellationToken)
         => Ok(await _booking.GetReservationsAsync(status, cancellationToken));
 
 /// <summary>获取预定详情。</summary>
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Reservation>> Get(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ReservationDto>> Get(int id, CancellationToken cancellationToken)
     {
         var reservation = await _booking.GetReservationAsync(id, cancellationToken);
         return reservation is null ? NotFound() : Ok(reservation);
@@ -33,7 +32,7 @@ public sealed class ReservationsController : ControllerBase
 
 /// <summary>创建预定。</summary>
     [HttpPost]
-    public async Task<ActionResult<Reservation>> Create(
+    public async Task<ActionResult<ReservationDto>> Create(
         [FromBody] ReservationRequest request,
         CancellationToken cancellationToken)
         => Ok(await _booking.CreateReservationAsync(request, cancellationToken));

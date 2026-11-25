@@ -1,4 +1,4 @@
-using HospiKeeper.Application.Services;
+using HospiKeeper.Application.Abstractions.Services;
 using HospiKeeper.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +19,7 @@ public sealed class UsersController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAll(CancellationToken cancellationToken)
     {
         var users = await _auth.GetUsersAsync(cancellationToken);
-        return Ok(users.Select(u => u.ToDto()).ToList());
+        return Ok(users);
     }
 
 /// <summary>创建账号。</summary>
@@ -29,7 +29,7 @@ public sealed class UsersController : ControllerBase
         CancellationToken cancellationToken)
     {
         var user = await _auth.CreateUserAsync(input, cancellationToken);
-        return Ok(user.ToDto());
+        return Ok(user);
     }
 
 /// <summary>修改账号。</summary>
