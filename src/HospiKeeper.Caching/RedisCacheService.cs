@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Text.Json;
 using HospiKeeper.Application.Abstractions.Caching;
 using HospiKeeper.Caching.Internal;
 using Microsoft.Extensions.Logging;
@@ -42,7 +41,7 @@ public sealed class RedisCacheService : ICacheService
             var bytes = (byte[]?)value;
             return bytes is null ? null : CacheSerializer.Deserialize<T>(bytes);
         }
-        catch (Exception ex) when (ex is RedisException or InvalidCastException or JsonException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Redis cache read failed for key {CacheKey}; treated as a miss.", fullKey);
             return null;
@@ -64,7 +63,7 @@ public sealed class RedisCacheService : ICacheService
                 CacheSerializer.Serialize(value),
                 absoluteExpiration ?? _options.DefaultExpiration);
         }
-        catch (RedisException ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Redis cache write failed for key {CacheKey}.", fullKey);
         }
@@ -111,7 +110,7 @@ public sealed class RedisCacheService : ICacheService
         {
             await _database.KeyDeleteAsync(fullKey);
         }
-        catch (RedisException ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Redis cache delete failed for key {CacheKey}.", fullKey);
         }
@@ -150,7 +149,7 @@ public sealed class RedisCacheService : ICacheService
                 }
             }
         }
-        catch (RedisException ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Redis cache prefix delete failed for pattern {Pattern}.", pattern);
         }
