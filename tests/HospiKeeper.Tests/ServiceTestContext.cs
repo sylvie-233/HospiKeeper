@@ -21,7 +21,8 @@ internal sealed class ServiceTestContext : IAsyncDisposable
         BookingService booking,
         RecordService records,
         ReportService reports,
-        GuestBookingService guest)
+        GuestBookingService guest,
+        SiteSettingsService siteSettings)
     {
         Db = db;
         Session = session;
@@ -31,6 +32,7 @@ internal sealed class ServiceTestContext : IAsyncDisposable
         Records = records;
         Reports = reports;
         Guest = guest;
+        SiteSettings = siteSettings;
     }
 
     public HotelDbContext Db { get; }
@@ -41,6 +43,7 @@ internal sealed class ServiceTestContext : IAsyncDisposable
     public RecordService Records { get; }
     public ReportService Reports { get; }
     public GuestBookingService Guest { get; }
+    public SiteSettingsService SiteSettings { get; }
 
     public static async Task<ServiceTestContext> CreateAsync(string username = "admin")
     {
@@ -81,7 +84,8 @@ internal sealed class ServiceTestContext : IAsyncDisposable
             new BookingService(unitOfWork, session, logger, clock, cache, cacheInvalidator),
             new RecordService(unitOfWork, session),
             new ReportService(unitOfWork, clock, cache),
-            new GuestBookingService(unitOfWork, clock, cache, cacheInvalidator, logger));
+            new GuestBookingService(unitOfWork, clock, cache, cacheInvalidator, logger),
+            new SiteSettingsService(cache, clock, session));
     }
 
     public ValueTask DisposeAsync() => Db.DisposeAsync();
