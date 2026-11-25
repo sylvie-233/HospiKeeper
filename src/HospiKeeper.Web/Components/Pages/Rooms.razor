@@ -1,9 +1,10 @@
 @page "/rooms"
 @inject IGuestBookingApi Api
+@inject SiteSettingsState SettingsState
 @inject ToastService Toast
 @inject NavigationManager Navigation
 
-<PageTitle>客房预订 · 云栖民宿</PageTitle>
+<PageTitle>客房预订 · @_settings.BrandName</PageTitle>
 
 <section class="page-head">
     <div class="section-eyebrow">ROOMS &amp; SUITES</div>
@@ -26,7 +27,7 @@
     <div class="sec-head">
         <div>
             <div class="section-title">可订房型</div>
-            <div class="section-sub">价格为每晚房费，到店支付；房号到店后由前台分配。</div>
+            <div class="section-sub">价格为每晚房费，@_settings.PaymentNote；房号到店后由前台分配。</div>
         </div>
         <div class="result-count">共 @VisibleTypes.Count 个房型</div>
     </div>
@@ -82,6 +83,7 @@
     private GuestAvailabilityResult? _availability;
     private GuestRoomTypeDto? _selectedType;
     private GuestReservationDto? _success;
+    private SiteSettings _settings = new();
     private bool _loading = true;
     private string? _error;
 
@@ -103,6 +105,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _settings = await SettingsState.GetAsync();
         _checkIn = (CheckIn ?? DateTime.Today).Date;
         _checkOut = (CheckOut ?? _checkIn.AddDays(1)).Date;
         _typeId = TypeId;

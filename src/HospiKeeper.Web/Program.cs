@@ -29,6 +29,7 @@ try
         client.Timeout = TimeSpan.FromSeconds(20);
     });
     builder.Services.AddScoped<ToastService>();
+    builder.Services.AddScoped<SiteSettingsState>();
 
     var app = builder.Build();
 

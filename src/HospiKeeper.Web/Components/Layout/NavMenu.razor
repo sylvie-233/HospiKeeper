@@ -1,8 +1,10 @@
+@inject SiteSettingsState SettingsState
+
 <header class="topbar">
     <div class="topbar-inner">
         <a class="brand" href="/">
-            <span class="brand-mark">栖</span>
-            <span class="brand-name">云栖民宿<span class="brand-sub">YUNQI INN</span></span>
+            <span class="brand-mark">@_settings.BrandMark</span>
+            <span class="brand-name">@_settings.BrandName<span class="brand-sub">@_settings.BrandEnglishName</span></span>
         </a>
 
         <nav class="nav-pills" aria-label="主导航">
@@ -14,7 +16,14 @@
         <div class="hotline">
             <span class="hotline-dot"></span>
             <span>前台热线</span>
-            <b>0571-8888 6666</b>
+            <b>@_settings.Hotline</b>
         </div>
     </div>
 </header>
+
+@code {
+    private SiteSettings _settings = new();
+
+    protected override async Task OnInitializedAsync()
+        => _settings = await SettingsState.GetAsync();
+}

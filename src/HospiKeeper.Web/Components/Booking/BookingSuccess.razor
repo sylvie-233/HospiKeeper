@@ -1,3 +1,5 @@
+@inject SiteSettingsState SettingsState
+
 @if (Reservation is not null)
 {
     <div class="modal-mask" @onclick="CloseAsync">
@@ -17,7 +19,7 @@
             </div>
 
             <div class="success-tip">
-                入住日 18:00 前到店；如需修改或取消，请前往「我的预订」。
+                入住日 @_settings.ArrivalDeadline 到店；如需修改或取消，请前往「我的预订」。
             </div>
 
             <div class="modal-actions center">
@@ -32,6 +34,11 @@
     [Parameter, EditorRequired] public GuestReservationDto? Reservation { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<GuestReservationDto> OnViewMine { get; set; }
+
+    private SiteSettings _settings = new();
+
+    protected override async Task OnInitializedAsync()
+        => _settings = await SettingsState.GetAsync();
 
     private async Task CloseAsync() => await OnClose.InvokeAsync();
 

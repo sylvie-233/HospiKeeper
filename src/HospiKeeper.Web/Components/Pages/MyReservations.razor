@@ -1,8 +1,9 @@
 @page "/mine"
 @inject IGuestBookingApi Api
+@inject SiteSettingsState SettingsState
 @inject ToastService Toast
 
-<PageTitle>我的预订 · 云栖民宿</PageTitle>
+<PageTitle>我的预订 · @_settings.BrandName</PageTitle>
 
 <section class="page-head">
     <div class="section-eyebrow">MY RESERVATIONS</div>
@@ -121,6 +122,7 @@
     [SupplyParameterFromQuery] public string? Phone { get; set; }
 
     private string _phone = string.Empty;
+    private SiteSettings _settings = new();
     private List<GuestReservationDto> _reservations = [];
     private bool _searching;
     private bool _searched;
@@ -130,6 +132,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _settings = await SettingsState.GetAsync();
         if (!string.IsNullOrWhiteSpace(Phone))
         {
             _phone = Phone.Trim();

@@ -1,8 +1,10 @@
+@inject SiteSettingsState SettingsState
+
 <footer class="footer">
     <div class="footer-cols">
         <div>
-            <div class="footer-logo"><span class="mark">栖</span>云栖民宿</div>
-            <p>位于西湖南山路的独栋小院，推窗见湖，出门即景。<br />我们相信好的住宿不只是睡一晚，<br />更是一段旅途里安放身心的地方。</p>
+            <div class="footer-logo"><span class="mark">@_settings.BrandMark</span>@_settings.BrandName</div>
+            <p>@_settings.FooterDescription</p>
         </div>
         <div>
             <h4>快捷导航</h4>
@@ -15,19 +17,26 @@
         <div>
             <h4>入住信息</h4>
             <ul>
-                <li>入住时间 14:00 后</li>
-                <li>退房时间 12:00 前</li>
-                <li>到店支付 · 免预订金</li>
+                <li>入住时间 @_settings.CheckInTime</li>
+                <li>退房时间 @_settings.CheckOutTime</li>
+                <li>@_settings.PaymentNote</li>
             </ul>
         </div>
         <div>
             <h4>联系我们</h4>
             <ul>
-                <li>地址：杭州市西湖区南山路 88 号</li>
-                <li>电话：0571-8888 6666</li>
-                <li>邮箱：hello@yunqi-inn.cn</li>
+                <li>地址：@_settings.Address</li>
+                <li>电话：@_settings.Hotline</li>
+                <li>邮箱：@_settings.Email</li>
             </ul>
         </div>
     </div>
-    <div class="footer-bottom">云栖民宿 · 在线预订 · 到店支付 · 客服 9:00 - 21:00</div>
+    <div class="footer-bottom">@_settings.FooterText</div>
 </footer>
+
+@code {
+    private SiteSettings _settings = new();
+
+    protected override async Task OnInitializedAsync()
+        => _settings = await SettingsState.GetAsync();
+}

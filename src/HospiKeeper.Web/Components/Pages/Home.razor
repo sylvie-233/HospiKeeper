@@ -1,21 +1,22 @@
 @page "/"
 @inject IGuestBookingApi Api
+@inject SiteSettingsState SettingsState
 @inject ToastService Toast
 @inject NavigationManager Navigation
 
-<PageTitle>云栖民宿 · 在线预订</PageTitle>
+<PageTitle>@_settings.BrandName · 在线预订</PageTitle>
 
 <section class="hero">
     <div class="hero-inner">
-        <div class="eyebrow">西湖 · 南山路 · 独栋小院</div>
-        <h1>云栖民宿 · 在<span class="accent">山与湖</span>之间</h1>
-        <p>推窗见湖，出门即景。三步完成预订，到店支付，把时间留给旅途。</p>
+        <div class="eyebrow">@_settings.LocationTagline</div>
+        <h1>@_settings.HeroTitlePrefix<span class="accent">@_settings.HeroAccent</span>@_settings.HeroTitleSuffix</h1>
+        <p>@_settings.HeroSubtitle</p>
 
         <div class="hero-stats">
             <div class="stat"><b>@RoomCount</b><span>间客房</span></div>
             <div class="stat"><b>@TypeCount</b><span>种房型</span></div>
-            <div class="stat"><b>@WalkMinutes</b><span>分钟步行至湖边</span></div>
-            <div class="stat"><b>@Rating</b><span>住客评分</span></div>
+            <div class="stat"><b>@_settings.WalkToLakeMinutes</b><span>分钟步行至湖边</span></div>
+            <div class="stat"><b>@_settings.Rating.ToString("0.0")</b><span>住客评分</span></div>
         </div>
     </div>
 </section>
@@ -60,72 +61,81 @@
     }
 </section>
 
-<section class="section">
-    <div class="sec-head">
-        <div>
-            <div class="section-eyebrow">WHY YUNQI</div>
-            <div class="section-title">为什么选择云栖</div>
+@if (_settings.Features.Count > 0)
+{
+    <section class="section">
+        <div class="sec-head">
+            <div>
+                <div class="section-eyebrow">WHY @_settings.BrandEnglishName</div>
+                <div class="section-title">为什么选择 @_settings.BrandName</div>
+            </div>
         </div>
-    </div>
-    <div class="feature-grid">
-        <div class="feature"><div class="ico">🛏️</div><h4>舒适房型</h4><p>单人间、双人间与大床房，满足独行、结伴与情侣出行。</p></div>
-        <div class="feature"><div class="ico">⏰</div><h4>灵活到店</h4><p>免预订金，入住日 18:00 前到店即可；房号到店分配。</p></div>
-        <div class="feature"><div class="ico">💳</div><h4>到店支付</h4><p>房费与押金到店支付，线上不收取任何费用。</p></div>
-        <div class="feature"><div class="ico">🧹</div><h4>每日打扫</h4><p>一客一换，公共区域每日清洁，住得安心。</p></div>
-    </div>
-</section>
+        <div class="feature-grid">
+            @foreach (var feature in _settings.Features)
+            {
+                <div class="feature">
+                    <div class="ico">@feature.Icon</div>
+                    <h4>@feature.Title</h4>
+                    <p>@feature.Description</p>
+                </div>
+            }
+        </div>
+    </section>
+}
 
-<section class="section">
-    <div class="sec-head">
-        <div>
-            <div class="section-eyebrow">BEFORE YOU ARRIVE</div>
-            <div class="section-title">入住须知</div>
+@if (_settings.Notices.Count > 0)
+{
+    <section class="section">
+        <div class="sec-head">
+            <div>
+                <div class="section-eyebrow">BEFORE YOU ARRIVE</div>
+                <div class="section-title">入住须知</div>
+            </div>
         </div>
-    </div>
-    <div class="notice-grid">
-        <div class="notice">
-            <h4>入住与退房</h4>
-            <p><b>入住</b> 14:00 后凭预订号或手机号办理</p>
-            <p><b>退房</b> 次日 12:00 前，可寄存行李</p>
+        <div class="notice-grid">
+            @foreach (var notice in _settings.Notices)
+            {
+                <div class="notice">
+                    <h4>@notice.Title</h4>
+                    <p>@notice.Line1</p>
+                    @if (!string.IsNullOrWhiteSpace(notice.Line2))
+                    {
+                        <p>@notice.Line2</p>
+                    }
+                </div>
+            }
         </div>
-        <div class="notice">
-            <h4>预订与取消</h4>
-            <p><b>预订</b> 免登录、免预订金，提交即锁定房型库存</p>
-            <p><b>取消</b> 待到店状态可在「我的预订」自助取消</p>
-        </div>
-        <div class="notice">
-            <h4>押金与支付</h4>
-            <p><b>房费</b> 到店支付，支持微信 / 支付宝 / 现金</p>
-            <p><b>押金</b> 退房验收后退还，具体以到店为准</p>
-        </div>
-    </div>
-</section>
+    </section>
+}
 
 @code {
     private DateTime _checkIn = DateTime.Today;
     private DateTime _checkOut = DateTime.Today.AddDays(1);
     private HotelSummaryDto? _summary;
     private GuestAvailabilityResult? _availability;
+    private SiteSettings _settings = new();
     private bool _loading = true;
     private string? _error;
 
     private int RoomCount => _summary?.RoomCount ?? 14;
     private int TypeCount => _summary?.TypeCount ?? 3;
-    private int WalkMinutes => _summary?.WalkToLakeMinutes ?? 5;
-    private string Rating => (_summary?.Rating ?? 4.9).ToString("0.0");
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            var settingsTask = SettingsState.GetAsync();
             var summaryTask = Api.GetSummaryAsync();
             var availabilityTask = Api.GetAvailabilityAsync(_checkIn, _checkOut);
-            await Task.WhenAll(summaryTask, availabilityTask);
+            await Task.WhenAll(settingsTask, summaryTask, availabilityTask);
+
+            _settings = await settingsTask;
             _summary = await summaryTask;
             _availability = await availabilityTask;
         }
         catch (Exception ex) when (ex is ApiException or HttpRequestException)
         {
+            _settings = await SettingsState.GetAsync();
             _error = "暂时无法获取房态，请稍后刷新或联系前台。";
             Toast.Error(_error);
         }

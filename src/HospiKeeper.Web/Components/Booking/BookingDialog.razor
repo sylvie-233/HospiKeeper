@@ -1,4 +1,5 @@
 @inject IGuestBookingApi Api
+@inject SiteSettingsState SettingsState
 @inject ToastService Toast
 
 @if (Visible && RoomType is not null)
@@ -59,7 +60,7 @@
                 </div>
 
                 <div class="booking-hint">
-                    到店支付房费与押金；入住日 18:00 前到店，出示预订号或手机号即可办理。
+                    @_settings.PaymentNote；押金：@_settings.DepositNote。入住日 @_settings.ArrivalDeadline 到店，出示预订号或手机号即可办理。
                 </div>
 
                 <div class="modal-actions">
@@ -83,8 +84,12 @@
     [Parameter] public EventCallback<GuestReservationDto> OnBooked { get; set; }
 
     private BookingFormModel _form = new();
+    private SiteSettings _settings = new();
     private bool _submitting;
     private bool _wasVisible;
+
+    protected override async Task OnInitializedAsync()
+        => _settings = await SettingsState.GetAsync();
 
     protected override void OnParametersSet()
     {
