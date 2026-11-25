@@ -18,7 +18,7 @@
 | 缓存 | 自研 `Sylvie233.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
 | 日志 | 自研 `Sylvie233.Logging`：Serilog 4 · 控制台 + 按天滚动文件 · 结构化字段 |
 | 基础设施 | MySQL 8 · Redis 7（`Scripts/docker-compose.yml`，3306 / 6379） |
-| 测试 | xUnit · EF Core InMemory（34 个用例） |
+| 测试 | xUnit · EF Core InMemory（37 个用例） |
 
 ## 解决方案结构
 
@@ -127,12 +127,13 @@ docker compose -f Scripts/docker-compose.yml up -d --wait
 
 ```text
 MySQL   Host=127.0.0.1 Port=3306 Database=hospikeeper User=hospikeeper Password=123456
-Redis   localhost:6379（无密码，仅作为缓存）
+Redis   localhost:6379（无密码，缓存 + 系统配置持久 key）
 ```
 
 > 数据库表结构与演示数据由 API 启动时的 EF Core Migrations 自动创建；
 > `Docs/民宿管理系统-数据库设计-v1.sql` 保留为设计参考，不再由 compose 自动执行。
-> Redis 以 `--maxmemory 256mb --maxmemory-policy allkeys-lru` 运行，不持久化缓存数据。
+> Redis 以 `--appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru` 运行：
+> 普通缓存 key 带 TTL，可被淘汰；系统配置 `config:site` 无 TTL，并通过 AOF 持久化。
 
 ### 2. 启动 API
 
@@ -233,6 +234,7 @@ API 使用 ASP.NET Core 10 内置的 `Microsoft.AspNetCore.OpenApi` 生成 **Ope
 | POST | `/api/public/reservations` | 提交预订 |
 | GET | `/api/public/reservations?phone=` | 手机号查询 |
 | POST | `/api/public/reservations/{resNo}/cancel` | 游客取消 |
+| GET | `/api/public/settings` | 游客 Web 静态配置 |
 
 配置：`src/HospiKeeper.Web/appsettings.json` → `Api:BaseUrl`（默认 `http://localhost:5080`）。
 
@@ -412,6 +414,7 @@ FLUSH PRIVILEGES;"
 - **Redis**：`StackExchange.Redis` 直连，支持多实例共享、前缀清理、TTL；
 - 统一的 `GetAsync / SetAsync / GetOrCreateAsync / RemoveAsync / RemoveByPrefixAsync`；
 - `GetOrCreateAsync` 内置进程内防击穿锁；Redis 异常时降级为回源，不阻断业务；
+- `SetPersistentAsync` 写入无 TTL 的持久项（系统配置使用），返回是否写入成功；
 - 业务 key 统一由 `CacheKeys` 定义，TTL 统一由 `CacheDurations` 定义；
 - `IHotelCacheInvalidator` 集中处理房间 / 前台 / 报表相关缓存失效，写操作成功后统一调用。
 
@@ -488,6 +491,31 @@ HotelDataInitializer
   ├─ IDatabaseMigrator.MigrateAsync()   # 共享模块
   └─ DemoDataSeeder.SeedAsync()          # 业务种子
 ```
+
+## 系统配置
+
+桌面端管理员可在「基础信息 → 系统配置」中动态调整游客 Web 与桌面端的静态信息：
+
+- 品牌：品牌名称、英文名、Logo 标识字、位置标语；
+- 首页：Hero 标题前缀 / 高亮词 / 后缀、副标题、评分、步行时间；
+- 联系与入住：前台热线、地址、邮箱、入住 / 退房时间、到店截止、支付与押金说明；
+- 页脚与桌面端：页脚介绍、页脚文案、桌面端系统名称 / 版本 / 状态栏、关于描述；
+- 内容卡片：特色介绍、入住须知（支持增删行）。
+
+保存后：
+
+- 游客 Web 刷新即可看到新内容（导航、首页、页脚、预订提示、成功页）；
+- 桌面端标题栏、状态栏与「关于本系统」即时刷新；
+- 配置存储于 Redis 的 `config:site` key（无 TTL），Redis 通过 AOF 持久化；
+  普通缓存 key 仍带 TTL，`volatile-lru` 只淘汰带过期时间的缓存项。
+
+API：
+
+| 方法 | 路径 | 权限 |
+|------|------|------|
+| GET | `/api/public/settings` | 公开，游客 Web / 桌面端展示 |
+| GET | `/api/settings` | 管理员 |
+| PUT | `/api/settings` | 管理员 |
 
 ## 权限约定
 

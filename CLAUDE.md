@@ -217,7 +217,9 @@ dotnet ef database update \
 - 当前缓存范围：看板、房态汇总、在住、预定、房间、空闲房、楼层、房型、报表快照、区间营收。
 - `GetOrCreateAsync` 内部有按 key 的进程内防击穿锁；缓存失败按 miss 处理，不阻断业务。
 - 新增读多写少接口时：在 Application 服务中调用 `_cache.GetOrCreateAsync`，并在相关写操作中补失效逻辑；不要直接在 Controller 中写缓存。
-- Redis 服务由 compose 管理：`hospikeeper-redis`，`localhost:6379`，不持久化缓存数据。
+- Redis 服务由 compose 管理：`hospikeeper-redis`，`localhost:6379`，开启 AOF；
+  普通缓存 key 带 TTL，`volatile-lru` 只淘汰带过期时间的 key；系统配置 key 无 TTL。
+- `SetPersistentAsync` 用于写入无 TTL 的持久项（系统配置），返回是否成功；普通缓存继续使用 `SetAsync` + TTL。
 
 ## 8. 日志约定
 
@@ -235,7 +237,28 @@ dotnet ef database update \
 - 请求日志模板：`HTTP {RequestMethod} {RequestPath} -> {StatusCode} in {Elapsed:0.0} ms`。
 - 新增日志不要使用 `Console.WriteLine` / `Debug.WriteLine`。
 
-## 9. 业务规则
+## 9. 系统配置约定
+
+- DTO：`HospiKeeper.Contracts.SiteSettings`，包含品牌、首页、联系、入住支付、页脚、桌面端文案与特色 / 须知列表；默认值写在该类中。
+- 服务：`ISiteSettingsService` / `SiteSettingsService`
+  - `GetPublicAsync`：公开读取；Redis 未配置时写入默认值；
+  - `GetForAdminAsync` / `UpdateAsync`：要求管理员；
+  - 存储 key：`CacheKeys.SiteSettings`（`config:site`），使用 `SetPersistentAsync` 无 TTL 写入；
+  - 保存失败（Redis 不可用）抛 `DomainException`，不要静默成功。
+- API：
+  - `GET /api/public/settings` 公开；
+  - `GET/PUT /api/settings` 管理员（控制器 `SettingsController`）。
+- 桌面端：
+  - 页面 `SystemSettingsPageViewModel` + `SystemSettingsView`，位于「基础信息（管理员）」；
+  - 保存后发送 `SiteSettingsChangedMessage`，主窗口即时刷新标题 / 版本 / 状态栏；
+  - 「关于本系统」使用 `SiteSettings` 的桌面端文案。
+- 游客 Web：
+  - `SiteSettingsState` 在每个 Blazor 电路中缓存一次配置；
+  - `NavMenu`、`PageFooter`、`Home`、`Rooms`、`BookingDialog`、`BookingSuccess` 均从配置读取；
+  - 新增静态文案时优先扩展 `SiteSettings` 与设置页，不要在 Razor 中硬编码。
+- 变更字段时同步：Contracts → 设置页 ViewModel/XAML → Web 组件 → README 本文件。
+
+## 10. 业务规则
 
 - **房态**：`Free / Occupied / Reserved / Cleaning / Repair / Disabled`；看板颜色与文案由 UI 映射。
 - **计费**：
@@ -256,7 +279,7 @@ dotnet ef database update \
 - **房型改名**：同步所有房间冗余 `TypeName`；改价写「改价」日志。
 - **账号**：不能停用 / 删除当前登录账号；至少保留一名启用管理员。
 
-## 10. API 约定
+## 11. API 约定
 
 - 路由统一 `api/<resource>`，返回 `Contracts` DTO；JSON 枚举以字符串输出。
 - 登录：`POST /api/auth/login` 返回 Bearer Token；除 `/health`、`/scalar`、`/openapi`、登录接口与 `/api/public` 游客接口外均需 `Authorization: Bearer`。
@@ -281,7 +304,7 @@ dotnet ef database update \
 - 错误响应统一引用 `ApiErrorResponse`；不要为每个接口重复定义错误 schema。
 - 改动鉴权、公开路径或安全方案时同步更新 README 的「接口文档」章节。
 
-## 11. UI 约定
+## 12. UI 约定
 
 - 设计系统在 `Sylvie233.UI`：
   - 控件：`AntButton / AntTag / AntCard / AntStatCard / AntPageHeader / AntFormItem / AntSectionTitle / AntModal / AntRoomCard / AntBarChart / AntEmpty / AntToast / AntTable / AntIcons`
@@ -298,7 +321,7 @@ dotnet ef database update \
 - 页面不展示演示账号、测试口令等演示信息。
 - 新控件需同时提供 C# 属性与 `ControlTheme`，并在 `AntControls.axaml` / `AntStyles.axaml` 中注册。
 
-## 12. 代码风格
+## 13. 代码风格
 
 - 命名空间与类型命名使用英文；用户可见文案使用中文。
 - 使用 `Directory.Build.props` 中的 `Nullable`、`ImplicitUsings`；不要关闭可空检查。
@@ -308,14 +331,14 @@ dotnet ef database update \
 - 不要在 Application / Domain 引入 EF Core、Avalonia 或 ASP.NET Core 依赖。
 - 删除不再使用的代码、图标、样式与包；不要保留“以后可能用到”的空实现。
 
-## 13. 测试
+## 14. 测试
 
 - 位置：`tests/HospiKeeper.Tests`
 - `ServiceTestContext` 使用 EF Core InMemory + `DemoDataSeeder` 构造完整业务栈，并默认登录 `admin`。
-- 新增业务规则必须补充测试；当前覆盖 34 个用例。
+- 新增业务规则必须补充测试；当前覆盖 37 个用例。
 - 不要用测试去连接真实 MySQL；需要集成验证时直接启动 API 进行手工 / curl 冒烟。
 
-## 14. Git 与协作
+## 15. Git 与协作
 
 - 项目按阶段 / 模块提交，**直接在 `main` 分支操作**（该项目的约定）。
 - 提交信息建议使用：
@@ -339,7 +362,7 @@ dotnet test
 - 不提交 `bin/`、`obj/`、本地日志、数据库文件或密钥。
 - `appsettings.json` 中为本地开发默认口令，生产部署必须改为环境变量 / 密钥管理。
 
-## 15. Blazor Web 模块
+## 16. Blazor Web 模块
 
 `src/HospiKeeper.Web` 是游客预订门户，已实现首页 / 客房预订 / 我的预订三页。
 
@@ -352,6 +375,7 @@ dotnet test
 - 公开接口统一 `/api/public/*`，在 `ApiAuthMiddleware` 中免鉴权；OpenAPI 中通过 `PublicPrefixes` 取消 Bearer 要求；
 - 库存计算集中在 `GuestBookingService`，UI 不重复实现；提交时通过 `IUnitOfWork.ExecuteInTransactionAsync` 做事务内二次校验；
 - 游客端不改变任何 `room.status`；
+- 品牌 / Hero / 联系方式 / 页脚 / 特色 / 须知等静态文案全部来自 `GET /api/public/settings`，不要硬编码；
 - Web 日志：`logs/web-*.log`，配置项与 API 相同（`Logging:Sylvie233`）。
 
 后续新增 Web 页面时：
