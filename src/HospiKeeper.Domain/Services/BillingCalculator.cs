@@ -4,6 +4,15 @@ using HospiKeeper.Domain.Enums;
 namespace HospiKeeper.Domain.Services;
 
 /// <summary>一次退房试算结果。</summary>
+/// <param name="Mode">计费方式。</param>
+/// <param name="Units">计费单位数：按天为晚数，加钟为小时数。</param>
+/// <param name="UnitPrice">成交单价。</param>
+/// <param name="RoomFee">房费。</param>
+/// <param name="ExtraTotal">追加消费合计。</param>
+/// <param name="Damage">损坏扣费。</param>
+/// <param name="Deposit">已收押金。</param>
+/// <param name="Total">应收合计 = 房费 + 追加消费 + 损坏扣费。</param>
+/// <param name="Difference">差额 = 应收 − 押金。</param>
 public sealed record BillingResult(
     BillingMode Mode,
     int Units,
@@ -31,6 +40,7 @@ public sealed record BillingResult(
 /// </summary>
 public static class BillingCalculator
 {
+    /// <summary>按天计费：不足一晚按一晚，返回最少 1 的晚数。</summary>
     public static int CountNights(DateTime checkIn, DateTime checkOut)
     {
         if (checkOut <= checkIn)
@@ -41,6 +51,7 @@ public static class BillingCalculator
         return Math.Max(1, (int)Math.Ceiling((checkOut - checkIn).TotalDays));
     }
 
+    /// <summary>加钟计费：小时数向上取整，返回最少 1 的小时数。</summary>
     public static int CountHours(DateTime checkIn, DateTime checkOut)
     {
         if (checkOut <= checkIn)
@@ -51,6 +62,11 @@ public static class BillingCalculator
         return Math.Max(1, (int)Math.Ceiling((checkOut - checkIn).TotalHours));
     }
 
+    /// <summary>
+    /// 计算一次退房账单。加钟模式下优先使用 <paramref name="originPrice"/>（改价前原价）折算，
+    /// 避免议价后按小时计费产生歧义。
+    /// </summary>
+    /// <exception cref="DomainException">金额为负数或退房时间不晚于入住时间。</exception>
     public static BillingResult Calculate(
         DateTime checkIn,
         DateTime checkOut,

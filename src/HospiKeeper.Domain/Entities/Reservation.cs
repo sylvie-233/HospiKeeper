@@ -18,6 +18,7 @@ public sealed class Reservation
     public int? CheckInId { get; set; }
     public string? CheckInNo { get; set; }
 
+    /// <summary>转入住后的入住单导航属性，仅用于 EF 关系维护，不参与 JSON 序列化。</summary>
     [JsonIgnore]
     public CheckInRecord? CheckIn { get; set; }
     public string? Note { get; set; }

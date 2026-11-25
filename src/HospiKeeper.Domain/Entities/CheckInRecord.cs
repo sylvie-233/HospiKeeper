@@ -29,5 +29,6 @@ public sealed class CheckInRecord
     public List<Companion> Companions { get; set; } = new();
     public List<ExtraCharge> ExtraCharges { get; set; } = new();
 
+    /// <summary>入住期间追加消费合计。</summary>
     public decimal ExtraTotal => ExtraCharges.Sum(x => x.Amount);
 }
