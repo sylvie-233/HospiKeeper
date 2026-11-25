@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>云栖民宿 · 游客在线预订 Web 原型 v1</title>
+<style>
+  /* ============ 设计变量（与桌面端原型同色系） ============ */
+  :root {
+    --primary: #1677ff;
+    --primary-hover: #4096ff;
+    --primary-bg: #e6f4ff;
+    --success: #52c41a;
+    --warning: #faad14;
+    --error: #ff4d4f;
+    --purple: #722ed1;
+    --text: rgba(0,0,0,.88);
+    --text-secondary: rgba(0,0,0,.65);
+    --text-tertiary: rgba(0,0,0,.45);
+    --border: #d9d9d9;
+    --border-split: #f0f0f0;
+    --bg-container: #ffffff;
+    --bg-panel: #fafafa;
+    --bg-page: #f5f7fa;
+    --shadow-sm: 0 1px 3px rgba(15,35,65,.06);
+    --shadow-md: 0 6px 20px rgba(15,35,65,.09);
+    --shadow-lg: 0 16px 40px rgba(15,35,65,.16);
+    --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font); background: var(--bg-page); color: var(--text); font-size: 14px; -webkit-font-smoothing: antialiased;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+  body > .page { flex: 1 0 auto; }
+
+  /* ============ 顶部导航 ============ */
+  .topbar {
+    position: sticky; top: 0; z-index: 100; height: 60px;
+    background: rgba(255,255,255,.86); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-split);
+    display: flex; align-items: center; padding: 0 36px; gap: 10px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; letter-spacing: 1px; color: var(--text); margin-right: 26px; cursor: pointer; }
+  .logo .mark {
+    width: 34px; height: 34px; border-radius: 9px; color: #fff; font-size: 16px;
+    background: linear-gradient(135deg, #0e5fd8, #4096ff);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 8px rgba(22,119,255,.35);
+  }
+  .logo .sub { font-size: 10.5px; font-weight: 400; color: var(--text-tertiary); letter-spacing: 2px; display: block; margin-top: 1px; }
+  .topbar .nav-link { padding: 7px 16px; border-radius: 999px; cursor: pointer; color: var(--text-secondary); user-select: none; font-size: 14px; transition: all .15s; }
+  .topbar .nav-link:hover { color: var(--primary); background: var(--primary-bg); }
+  .topbar .nav-link.active { color: #fff; background: var(--primary); font-weight: 600; box-shadow: 0 3px 8px rgba(22,119,255,.3); }
+  .topbar .hotline { margin-left: auto; color: var(--text-tertiary); font-size: 13px; display: flex; align-items: center; gap: 10px; }
+  .topbar .hotline .ph-ico { width: 30px; height: 30px; border-radius: 50%; background: #fff7e6; border: 1px solid #ffd591; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .topbar .hotline b { color: var(--text); font-size: 14px; letter-spacing: .5px; }
+
+  /* ============ 页面切换 ============ */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px);} to { opacity: 1; transform: none;} }
+
+  /* ============ 首页 Hero ============ */
+  .hero {
+    position: relative; color: #fff; padding: 88px 32px 140px; text-align: center;
+    background: linear-gradient(128deg, #0a4ab5 0%, #1677ff 52%, #4da3ff 100%);
+    overflow: hidden;
+  }
+  .hero::before, .hero::after {
+    content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,.08);
+  }
+  .hero::before { width: 420px; height: 420px; top: -180px; left: -120px; }
+  .hero::after  { width: 300px; height: 300px; bottom: -140px; right: -60px; }
+  .hero .inner { position: relative; z-index: 1; }
+  .hero .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; letter-spacing: 3px; padding: 5px 16px; border-radius: 999px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); margin-bottom: 18px; }
+  .hero h1 { font-size: 34px; letter-spacing: 4px; margin-bottom: 12px; text-shadow: 0 2px 12px rgba(9,52,120,.35); }
+  .hero h1 .accent { background: linear-gradient(90deg, #ffd666, #ffecb8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { opacity: .9; font-size: 15px; letter-spacing: 1px; }
+  .hero .hero-stats { display: flex; justify-content: center; gap: 44px; margin-top: 30px; }
+  .hero .stat b { font-size: 22px; display: block; }
+  .hero .stat span { font-size: 12px; opacity: .78; letter-spacing: 1px; }
+
+  /* ============ 查询条（玻璃拟态压在 hero 下沿） ============ */
+  .search-wrap { margin-top: -78px; padding: 0 32px; display: flex; justify-content: center; position: relative; z-index: 2; }
+  .search-bar {
+    background: rgba(255,255,255,.94); backdrop-filter: blur(10px);
+    border-radius: 14px; box-shadow: var(--shadow-lg); border: 1px solid rgba(255,255,255,.6);
+    display: flex; align-items: stretch; padding: 14px; gap: 8px; width: 100%; max-width: 900px;
+  }
+  .search-cell { flex: 1.2; display: flex; flex-direction: column; gap: 4px; padding: 3px 16px; border-right: 1px solid var(--border-split); }
+  .search-cell.narrow { flex: .9; }
+  .search-cell:last-of-type { border-right: none; }
+  .search-cell label { font-size: 12px; color: var(--text-tertiary); letter-spacing: 1px; }
+  .search-cell input, .search-cell select { border: none; outline: none; font-size: 15px; font-weight: 500; font-family: var(--font); color: var(--text); background: transparent; width: 100%; }
+  .search-bar.centered { margin: 0 auto; max-width: 960px; }
+  .search-bar .btn-lg { align-self: center; flex: none; }
+  .sec-center { text-align: center; margin-bottom: 26px; }
+  .sec-center .section-title { justify-content: center; font-size: 21px; font-weight: 700; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+  .sec-center .section-title::before { content: ""; width: 4px; height: 18px; background: linear-gradient(180deg, #1677ff, #69b1ff); border-radius: 2px; }
+  .sec-center .section-sub { color: var(--text-tertiary); font-size: 13px; margin-top: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 36px; padding: 0 18px;
+    border-radius: 7px; border: 1px solid var(--border); background: #fff; color: var(--text);
+    font-size: 14px; cursor: pointer; transition: all .15s; font-family: var(--font); white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--primary); color: var(--primary); }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: linear-gradient(135deg, #1677ff, #3c94ff); border: none; color: #fff; font-weight: 500; box-shadow: 0 4px 10px rgba(22,119,255,.3); }
+  .btn-primary:hover { filter: brightness(1.06); color: #fff; box-shadow: 0 5px 14px rgba(22,119,255,.4); }
+  .btn-danger { color: var(--error); border-color: #ffccc7; background: #fff; }
+  .btn-danger:hover { background: var(--error); border-color: var(--error); color: #fff; }
+  .btn-sm { height: 27px; padding: 0 13px; font-size: 12.5px; border-radius: 5px; }
+  .btn-lg { height: 46px; font-size: 15px; padding: 0 30px; border-radius: 9px; }
+  .btn:disabled { background: var(--bg-panel); color: var(--text-tertiary); border-color: var(--border-split); cursor: not-allowed; box-shadow: none; }
+
+  /* ============ 区块 ============ */
+  .section { max-width: 1120px; margin: 0 auto; padding: 36px 32px 20px; }
+  .sec-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 22px; }
+  .sec-head .left .section-title { font-size: 21px; font-weight: 700; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+  .sec-head .left .section-title::before { content: ""; width: 4px; height: 18px; background: linear-gradient(180deg, #1677ff, #69b1ff); border-radius: 2px; }
+  .sec-head .left .section-sub { color: var(--text-tertiary); font-size: 13px; margin-top: 6px; padding-left: 14px; }
+  .sec-head .right { font-size: 13px; color: var(--primary); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  .sec-head .right:hover { color: var(--primary-hover); }
+
+  /* ============ 房型卡片 ============ */
+  .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 22px; }
+  .room-card {
+    background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-split);
+    transition: box-shadow .2s, transform .2s; display: flex; flex-direction: column; position: relative;
+  }
+  .room-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); border-color: transparent; }
+  .room-cover { height: 148px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 46px; color: rgba(255,255,255,.9); overflow: hidden; }
+  .room-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.18)); }
+  .cover-single  { background: linear-gradient(135deg, #59b0ff, #1462d8); }
+  .cover-double  { background: linear-gradient(135deg, #73d13d, #237804); }
+  .cover-king    { background: linear-gradient(135deg, #9254de, #531dab); }
+  .room-cover .ico-lg { filter: drop-shadow(0 4px 8px rgba(0,0,0,.25)); position: relative; z-index: 1; }
+  .room-cover .stock {
+    position: absolute; top: 12px; right: 12px; z-index: 2; color: #fff; font-size: 12px;
+    padding: 3px 12px; border-radius: 999px; background: rgba(0,0,0,.32); backdrop-filter: blur(4px);
+  }
+  .room-cover .stock.full { background: rgba(255,77,79,.8); }
+  .room-cover .type-badge {
+    position: absolute; left: 14px; bottom: 12px; z-index: 2; color: #fff; font-size: 15px; font-weight: 700;
+    letter-spacing: 2px; text-shadow: 0 1px 6px rgba(0,0,0,.3);
+  }
+  .room-body { padding: 16px 18px 18px; flex: 1; display: flex; flex-direction: column; }
+  .facilities { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+  .fac { font-size: 12px; color: var(--text-secondary); background: var(--bg-panel); border: 1px solid var(--border-split); border-radius: 4px; padding: 2px 9px; }
+  .room-desc { font-size: 12.5px; color: var(--text-tertiary); line-height: 1.7; flex: 1; }
+  .room-foot { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border-split); }
+  .price { color: var(--error); }
+  .price .cur { font-size: 13px; font-weight: 600; }
+  .price .num { font-size: 26px; font-weight: 700; }
+  .price .unit { font-size: 12px; font-weight: 400; color: var(--text-tertiary); }
+  .price .nights { display: block; font-size: 11.5px; color: var(--text-tertiary); font-weight: 400; margin-top: 3px; }
+
+  /* ============ 特色介绍 ============ */
+  .feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .feature {
+    background: #fff; border: 1px solid var(--border-split); border-radius: 14px; padding: 22px 18px; text-align: center;
+    transition: all .2s;
+  }
+  .feature:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .feature .ico { width: 46px; height: 46px; margin: 0 auto 10px; border-radius: 12px; font-size: 22px; display: flex; align-items: center; justify-content: center; }
+  .feature:nth-child(1) .ico { background: #e6f4ff; }
+  .feature:nth-child(2) .ico { background: #fff7e6; }
+  .feature:nth-child(3) .ico { background: #f6ffed; }
+  .feature:nth-child(4) .ico { background: #f9f0ff; }
+  .feature b { display: block; font-size: 14.5px; margin-bottom: 5px; }
+  .feature span { font-size: 12px; color: var(--text-tertiary); line-height: 1.7; }
+
+  /* ============ 入住须知 ============ */
+  .notice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .notice { background: #fff; border: 1px solid var(--border-split); border-radius: 14px; padding: 18px 20px; }
+  .notice b { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 10px; color: var(--text); }
+  .notice b::before { content: "•"; color: var(--primary); font-size: 18px; line-height: 0; }
+  .notice p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.9; }
+
+  /* ============ 我的预订 ============ */
+  .panel { background: #fff; border: 1px solid var(--border-split); border-radius: 14px; padding: 26px; max-width: 760px; margin: 0 auto; box-shadow: var(--shadow-sm); }
+  .query-row { display: flex; gap: 10px; margin-bottom: 8px; }
+  .input, .select {
+    height: 38px; padding: 0 12px; border: 1px solid var(--border); border-radius: 7px;
+    font-size: 14px; font-family: var(--font); color: var(--text); background: #fff; outline: none; transition: all .15s;
+  }
+  .input:focus, .select:focus { border-color: var(--primary); box-shadow: 0 0 0 2.5px rgba(22,119,255,.12); }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .field label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+  .field label .req { color: var(--error); margin-left: 2px; }
+  .field .input { height: 40px; }
+  .field-hint { font-size: 12px; color: var(--text-tertiary); line-height: 1.7; }
+
+  .res-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 16px; border: 1px solid var(--border-split); border-radius: 8px; overflow: hidden; }
+  .res-table th, .res-table td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border-split); font-size: 13px; }
+  .res-table tr:last-child td { border-bottom: none; }
+  .res-table thead th { color: var(--text-secondary); font-weight: 600; background: var(--bg-panel); }
+  .res-table tbody tr { transition: background .12s; }
+  .res-table tbody tr:hover { background: rgba(22,119,255,.035); }
+  .res-no-code { font-family: Consolas, monospace; color: var(--primary); font-weight: 600; }
+
+  .tag { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11.5px; border: 1px solid; font-weight: 500; }
+  .tag::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .tag-pending   { color: var(--purple);  background: #f9f0ff; border-color: #d3adf7; }
+  .tag-converted { color: var(--primary); background: #e6f4ff; border-color: #91caff; }
+  .tag-cancelled { color: var(--text-tertiary); background: #fafafa; border-color: var(--border); }
+
+  /* ============ 弹窗 ============ */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(10,25,50,.5); backdrop-filter: blur(3px);
+    z-index: 300; display: none; align-items: flex-start; justify-content: center; padding: 60px 16px; overflow-y: auto;
+  }
+  .overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 14px; width: 480px; max-width: 100%; animation: dialogIn .18s ease; box-shadow: var(--shadow-lg); overflow: hidden; }
+  @keyframes dialogIn { from { opacity: 0; transform: scale(.96) translateY(8px);} to { opacity: 1; transform: none;} }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; border-bottom: 1px solid var(--border-split); }
+  .modal-head b { font-size: 16px; }
+  .modal-close { width: 28px; height: 28px; border: none; background: var(--bg-panel); border-radius: 50%; font-size: 14px; color: var(--text-tertiary); cursor: pointer; transition: all .15s; }
+  .modal-close:hover { background: #ffccc7; color: var(--error); }
+  .modal-body { padding: 20px 22px; }
+  .modal-foot { padding: 14px 22px; border-top: 1px solid var(--border-split); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-panel); }
+
+  .book-summary { background: var(--bg-panel); border: 1px solid var(--border-split); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; font-size: 13px; }
+  .book-summary .row { display: flex; justify-content: space-between; padding: 4px 0; color: var(--text-secondary); }
+  .book-summary .row .v { color: var(--text); font-weight: 600; }
+  .amount-line { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); color: var(--text-secondary); }
+  .amount-line .total { color: var(--error); font-size: 22px; font-weight: 700; }
+
+  /* ============ 成功页 ============ */
+  .success-box { text-align: center; padding: 10px 0 4px; }
+  .success-box .ok-ico {
+    width: 60px; height: 60px; margin: 0 auto 14px; border-radius: 50%;
+    background: linear-gradient(135deg, #f6ffed, #e8ffd0); border: 1px solid #b7eb8f; color: var(--success);
+    font-size: 28px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 16px rgba(82,196,26,.25);
+  }
+  .success-box h3 { font-size: 17px; margin-bottom: 8px; }
+  .success-box p { font-size: 13px; color: var(--text-secondary); line-height: 1.9; }
+  .success-box .res-no { display: inline-block; margin-top: 8px; background: var(--primary-bg); border: 1px dashed #91caff; border-radius: 6px; padding: 5px 18px; font-family: Consolas, monospace; font-size: 16px; font-weight: 700; color: var(--primary); letter-spacing: 1px; }
+
+  /* ============ Toast ============ */
+  .toast {
+    position: fixed; top: 74px; left: 50%; transform: translateX(-50%) translateY(-8px);
+    background: #fff; border-radius: 8px; box-shadow: var(--shadow-lg);
+    padding: 10px 20px; font-size: 13.5px; z-index: 400; opacity: 0; pointer-events: none; transition: all .22s;
+    display: flex; align-items: center; gap: 8px; max-width: 80vw;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.ok { color: var(--success); border-left: 3px solid var(--success); }
+  .toast.err { color: var(--error); border-left: 3px solid var(--error); }
+
+  /* ============ 页脚 ============ */
+  .footer { background: #171e2c; color: rgba(255,255,255,.6); margin-top: auto; flex-shrink: 0; }
+  .footer .cols {
+    max-width: 1120px; margin: 0 auto; padding: 40px 32px 30px;
+    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 30px;
+  }
+  .footer h4 { color: rgba(255,255,255,.92); font-size: 14px; margin-bottom: 12px; }
+  .footer .f-logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+  .footer .f-logo .mark { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #0e5fd8, #4096ff); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .footer p, .footer li { font-size: 12.5px; line-height: 2.1; list-style: none; }
+  .footer .hoverable li { cursor: pointer; transition: color .15s; }
+  .footer .hoverable li:hover { color: #fff; }
+  .footer .bottom { border-top: 1px solid rgba(255,255,255,.1); padding: 16px; text-align: center; font-size: 12px; color: rgba(255,255,255,.4); }
+
+  /* ============ 响应式 ============ */
+  @media (max-width: 860px) {
+    .search-bar { flex-direction: column; gap: 4px; }
+    .search-cell { border-right: none; border-bottom: 1px solid var(--border-split); padding: 10px 6px; }
+    .search-cell:last-of-type { border-bottom: none; }
+    .feature-grid, .notice-grid { grid-template-columns: repeat(2, 1fr); }
+    .footer .cols { grid-template-columns: 1fr 1fr; }
+    .hero h1 { font-size: 26px; }
+    .hero .hero-stats { gap: 24px; }
+    .topbar { padding: 0 16px; }
+    .topbar .hotline b, .topbar .hotline .ph-ico { display: none; }
+    .sec-head .right { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ 顶部导航 ============ -->
+<div class="topbar">
+  <div class="logo" onclick="go('home')">
+    <span class="mark">栖</span>
+    <span>云栖民宿<span class="sub">YUNQI INN</span></span>
+  </div>
+  <div class="nav-link active" data-nav="home" onclick="go('home')">首页</div>
+  <div class="nav-link" data-nav="rooms" onclick="go('rooms')">客房预订</div>
+  <div class="nav-link" data-nav="mine" onclick="go('mine')">我的预订</div>
+  <div class="hotline">
+    <span class="ph-ico">📞</span>
+    <span>前台热线 <b>0571-8888-6666</b></span>
+  </div>
+</div>
+
+<!-- ============ 首页 ============ -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="inner">
+      <div class="eyebrow">西湖 · 南山路 · 独栋小院</div>
+      <h1>云栖民宿 · 在<span class="accent">山与湖</span>之间</h1>
+      <p>与前台系统实时联动 · 在线预订到店即住 · 免预约金 · 到店支付</p>
+      <div class="hero-stats">
+        <div class="stat"><b>14</b><span>舒适客房</span></div>
+        <div class="stat"><b>3</b><span>特色房型</span></div>
+        <div class="stat"><b>5min</b><span>步行至湖边</span></div>
+        <div class="stat"><b>4.9</b><span>住客评分</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-bar">
+      <div class="search-cell">
+        <label>入住日期</label>
+        <input type="date" id="sCheckIn">
+      </div>
+      <div class="search-cell">
+        <label>退房日期</label>
+        <input type="date" id="sCheckOut">
+      </div>
+      <div class="search-cell narrow">
+        <label>房型偏好</label>
+        <select id="sType"><option value="all">不限</option></select>
+      </div>
+      <button class="btn btn-primary btn-lg" style="align-self:center" onclick="searchRooms()">查询可订房型</button>
+    </div>
+  </div>
+
+  <div class="section" id="resultSection">
+    <div class="sec-head">
+      <div class="left">
+        <div class="section-title">精选房型</div>
+        <div class="section-sub" id="resultSub">选择入住 / 退房日期后查询实时房量</div>
+      </div>
+      <div class="right" onclick="go('rooms')">查看全部房型 →</div>
+    </div>
+    <div class="room-grid" id="roomGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-head">
+      <div class="left">
+        <div class="section-title">为什么选择云栖</div>
+        <div class="section-sub">细节处见用心，让每一次入住都像回家</div>
+      </div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature"><div class="ico">🛏</div><b>六种房型</b><span>单人间 / 双人间 / 大床房<br>带窗、独立卫浴可选</span></div>
+      <div class="feature"><div class="ico">⏱</div><b>灵活到店</b><span>在线预订 18:00 前到店即可<br>晚到请致电前台保留</span></div>
+      <div class="feature"><div class="ico">💰</div><b>到店支付</b><span>预订免支付，押金到店收取<br>支持前台议价</span></div>
+      <div class="feature"><div class="ico">🧹</div><b>每日打扫</b><span>退房即时保洁消毒<br>布草一客一换</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-head">
+      <div class="left">
+        <div class="section-title">入住须知</div>
+        <div class="section-sub">预订前请仔细阅读，如有疑问联系前台</div>
+      </div>
+    </div>
+    <div class="notice-grid">
+      <div class="notice"><b>入住与退房时间</b><p>入住 14:00 后办理，退房次日 12:00 前；超过 12:00 按 1 天计费，需续住请提前联系前台。</p></div>
+      <div class="notice"><b>预订与取消</b><p>预订成功后房间即时锁定；入住日 18:00 前未到店且未联系前台，预订将自动释放。</p></div>
+      <div class="notice"><b>押金与支付</b><p>到店支付房费并收取押金（100–300 元/间），退房结算后无损全额退还。</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 客房预订页 ============ -->
+<div class="page" id="page-rooms">
+  <div class="section">
+    <div class="sec-head">
+      <div class="left">
+        <div class="section-title">客房预订</div>
+        <div class="section-sub" id="roomsSub">选择入住 / 退房日期，查询各房型实时可订数量</div>
+      </div>
+    </div>
+    <div class="search-bar centered" style="box-shadow:var(--shadow-md)">
+      <div class="search-cell">
+        <label>入住日期</label>
+        <input type="date" id="rCheckIn">
+      </div>
+      <div class="search-cell">
+        <label>退房日期</label>
+        <input type="date" id="rCheckOut">
+      </div>
+      <div class="search-cell narrow">
+        <label>房型偏好</label>
+        <select id="rType"><option value="all">不限</option></select>
+      </div>
+      <button class="btn btn-primary btn-lg" onclick="searchRooms('rooms')">查 询</button>
+    </div>
+    <div style="height:26px"></div>
+    <div class="room-grid" id="roomGrid2"></div>
+  </div>
+</div>
+
+<!-- ============ 我的预订页 ============ -->
+<div class="page" id="page-mine">
+  <div class="section">
+    <div class="sec-center">
+      <div class="section-title">我的预订</div>
+      <div class="section-sub">使用预订时填写的手机号查询；待到店的预订可在线取消</div>
+    </div>
+    <div class="panel">
+      <div class="query-row">
+        <input class="input" id="minePhone" placeholder="预订手机号" style="flex:1" maxlength="11">
+        <button class="btn btn-primary" style="height:38px" onclick="queryMine()">查 询</button>
+      </div>
+      <div class="field-hint">演示提示：可试 13900005678（王芳）/ 13700009012（孙敏）</div>
+      <div id="mineResult"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 预订弹窗 ============ -->
+<div class="overlay" id="bookOverlay">
+  <div class="modal">
+    <div class="modal-head"><b>填写预订信息</b><button class="modal-close" onclick="closeModal('bookOverlay')">✕</button></div>
+    <div class="modal-body" id="bookBody">
+      <div class="book-summary" id="bookSummary"></div>
+      <div class="field"><label>入住人姓名<span class="req">*</span></label><input class="input" id="bkName" placeholder="与到店证件一致" maxlength="20"></div>
+      <div class="field"><label>手机号<span class="req">*</span></label><input class="input" id="bkPhone" placeholder="用于查询与取消预订" maxlength="11"></div>
+      <div class="field">
+        <label>身份证号（选填）</label>
+        <input class="input" id="bkId" placeholder="到店登记时出示原件即可" maxlength="18">
+        <div class="field-hint">预计到店时间默认为入住日 18:00，如晚到请致电前台保留房间</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('bookOverlay')">取 消</button>
+      <button class="btn btn-primary" onclick="submitBooking()">提交预订</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 预订成功弹窗 ============ -->
+<div class="overlay" id="successOverlay">
+  <div class="modal">
+    <div class="modal-head"><b>预订结果</b><button class="modal-close" onclick="closeModal('successOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="success-box">
+        <div class="ok-ico">✓</div>
+        <h3>预订成功，房间已为您锁定</h3>
+        <p>预订号 <span class="res-no" id="okResNo"></span></p>
+        <p id="okDetail"></p>
+        <p style="margin-top:8px">请于入住日 18:00 前到店办理入住（出示预订号或手机号）<br>如需修改或取消，可在「我的预订」中操作</p>
+        <div style="margin-top:16px;display:flex;gap:10px;justify-content:center">
+          <button class="btn" onclick="closeModal('successOverlay')">继续浏览</button>
+          <button class="btn btn-primary" onclick="closeModal('successOverlay'); go('mine'); prefillMine()">查看我的预订</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ 页脚 ============ -->
+<div class="footer">
+  <div class="cols">
+    <div>
+      <div class="f-logo"><span class="mark">栖</span>云栖民宿</div>
+      <p>位于西湖南山路的独栋小院，推窗见湖，出门即景。<br>我们相信好的住宿不只是睡一晚，<br>更是一段旅途里安放身心的地方。</p>
+    </div>
+    <div>
+      <h4>快捷导航</h4>
+      <ul class="hoverable">
+        <li onclick="go('home')">首页</li>
+        <li onclick="go('rooms')">客房预订</li>
+        <li onclick="go('mine')">我的预订</li>
+      </ul>
+    </div>
+    <div>
+      <h4>入住信息</h4>
+      <ul>
+        <li>入住 14:00 后 · 退房 12:00 前</li>
+        <li>押金 ¥100–300 / 间</li>
+        <li>免费 WiFi · 24h 热水</li>
+      </ul>
+    </div>
+    <div>
+      <h4>联系我们</h4>
+      <ul>
+        <li>前台热线：0571-8888-6666</li>
+        <li>服务时间：8:00 – 22:00</li>
+        <li>地址：杭州市西湖区南山路 88 号</li>
+      </ul>
+    </div>
+  </div>
+  <div class="bottom">云栖民宿管理系统 · 游客预订 Web 原型 v1（数据为演示数据） · 仅作交互演示</div>
+</div>
+
+<script>
+/* =====================================================
+ * 演示数据：口径对齐桌面端原型 & 数据库设计 v1
+ * 房态：FREE=空闲 OCCUPIED=已入住 RESERVED=预定
+ *       CLEANING=打扫中 REPAIR=维修 DISABLED=停用
+ * ===================================================== */
+const ROOM_TYPES = [
+  { id: 1, name: '单人间', price: 128, desc: '1.5 米舒适大床，静音空调，适合独行旅居', icon: '🛏', cls: 'cover-single',  fac: ['1 张床', '带窗', '独立卫浴', '免费 WiFi'] },
+  { id: 2, name: '双人间', price: 168, desc: '两张 1.2 米床，适合闺蜜 / 同事同行',     icon: '🛏🛏', cls: 'cover-double', fac: ['2 张床', '独立卫浴', '免费 WiFi', '热水壶'] },
+  { id: 3, name: '大床房', price: 198, desc: '1.8 米大床 + 湖景飘窗，蜜月出行首选',   icon: '🌅', cls: 'cover-king',   fac: ['1.8 米大床', '湖景窗', '独立卫浴', '智能马桶'] },
+];
+
+const rooms = [
+  { no:'101', floor:1, typeId:1, status:'FREE' },
+  { no:'102', floor:1, typeId:2, status:'OCCUPIED' },
+  { no:'103', floor:1, typeId:3, status:'OCCUPIED' },
+  { no:'104', floor:1, typeId:1, status:'CLEANING' },
+  { no:'105', floor:1, typeId:2, status:'RESERVED' },
+  { no:'106', floor:1, typeId:2, status:'REPAIR' },
+  { no:'201', floor:2, typeId:3, status:'OCCUPIED' },
+  { no:'202', floor:2, typeId:3, status:'OCCUPIED' },
+  { no:'203', floor:2, typeId:2, status:'FREE' },
+  { no:'204', floor:2, typeId:1, status:'FREE' },
+  { no:'205', floor:2, typeId:2, status:'FREE' },
+  { no:'206', floor:2, typeId:3, status:'RESERVED' },
+  { no:'207', floor:2, typeId:3, status:'CLEANING' },
+  { no:'208', floor:2, typeId:1, status:'DISABLED' },
+];
+
+/* 预定单：PENDING=待到店 CONVERTED=已转入住 CANCELLED=已取消 */
+let reservations = [
+  { id:'R20261125001', name:'王芳', phone:'13900005678', room:'105', typeId:2, checkIn:'2026-11-25', checkOut:'2026-11-27', status:'PENDING' },
+  { id:'R20261125002', name:'孙敏', phone:'13700009012', room:'206', typeId:3, checkIn:'2026-11-26', checkOut:'2026-11-28', status:'PENDING' },
+  { id:'R20261124003', name:'赵磊', phone:'15800001122', room:'203', typeId:2, checkIn:'2026-11-23', checkOut:'2026-11-24', status:'CONVERTED' },
+  { id:'R20261122002', name:'钱进', phone:'13600009911', room:'204', typeId:1, checkIn:'2026-11-22', checkOut:'2026-11-23', status:'CANCELLED' },
+];
+
+const STATUS_TEXT = { PENDING:'待到店', CONVERTED:'已转入住', CANCELLED:'已取消' };
+const $ = id => document.getElementById(id);
+
+/* ---------- 初始化 ---------- */
+function today(offset = 0) {
+  const d = new Date(); d.setDate(d.getDate() + offset);
+  return d.toISOString().slice(0, 10);
+}
+function initPage() {
+  ['sCheckIn','rCheckIn'].forEach(id => { $(id).value = today(); $(id).min = today(); });
+  ['sCheckOut','rCheckOut'].forEach(id => { $(id).value = today(1); $(id).min = today(1); });
+  ROOM_TYPES.forEach(t => {
+    ['sType','rType'].forEach(id => {
+      const o = document.createElement('option'); o.value = t.id; o.textContent = t.name; $(id).appendChild(o);
+    });
+  });
+  renderRooms($('roomGrid'),  $('sCheckIn'), $('sCheckOut'), $('sType'), 'resultSub');
+  renderRooms($('roomGrid2'), $('rCheckIn'), $('rCheckOut'), $('rType'), 'roomsSub');
+}
+
+/* ---------- 页面切换 ---------- */
+function go(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  $('page-' + name).classList.add('active');
+  document.querySelectorAll('.topbar .nav-link').forEach(l => l.classList.toggle('active', l.dataset.nav === name));
+  window.scrollTo({ top: 0 });
+}
+function prefillMine() { $('minePhone').value = lastBookPhone || ''; queryMine(); }
+
+/* ---------- 查询可订房型 ---------- */
+function nightsOf(ci, co) {
+  return Math.round((new Date(co) - new Date(ci)) / 86400000);
+}
+function searchRooms(pageId) {
+  const inId  = pageId === 'rooms' ? 'rCheckIn'  : 'sCheckIn';
+  const outId = pageId === 'rooms' ? 'rCheckOut' : 'sCheckOut';
+  const typeId = pageId === 'rooms' ? $('rType').value : $('sType').value;
+
+  const ci = $(inId).value, co = $(outId).value;
+  if (!ci || !co || nightsOf(ci, co) < 1) { toast('退房日期需晚于入住日期', 'err'); return; }
+
+  const n = nightsOf(ci, co);
+  const subId = pageId === 'rooms' ? 'roomsSub' : 'resultSub';
+  $(subId).textContent = `${ci} 入住 · ${co} 退房 · 共 ${n} 晚`;
+
+  if (pageId === 'rooms') {
+    renderRooms($('roomGrid2'), $('rCheckIn'), $('rCheckOut'), $('rType'), 'roomsSub');
+  } else {
+    go('rooms');
+    $('rCheckIn').value = ci; $('rCheckOut').value = co; $('rType').value = typeId;
+    renderRooms($('roomGrid2'), $('rCheckIn'), $('rCheckOut'), $('rType'), 'roomsSub');
+  }
+}
+
+/* 可订数 = 该房型下「空闲」房间数 − 与日期段重叠的有效预订占用 */
+function stockOf(typeId, ci, co) {
+  const total = rooms.filter(r => r.typeId === typeId && r.status === 'FREE').length;
+  const held = reservations.filter(r =>
+    r.typeId === typeId && r.status === 'PENDING' && r.checkIn < co && r.checkOut > ci
+  ).length;
+  return Math.max(0, total - held);
+}
+
+function renderRooms(grid, ciEl, coEl, typeSel, subId) {
+  const ci = ciEl.value, co = coEl.value;
+  const n = nightsOf(ci, co);
+  if (n >= 1 && subId) $(subId).textContent = `${ci} 入住 · ${co} 退房 · 共 ${n} 晚`;
+  const list = (typeSel.value === 'all' ? ROOM_TYPES : ROOM_TYPES.filter(t => t.id == typeSel.value));
+  grid.innerHTML = list.map(t => {
+    const stock = stockOf(t.id, ci, co);
+    return `
+    <div class="room-card">
+      <div class="room-cover ${t.cls}">
+        <span class="ico-lg">${t.icon}</span>
+        <span class="type-badge">${t.name}</span>
+        <span class="stock ${stock === 0 ? 'full' : ''}">${stock > 0 ? `剩余 ${stock} 间` : '已订满'}</span>
+      </div>
+      <div class="room-body">
+        <div class="facilities">${t.fac.map(f => `<span class="fac">${f}</span>`).join('')}</div>
+        <div class="room-desc">${t.desc}</div>
+        <div class="room-foot">
+          <div class="price"><span class="cur">¥</span><span class="num">${t.price}</span><span class="unit"> /晚</span>
+            <span class="nights">共 ${n} 晚 · 合计 ¥${t.price * n} · 到店支付</span></div>
+          <button class="btn ${stock > 0 ? 'btn-primary' : ''}" ${stock > 0 ? '' : 'disabled'}
+                  onclick="${stock > 0 ? `openBooking(${t.id})` : 'void 0'}">立即预订</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- 预订弹窗 ---------- */
+let booking = null, lastBookPhone = '';
+function openBooking(typeId) {
+  const t = ROOM_TYPES.find(x => x.id === typeId);
+  const ci = $('sCheckIn').value || $('rCheckIn').value;
+  const co = $('sCheckOut').value || $('rCheckOut').value;
+  const n = nightsOf(ci, co);
+  booking = { typeId, ci, co, nights: n, price: t.price, total: t.price * n };
+
+  $('bookSummary').innerHTML = `
+    <div class="row"><span>房型</span><span class="v">${t.name}</span></div>
+    <div class="row"><span>入住 / 退房</span><span class="v">${ci} → ${co}（${n} 晚）</span></div>
+    <div class="row"><span>单价</span><span class="v">¥${t.price} /晚</span></div>
+    <div class="amount-line"><span>预估房费（到店支付，另收押金）</span><span class="total">¥${booking.total}</span></div>`;
+  $('bkName').value = ''; $('bkPhone').value = ''; $('bkId').value = '';
+  openModal('bookOverlay');
+}
+
+function submitBooking() {
+  const name = $('bkName').value.trim();
+  const phone = $('bkPhone').value.trim();
+  const idcard = $('bkId').value.trim();
+
+  if (!name) { toast('请填写入住人姓名', 'err'); return; }
+  if (!/^1\d{10}$/.test(phone)) { toast('请填写正确的 11 位手机号', 'err'); return; }
+  if (idcard && !/^\d{17}[\dXx]$/.test(idcard)) { toast('身份证号格式不正确', 'err'); return; }
+  if (stockOf(booking.typeId, booking.ci, booking.co) === 0) { toast('该房型已被订满，请重新查询', 'err'); return; }
+
+  /* 锁定一间空闲房 → 预定（与桌面端「预定」房态联动） */
+  const room = rooms.find(r => r.typeId === booking.typeId && r.status === 'FREE');
+  room.status = 'RESERVED';
+
+  const no = 'R' + booking.ci.replace(/-/g, '') + String(reservations.filter(r => r.id.startsWith('R' + booking.ci.replace(/-/g, ''))).length + 1).padStart(3, '0');
+  reservations.unshift({ id: no, name, phone, room: room.no, typeId: booking.typeId,
+    checkIn: booking.ci, checkOut: booking.co, status: 'PENDING' });
+  lastBookPhone = phone;
+
+  closeModal('bookOverlay');
+  $('okResNo').textContent = no;
+  $('okDetail').textContent = `${name} · ${room.no} 房 · ${booking.ci} 至 ${booking.co} · 共 ${booking.nights} 晚，预估房费 ¥${booking.total}`;
+  openModal('successOverlay');
+
+  renderRooms($('roomGrid'),  $('sCheckIn'),  $('sCheckOut'),  $('sType'), 'resultSub');
+  renderRooms($('roomGrid2'), $('rCheckIn'),  $('rCheckOut'),  $('rType'), 'roomsSub');
+}
+
+/* ---------- 我的预订 ---------- */
+function queryMine() {
+  const phone = $('minePhone').value.trim();
+  if (!/^1\d{10}$/.test(phone)) { toast('请输入正确的 11 位手机号', 'err'); return; }
+  const list = reservations.filter(r => r.phone === phone);
+  const typeName = id => (ROOM_TYPES.find(t => t.id === id) || {}).name || '—';
+  if (list.length === 0) {
+    $('mineResult').innerHTML = `<p style="text-align:center;color:var(--text-tertiary);padding:26px 0">该手机号暂无预订记录</p>`;
+    return;
+  }
+  $('mineResult').innerHTML = `
+    <table class="res-table">
+      <thead><tr><th>预订号</th><th>房型 / 房号</th><th>入住 → 退房</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>
+      ${list.map(r => `
+      <tr>
+        <td class="res-no-code">${r.id}</td>
+        <td>${typeName(r.typeId)} / ${r.room}</td>
+        <td>${r.checkIn} → ${r.checkOut}</td>
+        <td><span class="tag tag-${r.status.toLowerCase()}">${STATUS_TEXT[r.status]}</span></td>
+        <td>${r.status === 'PENDING' ? `<button class="btn btn-danger btn-sm" onclick="cancelBooking('${r.id}','${phone}')">取消预订</button>` : '—'}</td>
+      </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function cancelBooking(id, phone) {
+  const r = reservations.find(x => x.id === id);
+  if (!r || r.status !== 'PENDING') return;
+  if (!confirm(`确认取消预订 ${id}？房间将恢复为可订状态。`)) return;
+  r.status = 'CANCELLED';
+  const room = rooms.find(x => x.no === r.room);
+  if (room && room.status === 'RESERVED') room.status = 'FREE';
+  toast('预订已取消', 'ok');
+  queryMine();
+  renderRooms($('roomGrid'),  $('sCheckIn'),  $('sCheckOut'),  $('sType'), 'resultSub');
+  renderRooms($('roomGrid2'), $('rCheckIn'),  $('rCheckOut'),  $('rType'), 'roomsSub');
+}
+
+/* ---------- 通用 ---------- */
+function openModal(id)  { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
+let toastTimer;
+function toast(msg, type = 'ok') {
+  const t = $('toast');
+  t.textContent = (type === 'ok' ? '✓ ' : '✕ ') + msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+
+initPage();
+</script>
+</body>
+</html>

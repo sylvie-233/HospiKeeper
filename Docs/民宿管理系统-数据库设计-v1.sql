@@ -99,7 +99,13 @@ CREATE TABLE `reservation` (
   `res_no`       VARCHAR(32)     NOT NULL                COMMENT '预定单号：R+日期+序号，如 R20261125001',
   `guest_name`   VARCHAR(32)     NOT NULL                COMMENT '客人姓名',
   `guest_phone`  VARCHAR(20)     NOT NULL                COMMENT '联系电话',
-  `room_id`      INT UNSIGNED    NOT NULL                COMMENT '预定房间 → room.id',
+  `type_id`      INT UNSIGNED    NOT NULL                COMMENT '预定房型 → room_type.id（房型库存模型）',
+  `room_id`      INT UNSIGNED             NULL           COMMENT '到店分配的房间 → room.id；游客在线预订提交时为 NULL',
+  `room_no`      VARCHAR(16)              NULL           COMMENT '房号冗余；游客在线预订提交时为 NULL，转入住时回填',
+  `room_type_name` VARCHAR(32)   NOT NULL                COMMENT '房型名称冗余（列表直读）',
+  `check_in_date`  DATE          NOT NULL                COMMENT '入住日期',
+  `check_out_date` DATE          NOT NULL                COMMENT '退房日期，必须晚于入住日期',
+  `channel`      ENUM('WALK_IN','WEB') NOT NULL DEFAULT 'WALK_IN' COMMENT '预订渠道：前台 / 游客 Web',
   `arrive_time`  DATETIME        NOT NULL                COMMENT '预计到店时间',
   `status`       ENUM('PENDING','CONVERTED','CANCELLED') NOT NULL DEFAULT 'PENDING'
                                                          COMMENT '状态：PENDING=待到店 CONVERTED=已转入住 CANCELLED=已取消',
@@ -113,10 +119,12 @@ CREATE TABLE `reservation` (
   KEY `idx_status` (`status`),
   KEY `idx_arrive` (`arrive_time`),
   KEY `idx_phone` (`guest_phone`),
+  KEY `idx_type_dates` (`type_id`, `check_in_date`, `check_out_date`),
+  CONSTRAINT `fk_res_type` FOREIGN KEY (`type_id`) REFERENCES `room_type` (`id`),
   CONSTRAINT `fk_res_room` FOREIGN KEY (`room_id`) REFERENCES `room` (`id`),
   CONSTRAINT `fk_res_checkin` FOREIGN KEY (`checkin_id`) REFERENCES `checkin_record` (`id`),
   CONSTRAINT `fk_res_user` FOREIGN KEY (`op_user_id`) REFERENCES `sys_user` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='预定管理';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='预定管理（前台代客 + 游客 Web；Web 预订只锁房型日期段，不锁房号）';
 
 -- -------------------------------------------------------------
 -- 5. 入住单表 checkin_record（核心）
@@ -313,9 +321,9 @@ INSERT INTO `room` (`id`,`room_no`,`floor`,`type_id`,`type_name`,`beds`,`price`,
 (14,'208','2',1,'单人间',1,128.00,100.00,100.00,0,0,'DISABLED');
 
 -- 预定（演示：2 条待到店）
-INSERT INTO `reservation` (`res_no`,`guest_name`,`guest_phone`,`room_id`,`arrive_time`,`status`,`op_user_id`) VALUES
-('R20261125001','王芳','13900005678',5 ,'2026-11-25 18:00:00','PENDING',2),
-('R20261125002','孙敏','13700009012',12,'2026-11-26 14:00:00','PENDING',2);
+INSERT INTO `reservation` (`res_no`,`guest_name`,`guest_phone`,`type_id`,`room_id`,`room_no`,`room_type_name`,`check_in_date`,`check_out_date`,`channel`,`arrive_time`,`status`,`op_user_id`) VALUES
+('R20261125001','王芳','13900005678',2,5 ,'105','双人间','2026-11-25','2026-11-26','WALK_IN','2026-11-25 18:00:00','PENDING',2),
+('R20261125002','孙敏','13700009012',3,12,'206','大床房','2026-11-26','2026-11-27','WALK_IN','2026-11-26 14:00:00','PENDING',2);
 
 -- =============================================================
 -- 常用查询示例（对应原型各页面）
