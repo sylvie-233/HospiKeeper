@@ -303,19 +303,29 @@ public sealed class RoomService : IRoomService
         type.BasePrice = decimal.Round(input.BasePrice, 2);
         type.Note = InputGuard.OptionalText(input.Note, "备注");
 
-        if (!string.Equals(oldName, name, StringComparison.Ordinal))
+        var nameChanged = !string.Equals(oldName, name, StringComparison.Ordinal);
+        var priceChanged = oldPrice != type.BasePrice;
+        if (nameChanged || priceChanged)
         {
             var rooms = await _unitOfWork.Rooms.GetByTypeAsync(roomTypeId, cancellationToken);
             foreach (var room in rooms)
             {
-                room.TypeName = name;
+                if (nameChanged)
+                {
+                    room.TypeName = name;
+                }
+
+                if (priceChanged)
+                {
+                    room.Price = type.BasePrice;
+                }
             }
         }
 
-        if (oldPrice != type.BasePrice)
+        if (priceChanged)
         {
             _logger.Append(OperationActions.ModifyPrice, $"房型·{name}",
-                $"基础定价 ¥{oldPrice:0.00} → ¥{type.BasePrice:0.00}");
+                $"基础定价 ¥{oldPrice:0.00} → ¥{type.BasePrice:0.00}，已同步房间标价");
         }
 
         _logger.Append(OperationActions.RoomType, name,
