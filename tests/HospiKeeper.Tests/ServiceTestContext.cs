@@ -1,7 +1,13 @@
+using HospiKeeper.Application.Abstractions.Caching;
+using HospiKeeper.Application.Caching;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Application.Services;
+using HospiKeeper.Caching;
 using HospiKeeper.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace HospiKeeper.Tests;
 
@@ -46,6 +52,17 @@ internal sealed class ServiceTestContext : IAsyncDisposable
         var clock = new SystemClock();
         var unitOfWork = new EfUnitOfWork(db);
         var logger = new OperationLogger(unitOfWork, session, clock);
+        var cacheOptions = Options.Create(new CacheOptions
+        {
+            Provider = CacheProvider.Memory,
+            InstanceName = "hospikeeper-tests:",
+            DefaultExpirationSeconds = 60
+        });
+        var cache = new MemoryCacheService(
+            new MemoryCache(new MemoryCacheOptions()),
+            cacheOptions,
+            NullLogger<MemoryCacheService>.Instance);
+        var cacheInvalidator = new HotelCacheInvalidator(cache);
         var auth = new AuthService(unitOfWork, session, logger, clock);
         var login = await auth.LoginAsync(username, "123456");
         if (!login.Success)
@@ -57,10 +74,10 @@ internal sealed class ServiceTestContext : IAsyncDisposable
             db,
             session,
             auth,
-            new RoomService(unitOfWork, session, logger, clock),
-            new BookingService(unitOfWork, session, logger, clock),
+            new RoomService(unitOfWork, session, logger, clock, cache, cacheInvalidator),
+            new BookingService(unitOfWork, session, logger, clock, cache, cacheInvalidator),
             new RecordService(unitOfWork, session),
-            new ReportService(unitOfWork, clock));
+            new ReportService(unitOfWork, clock, cache));
     }
 
     public ValueTask DisposeAsync() => Db.DisposeAsync();

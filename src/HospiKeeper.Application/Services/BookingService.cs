@@ -1,4 +1,6 @@
 using HospiKeeper.Application.Abstractions;
+using HospiKeeper.Application.Abstractions.Caching;
+using HospiKeeper.Application.Caching;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Contracts;
 using HospiKeeper.Domain.Common;
@@ -47,20 +49,33 @@ public sealed class BookingService : IBookingService
     private readonly SessionContext _session;
     private readonly IOperationLogger _logger;
     private readonly IClock _clock;
+    private readonly ICacheService _cache;
+    private readonly IHotelCacheInvalidator _cacheInvalidator;
 
     public BookingService(
         IUnitOfWork unitOfWork,
         SessionContext session,
         IOperationLogger logger,
-        IClock clock)
+        IClock clock,
+        ICacheService cache,
+        IHotelCacheInvalidator cacheInvalidator)
     {
         _unitOfWork = unitOfWork;
         _session = session;
         _logger = logger;
         _clock = clock;
+        _cache = cache;
+        _cacheInvalidator = cacheInvalidator;
     }
 
     public async Task<IReadOnlyList<BoardRoom>> GetBoardAsync(CancellationToken cancellationToken = default)
+        => await _cache.GetOrCreateAsync(
+            CacheKeys.Board,
+            LoadBoardAsync,
+            CacheDurations.Board,
+            cancellationToken);
+
+    private async Task<List<BoardRoom>> LoadBoardAsync(CancellationToken cancellationToken)
     {
         var rooms = await _unitOfWork.Rooms.GetAllAsync(cancellationToken: cancellationToken);
         var living = await _unitOfWork.CheckIns.GetLivingAsync(cancellationToken);
@@ -85,14 +100,29 @@ public sealed class BookingService : IBookingService
         string? keyword = null,
         CancellationToken cancellationToken = default)
     {
+        var stays = await _cache.GetOrCreateAsync(
+            CacheKeys.StaysAll,
+            LoadLivingStaysAsync,
+            CacheDurations.Stays,
+            cancellationToken);
+
         var kw = keyword?.Trim();
-        var stays = await _unitOfWork.CheckIns.GetLivingAsync(cancellationToken);
+        if (string.IsNullOrEmpty(kw))
+        {
+            return stays;
+        }
 
         return stays
-            .Where(c => string.IsNullOrEmpty(kw)
-                        || c.RoomNo.Contains(kw, StringComparison.OrdinalIgnoreCase)
-                        || c.GuestName.Contains(kw, StringComparison.OrdinalIgnoreCase)
-                        || c.GuestPhone.Contains(kw, StringComparison.OrdinalIgnoreCase))
+            .Where(s => s.CheckIn.RoomNo.Contains(kw, StringComparison.OrdinalIgnoreCase)
+                        || s.CheckIn.GuestName.Contains(kw, StringComparison.OrdinalIgnoreCase)
+                        || s.CheckIn.GuestPhone.Contains(kw, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private async Task<List<StayInfo>> LoadLivingStaysAsync(CancellationToken cancellationToken)
+    {
+        var stays = await _unitOfWork.CheckIns.GetLivingAsync(cancellationToken);
+        return stays
             .OrderByDescending(c => c.CheckInTime)
             .Select(ToStayInfo)
             .ToList();
@@ -104,10 +134,14 @@ public sealed class BookingService : IBookingService
         return record is null || record.Status != CheckInStatus.Living ? null : ToStayInfo(record);
     }
 
-    public Task<IReadOnlyList<Reservation>> GetReservationsAsync(
+    public async Task<IReadOnlyList<Reservation>> GetReservationsAsync(
         ReservationStatus? status = null,
         CancellationToken cancellationToken = default)
-        => _unitOfWork.Reservations.GetAllAsync(status, cancellationToken);
+        => await _cache.GetOrCreateAsync(
+            CacheKeys.Reservations(status),
+            async ct => (await _unitOfWork.Reservations.GetAllAsync(status, ct)).ToList(),
+            CacheDurations.Reservations,
+            cancellationToken);
 
     public Task<Reservation?> GetReservationAsync(
         int reservationId,
@@ -115,6 +149,13 @@ public sealed class BookingService : IBookingService
         => _unitOfWork.Reservations.GetByIdAsync(reservationId, cancellationToken);
 
     public async Task<FrontDeskCounts> GetCountsAsync(CancellationToken cancellationToken = default)
+        => await _cache.GetOrCreateAsync(
+            CacheKeys.Counts,
+            LoadCountsAsync,
+            CacheDurations.Counts,
+            cancellationToken);
+
+    private async Task<FrontDeskCounts> LoadCountsAsync(CancellationToken cancellationToken)
     {
         var living = await _unitOfWork.CheckIns.CountLivingAsync(cancellationToken);
         var pending = await _unitOfWork.Reservations.CountPendingAsync(cancellationToken);
@@ -220,6 +261,7 @@ public sealed class BookingService : IBookingService
             detail, record.CheckInNo);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateFrontDeskAsync(cancellationToken);
         return record;
     }
 
@@ -312,6 +354,7 @@ public sealed class BookingService : IBookingService
             $"结算 ¥{billing.Total:0.00}{damageNote}，房间转待打扫", bill.BillNo);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateFrontDeskAsync(cancellationToken);
         return bill;
     }
 
@@ -345,6 +388,7 @@ public sealed class BookingService : IBookingService
             $"{record.GuestName} 追加 {item} ¥{amount:0.00}", record.CheckInNo);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateFrontDeskAsync(cancellationToken);
     }
 
     public async Task<Reservation> CreateReservationAsync(
@@ -386,6 +430,7 @@ public sealed class BookingService : IBookingService
             $"{guestName} 预定 {reservation.ArriveTime:MM-dd HH:mm} 到店", reservation.ResNo);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateFrontDeskAsync(cancellationToken);
         return reservation;
     }
 
@@ -415,6 +460,7 @@ public sealed class BookingService : IBookingService
             $"预定 {reservation.ResNo}（{reservation.GuestName}）已取消", reservation.ResNo);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateFrontDeskAsync(cancellationToken);
     }
 
     private static StayInfo ToStayInfo(CheckInRecord record)

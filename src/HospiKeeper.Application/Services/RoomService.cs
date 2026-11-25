@@ -1,4 +1,6 @@
 using HospiKeeper.Application.Abstractions;
+using HospiKeeper.Application.Abstractions.Caching;
+using HospiKeeper.Application.Caching;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Contracts;
 using HospiKeeper.Domain.Common;
@@ -52,37 +54,62 @@ public sealed class RoomService : IRoomService
     private readonly SessionContext _session;
     private readonly IOperationLogger _logger;
     private readonly IClock _clock;
+    private readonly ICacheService _cache;
+    private readonly IHotelCacheInvalidator _cacheInvalidator;
 
     public RoomService(
         IUnitOfWork unitOfWork,
         SessionContext session,
         IOperationLogger logger,
-        IClock clock)
+        IClock clock,
+        ICacheService cache,
+        IHotelCacheInvalidator cacheInvalidator)
     {
         _unitOfWork = unitOfWork;
         _session = session;
         _logger = logger;
         _clock = clock;
+        _cache = cache;
+        _cacheInvalidator = cacheInvalidator;
     }
 
-    public Task<IReadOnlyList<Room>> GetRoomsAsync(
+    public async Task<IReadOnlyList<Room>> GetRoomsAsync(
         int? floor = null,
         int? typeId = null,
         RoomStatus? status = null,
         CancellationToken cancellationToken = default)
-        => _unitOfWork.Rooms.GetAllAsync(floor, typeId, status, cancellationToken);
+    {
+        var key = CacheKeys.Rooms(floor, typeId, status);
+        return await _cache.GetOrCreateAsync(
+            key,
+            async ct => (await _unitOfWork.Rooms.GetAllAsync(floor, typeId, status, ct)).ToList(),
+            CacheDurations.Rooms,
+            cancellationToken);
+    }
 
-    public Task<IReadOnlyList<Room>> GetFreeRoomsAsync(CancellationToken cancellationToken = default)
-        => _unitOfWork.Rooms.GetFreeAsync(cancellationToken);
+    public async Task<IReadOnlyList<Room>> GetFreeRoomsAsync(CancellationToken cancellationToken = default)
+        => await _cache.GetOrCreateAsync(
+            CacheKeys.FreeRooms,
+            async ct => (await _unitOfWork.Rooms.GetFreeAsync(ct)).ToList(),
+            CacheDurations.Rooms,
+            cancellationToken);
 
     public Task<Room?> GetRoomAsync(int roomId, CancellationToken cancellationToken = default)
         => _unitOfWork.Rooms.GetByIdAsync(roomId, cancellationToken);
 
-    public Task<IReadOnlyList<int>> GetFloorsAsync(CancellationToken cancellationToken = default)
-        => _unitOfWork.Rooms.GetFloorsAsync(cancellationToken);
+    public async Task<IReadOnlyList<int>> GetFloorsAsync(CancellationToken cancellationToken = default)
+        => await _cache.GetOrCreateAsync(
+            CacheKeys.Floors,
+            async ct => (await _unitOfWork.Rooms.GetFloorsAsync(ct)).ToList(),
+            CacheDurations.Rooms,
+            cancellationToken);
 
-    public Task<IReadOnlyList<RoomType>> GetRoomTypesAsync(CancellationToken cancellationToken = default)
-        => _unitOfWork.RoomTypes.GetAllAsync(cancellationToken);
+    public async Task<IReadOnlyList<RoomType>> GetRoomTypesAsync(CancellationToken cancellationToken = default)
+        => await _cache.GetOrCreateAsync(
+            CacheKeys.RoomTypes,
+            async ct => (await _unitOfWork.RoomTypes.GetAllAsync(ct)).ToList(),
+            CacheDurations.RoomTypes,
+            cancellationToken);
 
     public async Task<Room> CreateRoomAsync(RoomInput input, CancellationToken cancellationToken = default)
     {
@@ -119,6 +146,7 @@ public sealed class RoomService : IRoomService
         _logger.Append(OperationActions.Room, $"{room.RoomNo} · {room.TypeName}",
             $"新增房间 {room.RoomNo}，标价 ¥{room.Price:0.00}");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
         return room;
     }
 
@@ -157,6 +185,7 @@ public sealed class RoomService : IRoomService
         _logger.Append(OperationActions.Room, $"{room.RoomNo} · {room.TypeName}",
             $"修改房间资料，标价 ¥{room.Price:0.00}，底价 ¥{room.MinPrice:0.00}");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
     }
 
     public async Task DeleteRoomAsync(int roomId, CancellationToken cancellationToken = default)
@@ -179,6 +208,7 @@ public sealed class RoomService : IRoomService
         _logger.Append(OperationActions.Room, $"{room.RoomNo} · {room.TypeName}",
             $"删除房间 {room.RoomNo}");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
     }
 
     public async Task MarkCleaningCompleteAsync(int roomId, CancellationToken cancellationToken = default)
@@ -195,6 +225,7 @@ public sealed class RoomService : IRoomService
         room.Status = RoomStatus.Free;
         _logger.Append(OperationActions.Cleaning, room.RoomNo, "保洁完成，房间改为空闲");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
     }
 
     public async Task RestoreRoomAsync(int roomId, CancellationToken cancellationToken = default)
@@ -214,6 +245,7 @@ public sealed class RoomService : IRoomService
         _logger.Append(OperationActions.Restore, room.RoomNo,
             $"{RoomStatusText(oldStatus)} → 空闲");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
     }
 
     public async Task SetMaintenanceAsync(
@@ -242,6 +274,7 @@ public sealed class RoomService : IRoomService
         _logger.Append(action, room.RoomNo,
             $"{RoomStatusText(status)}{(room.Note is null ? string.Empty : "：" + room.Note)}");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
     }
 
     public async Task<RoomType> CreateRoomTypeAsync(
@@ -269,6 +302,7 @@ public sealed class RoomService : IRoomService
         _logger.Append(OperationActions.RoomType, name,
             $"新增房型，基础定价 ¥{type.BasePrice:0.00}");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
         return type;
     }
 
@@ -316,6 +350,7 @@ public sealed class RoomService : IRoomService
                 : $"房型改名：{oldName} → {name}，已同步房间数据");
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
     }
 
     public async Task DeleteRoomTypeAsync(int roomTypeId, CancellationToken cancellationToken = default)
@@ -332,6 +367,7 @@ public sealed class RoomService : IRoomService
         _unitOfWork.RoomTypes.Remove(type);
         _logger.Append(OperationActions.RoomType, type.Name, "删除房型");
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _cacheInvalidator.InvalidateRoomsAsync(cancellationToken);
     }
 
     private static void ValidateRoomInput(RoomInput input)

@@ -135,6 +135,19 @@ public sealed class BookingWorkflowTests
     }
 
     [Fact]
+    public async Task CheckIn_InvalidatesRoomCaches()
+    {
+        await using var ctx = await ServiceTestContext.CreateAsync();
+        var freeBefore = await ctx.Rooms.GetFreeRoomsAsync();
+        var room = freeBefore.First();
+
+        await ctx.Booking.CheckInAsync(CreateRequest(room.Id, room.Price, room.Deposit));
+
+        var freeAfter = await ctx.Rooms.GetFreeRoomsAsync();
+        Assert.DoesNotContain(freeAfter, r => r.Id == room.Id);
+    }
+
+    [Fact]
     public async Task RoomWithHistory_CannotBeDeleted()
     {
         await using var ctx = await ServiceTestContext.CreateAsync();

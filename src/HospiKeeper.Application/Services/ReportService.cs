@@ -1,4 +1,6 @@
 using HospiKeeper.Application.Abstractions;
+using HospiKeeper.Application.Abstractions.Caching;
+using HospiKeeper.Application.Caching;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Contracts;
 using HospiKeeper.Domain.Common;
@@ -20,14 +22,23 @@ public sealed class ReportService : IReportService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IClock _clock;
+    private readonly ICacheService _cache;
 
-    public ReportService(IUnitOfWork unitOfWork, IClock clock)
+    public ReportService(IUnitOfWork unitOfWork, IClock clock, ICacheService cache)
     {
         _unitOfWork = unitOfWork;
         _clock = clock;
+        _cache = cache;
     }
 
     public async Task<ReportSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
+        => await _cache.GetOrCreateAsync(
+            CacheKeys.ReportSnapshot,
+            LoadSnapshotAsync,
+            CacheDurations.Reports,
+            cancellationToken);
+
+    private async Task<ReportSnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
     {
         var now = _clock.Now;
         var today = now.Date;
@@ -106,6 +117,18 @@ public sealed class ReportService : IReportService
             throw new DomainException("结束日期不能早于开始日期。");
         }
 
+        return await _cache.GetOrCreateAsync(
+            CacheKeys.ReportRange(from, to),
+            ct => LoadRevenueRangeAsync(from, to, ct),
+            CacheDurations.Reports,
+            cancellationToken);
+    }
+
+    private async Task<RevenueRangeResult> LoadRevenueRangeAsync(
+        DateTime from,
+        DateTime to,
+        CancellationToken cancellationToken)
+    {
         var length = (to - from).Days + 1;
         var previousFrom = from.AddDays(-length);
         var previousTo = from.AddDays(-1);
