@@ -1,0 +1,17 @@
+@using System.Net.Http
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.JSInterop
+@using HospiKeeper.Client
+@using HospiKeeper.Contracts
+@using HospiKeeper.Domain.Enums
+@using HospiKeeper.Web
+@using HospiKeeper.Web.Components
+@using HospiKeeper.Web.Components.Booking
+@using HospiKeeper.Web.Components.Layout
+@using HospiKeeper.Web.Services
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+
+@* 页面统一使用交互式服务端渲染：首屏由服务端输出，交互在 Blazor Server 电路内完成。 *@

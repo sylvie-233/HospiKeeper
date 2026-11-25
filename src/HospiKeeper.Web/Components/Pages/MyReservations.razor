@@ -1,0 +1,212 @@
+@page "/mine"
+@inject IGuestBookingApi Api
+@inject ToastService Toast
+
+<PageTitle>我的预订 · 云栖民宿</PageTitle>
+
+<section class="page-head">
+    <div class="section-eyebrow">MY RESERVATIONS</div>
+    <h1>我的预订</h1>
+    <p>输入预订时填写的手机号，查询或取消您的预订。</p>
+</section>
+
+<section class="section narrow-section">
+    <div class="phone-panel">
+        <label class="field">
+            <span>预订手机号</span>
+            <div class="phone-row">
+                <input class="input" type="tel" maxlength="11" placeholder="请输入 11 位手机号"
+                       @bind="_phone" @bind:event="oninput" @onkeydown="OnPhoneKeyDown" />
+                <button class="btn btn-primary" type="button" disabled="@_searching" @onclick="SearchAsync">
+                    @(_searching ? "查询中..." : "查询预订")
+                </button>
+            </div>
+        </label>
+        <p class="panel-tip">手机号仅用于查询本次预订，不涉及会员注册。</p>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="page-error">@_error</div>
+    }
+
+    @if (_searched && !_searching)
+    {
+        @if (_reservations.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3>该手机号暂无预订记录</h3>
+                <p>请确认手机号是否与预订时填写的一致。</p>
+                <a class="btn btn-primary" href="/rooms">去看看房型</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="res-table">
+                    <thead>
+                        <tr>
+                            <th>预订号</th>
+                            <th>房型 / 房号</th>
+                            <th>入住 → 退房</th>
+                            <th>晚数</th>
+                            <th>预估房费</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in _reservations)
+                        {
+                            <tr>
+                                <td><span class="res-no-code">@item.ResNo</span></td>
+                                <td>
+                                    <b>@item.RoomTypeName × 1</b>
+                                    <span class="sub-text">
+                                        @(string.IsNullOrWhiteSpace(item.RoomNo)
+                                            ? "房号到店分配"
+                                            : $"房号 {item.RoomNo}")
+                                    </span>
+                                </td>
+                                <td>@item.CheckInDate.ToString("MM-dd") → @item.CheckOutDate.ToString("MM-dd")</td>
+                                <td>@item.Nights 晚</td>
+                                <td class="price-cell">¥@item.Total.ToString("0.00")</td>
+                                <td><StatusTag Status="item.Status" /></td>
+                                <td>
+                                    @if (item.Status == ReservationStatus.Pending && item.Channel == ReservationChannel.Web)
+                                    {
+                                        <button class="btn btn-link danger" type="button"
+                                                @onclick="() => _cancelTarget = item">取消预订</button>
+                                    }
+                                    else
+                                    {
+                                        <span class="sub-text">—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+    else if (!_searched)
+    {
+        <div class="search-hint">
+            <span>🔎</span>
+            <p>输入手机号后点击「查询预订」，即可查看预订状态。</p>
+        </div>
+    }
+</section>
+
+@if (_cancelTarget is not null)
+{
+    <div class="modal-mask" @onclick="CloseCancel">
+        <div class="modal confirm-modal" @onclick:stopPropagation="true">
+            <div class="confirm-icon">!</div>
+            <h3>取消预订？</h3>
+            <p>确定取消预订 <b>@_cancelTarget.ResNo</b>（@_cancelTarget.RoomTypeName）吗？<br />取消后该房型的日期段库存会自动回补。</p>
+            <div class="modal-actions center">
+                <button class="btn" type="button" @onclick="CloseCancel" disabled="@_cancelling">返回</button>
+                <button class="btn btn-danger" type="button" @onclick="ConfirmCancelAsync" disabled="@_cancelling">
+                    @(_cancelling ? "取消中..." : "确认取消")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery] public string? Phone { get; set; }
+
+    private string _phone = string.Empty;
+    private List<GuestReservationDto> _reservations = [];
+    private bool _searching;
+    private bool _searched;
+    private string? _error;
+    private GuestReservationDto? _cancelTarget;
+    private bool _cancelling;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(Phone))
+        {
+            _phone = Phone.Trim();
+            await SearchAsync();
+        }
+    }
+
+    private async Task OnPhoneKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await SearchAsync();
+        }
+    }
+
+    private async Task SearchAsync()
+    {
+        _error = null;
+        var phone = _phone.Trim();
+        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, ValidationPatterns.Mobile))
+        {
+            _error = "请输入 11 位有效手机号。";
+            return;
+        }
+
+        _searching = true;
+        try
+        {
+            _reservations = (await Api.GetByPhoneAsync(phone)).ToList();
+            _searched = true;
+        }
+        catch (Exception ex) when (ex is ApiException or HttpRequestException)
+        {
+            _error = ex is ApiException api ? api.Message : "网络连接失败，请稍后重试。";
+            _reservations = [];
+            _searched = true;
+        }
+        finally
+        {
+            _searching = false;
+        }
+    }
+
+    private void CloseCancel()
+    {
+        if (!_cancelling)
+        {
+            _cancelTarget = null;
+        }
+    }
+
+    private async Task ConfirmCancelAsync()
+    {
+        if (_cancelTarget is null)
+        {
+            return;
+        }
+
+        _cancelling = true;
+        try
+        {
+            await Api.CancelAsync(_cancelTarget.ResNo, _phone.Trim());
+            Toast.Success("预订已取消，库存已回补。");
+            _cancelTarget = null;
+            await SearchAsync();
+        }
+        catch (ApiException ex)
+        {
+            Toast.Error(ex.Message);
+        }
+        catch (HttpRequestException)
+        {
+            Toast.Error("网络连接失败，请稍后重试。");
+        }
+        finally
+        {
+            _cancelling = false;
+        }
+    }
+}

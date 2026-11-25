@@ -1,0 +1,45 @@
+@if (Reservation is not null)
+{
+    <div class="modal-mask" @onclick="CloseAsync">
+        <div class="modal success-modal" @onclick:stopPropagation="true">
+            <div class="success-icon">✓</div>
+            <h2>预订成功</h2>
+            <p class="success-sub">请保存预订号，到店出示即可办理入住</p>
+
+            <div class="success-resno">@Reservation.ResNo</div>
+
+            <div class="success-detail">
+                <div><span>入住人</span><b>@Reservation.GuestName</b></div>
+                <div><span>房型</span><b>@Reservation.RoomTypeName × 1</b></div>
+                <div><span>日期</span><b>@Reservation.CheckInDate.ToString("MM-dd") → @Reservation.CheckOutDate.ToString("MM-dd") · @Reservation.Nights 晚</b></div>
+                <div><span>预估房费</span><b>¥@Reservation.Total.ToString("0.00")</b></div>
+                <div><span>房号</span><b>到店分配</b></div>
+            </div>
+
+            <div class="success-tip">
+                入住日 18:00 前到店；如需修改或取消，请前往「我的预订」。
+            </div>
+
+            <div class="modal-actions center">
+                <button class="btn" type="button" @onclick="CloseAsync">继续浏览</button>
+                <button class="btn btn-primary" type="button" @onclick="ViewMineAsync">查看我的预订</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public GuestReservationDto? Reservation { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<GuestReservationDto> OnViewMine { get; set; }
+
+    private async Task CloseAsync() => await OnClose.InvokeAsync();
+
+    private async Task ViewMineAsync()
+    {
+        if (Reservation is not null)
+        {
+            await OnViewMine.InvokeAsync(Reservation);
+        }
+    }
+}

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>HospiKeeper.Web</RootNamespace>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HospiKeeper.Contracts\HospiKeeper.Contracts.csproj" />
+    <ProjectReference Include="..\HospiKeeper.Client\HospiKeeper.Client.csproj" />
+    <ProjectReference Include="..\Sylvie233.Logging\Sylvie233.Logging.csproj" />
+  </ItemGroup>
+</Project>

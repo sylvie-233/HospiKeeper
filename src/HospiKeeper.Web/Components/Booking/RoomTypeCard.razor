@@ -1,0 +1,47 @@
+<article class="room-card">
+    <div class="room-cover @CoverClass">
+        <span class="ico-lg">@Icon</span>
+        <span class="type-badge">@RoomType.Name</span>
+        <span class="stock @(RoomType.Remaining == 0 ? "full" : string.Empty)">
+            @(RoomType.Remaining > 0 ? $"剩余 {RoomType.Remaining} 间" : "已订满")
+        </span>
+    </div>
+    <div class="room-body">
+        <div class="facilities">
+            <span class="fac">@RoomType.Beds 张床</span>
+            <span class="fac">@(RoomType.HasWindow ? "有窗" : "无窗")</span>
+            <span class="fac">@(RoomType.HasBath ? "独立卫浴" : "公共卫浴")</span>
+            <span class="fac">免费 WiFi</span>
+        </div>
+        <p class="room-desc">@(string.IsNullOrWhiteSpace(RoomType.Note) ? "舒适整洁，适合旅途休憩。" : RoomType.Note)</p>
+
+        <div class="room-foot">
+            <div class="price">
+                <span class="cur">¥</span><span class="num">@RoomType.BasePrice.ToString("0")</span>
+                <span class="unit">/晚</span>
+                @if (ShowTotal && Nights > 0)
+                {
+                    <span class="nights">共 @Nights 晚 · 合计 ¥@((RoomType.BasePrice * Nights).ToString("0")) · 到店支付</span>
+                }
+            </div>
+            <button class="btn btn-primary" type="button"
+                    disabled="@(RoomType.Remaining == 0)"
+                    @onclick="() => OnBook.InvokeAsync(RoomType)">
+                @(RoomType.Remaining == 0 ? "已订满" : "立即预订")
+            </button>
+        </div>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public GuestRoomTypeDto RoomType { get; set; } = default!;
+    [Parameter] public int Nights { get; set; }
+    [Parameter] public bool ShowTotal { get; set; } = true;
+    [Parameter] public EventCallback<GuestRoomTypeDto> OnBook { get; set; }
+
+    private string CoverClass => RoomType.Name.Contains("单")
+        ? "cover-single"
+        : RoomType.Name.Contains("双") ? "cover-double" : "cover-king";
+
+    private string Icon => RoomType.Name.Contains("单") ? "🛏️" : RoomType.Name.Contains("双") ? "🛏️" : "🛌";
+}

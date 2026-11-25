@@ -1,0 +1,173 @@
+@page "/rooms"
+@inject IGuestBookingApi Api
+@inject ToastService Toast
+@inject NavigationManager Navigation
+
+<PageTitle>客房预订 · 云栖民宿</PageTitle>
+
+<section class="page-head">
+    <div class="section-eyebrow">ROOMS &amp; SUITES</div>
+    <h1>选择你的房型</h1>
+    <p>@DateSummary</p>
+</section>
+
+<div class="search-wrap compact">
+    <DateSearchBar CheckIn="_checkIn" CheckOut="_checkOut" TypeId="_typeId"
+                   RoomTypes="_availability?.RoomTypes ?? []"
+                   OnSearch="SearchAsync" />
+</div>
+
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="page-error">@_error</div>
+}
+
+<section class="section">
+    <div class="sec-head">
+        <div>
+            <div class="section-title">可订房型</div>
+            <div class="section-sub">价格为每晚房费，到店支付；房号到店后由前台分配。</div>
+        </div>
+        <div class="result-count">共 @VisibleTypes.Count 个房型</div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="room-grid">
+            @for (var i = 0; i < 3; i++)
+            {
+                <div class="room-card skeleton"></div>
+            }
+        </div>
+    }
+    else if (VisibleTypes.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-icon">🌙</div>
+            <h3>所选日期暂无可订房型</h3>
+            <p>试试调整日期或选择其他房型。</p>
+        </div>
+    }
+    else
+    {
+        <div class="room-grid">
+            @foreach (var type in VisibleTypes)
+            {
+                <RoomTypeCard RoomType="type" Nights="Nights" OnBook="OpenBooking" />
+            }
+        </div>
+    }
+</section>
+
+<BookingDialog RoomType="_selectedType"
+               CheckIn="_checkIn"
+               CheckOut="_checkOut"
+               Nights="Nights"
+               Visible="_selectedType is not null"
+               OnClose="CloseBooking"
+               OnBooked="OnBooked" />
+
+<BookingSuccess Reservation="_success"
+                OnClose="CloseSuccess"
+                OnViewMine="ViewMineAsync" />
+
+@code {
+    [SupplyParameterFromQuery] public DateTime? CheckIn { get; set; }
+    [SupplyParameterFromQuery] public DateTime? CheckOut { get; set; }
+    [SupplyParameterFromQuery] public int? TypeId { get; set; }
+
+    private DateTime _checkIn = DateTime.Today;
+    private DateTime _checkOut = DateTime.Today.AddDays(1);
+    private int? _typeId;
+    private GuestAvailabilityResult? _availability;
+    private GuestRoomTypeDto? _selectedType;
+    private GuestReservationDto? _success;
+    private bool _loading = true;
+    private string? _error;
+
+    private int Nights => Math.Max(1, (_checkOut.Date - _checkIn.Date).Days);
+
+    private string DateSummary =>
+        $"{_checkIn:MM月dd日} 入住 · {_checkOut:MM月dd日} 退房 · 共 {Nights} 晚";
+
+    private IReadOnlyList<GuestRoomTypeDto> VisibleTypes
+    {
+        get
+        {
+            var types = _availability?.RoomTypes ?? [];
+            return _typeId is int selected
+                ? types.Where(t => t.TypeId == selected).ToList()
+                : types;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _checkIn = (CheckIn ?? DateTime.Today).Date;
+        _checkOut = (CheckOut ?? _checkIn.AddDays(1)).Date;
+        _typeId = TypeId;
+        if (_checkOut <= _checkIn)
+        {
+            _checkOut = _checkIn.AddDays(1);
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task SearchAsync(SearchCriteria criteria)
+    {
+        _checkIn = criteria.CheckIn;
+        _checkOut = criteria.CheckOut;
+        _typeId = criteria.TypeId;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _availability = await Api.GetAvailabilityAsync(_checkIn, _checkOut);
+        }
+        catch (Exception ex) when (ex is ApiException or HttpRequestException)
+        {
+            _availability = null;
+            _error = "暂时无法获取房态，请稍后重试或联系前台。";
+            Toast.Error(_error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenBooking(GuestRoomTypeDto type)
+    {
+        if (type.Remaining <= 0)
+        {
+            Toast.Error("该房型已订满，请选择其他日期或房型。");
+            return;
+        }
+
+        _selectedType = type;
+    }
+
+    private void CloseBooking() => _selectedType = null;
+
+    private async Task OnBooked(GuestReservationDto reservation)
+    {
+        _selectedType = null;
+        _success = reservation;
+        await LoadAsync();
+    }
+
+    private void CloseSuccess() => _success = null;
+
+    private async Task ViewMineAsync(GuestReservationDto reservation)
+    {
+        _success = null;
+        Navigation.NavigateTo($"/mine?phone={Uri.EscapeDataString(reservation.GuestPhone)}");
+        await Task.CompletedTask;
+    }
+}

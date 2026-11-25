@@ -1,0 +1,19 @@
+@implements IDisposable
+@inject ToastService Toast
+
+<div class="toast-stack" aria-live="polite">
+    @foreach (var item in Toast.Messages)
+    {
+        <div class="toast toast-@item.Kind.ToString().ToLowerInvariant()">
+            <span class="toast-dot"></span>@item.Text
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized() => Toast.Changed += HandleChanged;
+
+    private void HandleChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Toast.Changed -= HandleChanged;
+}

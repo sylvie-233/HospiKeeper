@@ -1,0 +1,77 @@
+@inject ToastService Toast
+
+<section class="search-bar">
+    <div class="search-cell">
+        <label>入住日期</label>
+        <input type="date" @bind="_checkIn" @bind:format="yyyy-MM-dd"
+               min="@TodayText" />
+    </div>
+    <div class="search-cell">
+        <label>退房日期</label>
+        <input type="date" @bind="_checkOut" @bind:format="yyyy-MM-dd"
+               min="@TomorrowText" />
+    </div>
+    <div class="search-cell narrow">
+        <label>房型偏好</label>
+        <select value="@(_typeId?.ToString() ?? string.Empty)" @onchange="OnTypeChanged">
+            <option value="">全部房型</option>
+            @foreach (var type in RoomTypes)
+            {
+                <option value="@type.TypeId">@type.Name · ¥@type.BasePrice.ToString("0")/晚</option>
+            }
+        </select>
+    </div>
+    <button class="btn btn-primary btn-lg" type="button" @onclick="SearchAsync">查询可订房型</button>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="search-error">@_error</div>
+}
+
+@code {
+    [Parameter] public DateTime CheckIn { get; set; } = DateTime.Today;
+    [Parameter] public DateTime CheckOut { get; set; } = DateTime.Today.AddDays(1);
+    [Parameter] public int? TypeId { get; set; }
+    [Parameter] public IReadOnlyList<GuestRoomTypeDto> RoomTypes { get; set; } = [];
+    [Parameter] public EventCallback<SearchCriteria> OnSearch { get; set; }
+
+    private DateTime _checkIn;
+    private DateTime _checkOut;
+    private int? _typeId;
+    private string? _error;
+
+    private string TodayText => DateTime.Today.ToString("yyyy-MM-dd");
+    private string TomorrowText => DateTime.Today.AddDays(1).ToString("yyyy-MM-dd");
+
+    protected override void OnParametersSet()
+    {
+        _checkIn = CheckIn.Date;
+        _checkOut = CheckOut.Date;
+        _typeId = TypeId;
+    }
+
+    private void OnTypeChanged(ChangeEventArgs args)
+    {
+        var value = args.Value?.ToString();
+        _typeId = int.TryParse(value, out var parsed) ? parsed : null;
+    }
+
+    private async Task SearchAsync()
+    {
+        _error = null;
+        if (_checkIn.Date < DateTime.Today)
+        {
+            _error = "入住日期不能早于今天。";
+            return;
+        }
+
+        if (_checkOut.Date <= _checkIn.Date)
+        {
+            _error = "退房日期必须晚于入住日期。";
+            return;
+        }
+
+        await OnSearch.InvokeAsync(new SearchCriteria(_checkIn.Date, _checkOut.Date, _typeId));
+    }
+}

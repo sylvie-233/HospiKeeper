@@ -1,0 +1,144 @@
+@inject IGuestBookingApi Api
+@inject ToastService Toast
+
+@if (Visible && RoomType is not null)
+{
+    <div class="modal-mask" @onclick="CloseAsync">
+        <div class="modal booking-modal" @onclick:stopPropagation="true">
+            <div class="modal-head">
+                <div>
+                    <h3>填写预订信息</h3>
+                    <p>免登录 · 到店支付 · 房号到店分配</p>
+                </div>
+                <button class="modal-close" type="button" @onclick="CloseAsync" aria-label="关闭">×</button>
+            </div>
+
+            <div class="booking-summary">
+                <div>
+                    <span class="summary-label">房型</span>
+                    <b>@RoomType!.Name × 1</b>
+                </div>
+                <div>
+                    <span class="summary-label">日期</span>
+                    <b>@CheckIn.ToString("MM-dd") → @CheckOut.ToString("MM-dd") · @Nights 晚</b>
+                </div>
+                <div class="summary-price">
+                    <span class="summary-label">预估房费</span>
+                    <b>¥@((RoomType.BasePrice * Nights).ToString("0.00"))</b>
+                </div>
+            </div>
+
+            <EditForm Model="_form" OnValidSubmit="SubmitAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="form-summary" />
+
+                <div class="form-grid">
+                    <label class="field">
+                        <span>入住人姓名 <em>*</em></span>
+                        <InputText @bind-Value="_form.GuestName" class="input" placeholder="请输入姓名" />
+                        <ValidationMessage For="() => _form.GuestName" />
+                    </label>
+
+                    <label class="field">
+                        <span>手机号 <em>*</em></span>
+                        <InputText @bind-Value="_form.GuestPhone" class="input" placeholder="用于查询 / 取消预订" />
+                        <ValidationMessage For="() => _form.GuestPhone" />
+                    </label>
+
+                    <label class="field">
+                        <span>身份证号（选填）</span>
+                        <InputText @bind-Value="_form.GuestIdCard" class="input" placeholder="到店出示即可" />
+                        <ValidationMessage For="() => _form.GuestIdCard" />
+                    </label>
+
+                    <label class="field">
+                        <span>备注（选填）</span>
+                        <InputText @bind-Value="_form.Note" class="input" placeholder="如预计到店时间" />
+                        <ValidationMessage For="() => _form.Note" />
+                    </label>
+                </div>
+
+                <div class="booking-hint">
+                    到店支付房费与押金；入住日 18:00 前到店，出示预订号或手机号即可办理。
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn" type="button" @onclick="CloseAsync" disabled="@_submitting">再想想</button>
+                    <button class="btn btn-primary btn-lg" type="submit" disabled="@_submitting">
+                        @(_submitting ? "提交中..." : "确认预订")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public GuestRoomTypeDto? RoomType { get; set; }
+    [Parameter] public DateTime CheckIn { get; set; }
+    [Parameter] public DateTime CheckOut { get; set; }
+    [Parameter] public int Nights { get; set; }
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<GuestReservationDto> OnBooked { get; set; }
+
+    private BookingFormModel _form = new();
+    private bool _submitting;
+    private bool _wasVisible;
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && !_wasVisible)
+        {
+            _form = new BookingFormModel();
+        }
+
+        _wasVisible = Visible;
+    }
+
+    private async Task CloseAsync()
+    {
+        if (_submitting)
+        {
+            return;
+        }
+
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (RoomType is null)
+        {
+            return;
+        }
+
+        _submitting = true;
+        try
+        {
+            var result = await Api.CreateAsync(new GuestBookingRequest(
+                RoomType.TypeId,
+                CheckIn,
+                CheckOut,
+                _form.GuestName.Trim(),
+                _form.GuestPhone.Trim(),
+                string.IsNullOrWhiteSpace(_form.GuestIdCard) ? null : _form.GuestIdCard.Trim(),
+                string.IsNullOrWhiteSpace(_form.Note) ? null : _form.Note.Trim()));
+
+            Toast.Success("预订成功，期待您的到来。");
+            await OnBooked.InvokeAsync(result);
+        }
+        catch (ApiException ex)
+        {
+            Toast.Error(ex.Message);
+        }
+        catch (HttpRequestException)
+        {
+            Toast.Error("网络连接失败，请稍后重试。");
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+}
