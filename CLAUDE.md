@@ -73,8 +73,13 @@ dotnet run --project src/HospiKeeper.Api
 # 启动桌面端
 dotnet run --project src/HospiKeeper.Desktop
 
-# 一键开发启动
-./Scripts/run-dev.ps1
+# 本地运维（根目录 manage.ps1）
+pwsh ./manage.ps1 up
+pwsh ./manage.ps1 status
+pwsh ./manage.ps1 dev
+pwsh ./manage.ps1 logs -Target api -Follow
+pwsh ./manage.ps1 reset -Force
+pwsh ./manage.ps1 migrate
 ```
 
 ### EF Core 迁移

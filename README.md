@@ -96,10 +96,23 @@ dotnet run --project src/HospiKeeper.Api
 dotnet run --project src/HospiKeeper.Desktop
 ```
 
-或者直接运行：
+或者使用根目录运维脚本一键启动 MySQL、API 后打开桌面端：
 
 ```powershell
-./Scripts/run-dev.ps1
+pwsh ./manage.ps1 dev
+```
+
+常用运维命令：
+
+```powershell
+pwsh ./manage.ps1 up            # 启动 MySQL + API 并等待就绪
+pwsh ./manage.ps1 status        # 查看 MySQL / API 状态与地址
+pwsh ./manage.ps1 logs -Target api -Follow
+pwsh ./manage.ps1 build         # 构建解决方案
+pwsh ./manage.ps1 test          # 运行测试
+pwsh ./manage.ps1 migrate       # 应用 EF Core 迁移
+pwsh ./manage.ps1 reset -Force  # 清空数据卷后重建环境
+pwsh ./manage.ps1 down          # 停止 API 与容器
 ```
 
 ## 初始账号
