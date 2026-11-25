@@ -1,0 +1,295 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:HospiKeeper.Desktop.ViewModels"
+        xmlns:svc="using:HospiKeeper.Desktop.Services"
+        xmlns:controls="using:HospiKeeper.UI.Controls"
+        xmlns:icons="using:HospiKeeper.UI.Icons"
+        x:Class="HospiKeeper.Desktop.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="{Binding WindowTitle}"
+        Width="1320"
+        Height="820"
+        MinWidth="1120"
+        MinHeight="680"
+        WindowStartupLocation="Manual"
+        WindowDecorations="BorderOnly"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        Background="#F5F7FA"
+        FontFamily="{DynamicResource AntFontFamily}"
+        Loaded="OnLoaded"
+        Opened="OnOpened">
+
+  <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+P" Command="{Binding ChangePasswordCommand}" />
+    <KeyBinding Gesture="F2" Command="{Binding NavigateCommand}" CommandParameter="checkin" />
+  </Window.KeyBindings>
+
+  <Grid>
+
+    <DockPanel>
+
+      <!-- ============ 标题栏 ============ -->
+      <Border DockPanel.Dock="Top" Height="42" PointerPressed="OnTitleBarPointerPressed">
+        <Border.Background>
+          <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+            <GradientStop Color="#0E5FD8" Offset="0" />
+            <GradientStop Color="#1677FF" Offset="0.65" />
+            <GradientStop Color="#4096FF" Offset="1" />
+          </LinearGradientBrush>
+        </Border.Background>
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <StackPanel Orientation="Horizontal" Spacing="9" Margin="12,0,0,0" VerticalAlignment="Center">
+            <Border Width="26" Height="26" CornerRadius="6" Background="#2EFFFFFF">
+              <PathIcon Data="{x:Static icons:AntIcons.Home}" Width="15" Height="15" Foreground="#FFFFFF" />
+            </Border>
+            <TextBlock Text="云栖民宿管理系统"
+                       FontSize="13"
+                       FontWeight="SemiBold"
+                       Foreground="#FFFFFF"
+                       VerticalAlignment="Center" />
+            <Border Background="#33FFFFFF" CornerRadius="3" Padding="5,1" VerticalAlignment="Center">
+              <TextBlock Text="v1.0" FontSize="10" Foreground="#FFFFFF" />
+            </Border>
+            <TextBlock Text="{Binding PageTitle, StringFormat='—  [{0}]'}"
+                       FontSize="12"
+                       Foreground="#CCFFFFFF"
+                       VerticalAlignment="Center"
+                       Margin="6,0,0,0" />
+          </StackPanel>
+
+          <StackPanel Grid.Column="2" Orientation="Horizontal">
+            <Button Classes="win-btn" Click="OnMinimizeClick" ToolTip.Tip="最小化">
+              <PathIcon Data="{x:Static icons:AntIcons.Minimize}" Width="10" Height="10" />
+            </Button>
+            <Button Classes="win-btn" Click="OnMaximizeClick" ToolTip.Tip="最大化 / 还原">
+              <PathIcon Data="{x:Static icons:AntIcons.Maximize}" Width="10" Height="10" />
+            </Button>
+            <Button Classes="win-btn close" Click="OnCloseClick" ToolTip.Tip="关闭">
+              <PathIcon Data="{x:Static icons:AntIcons.Close}" Width="10" Height="10" />
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ============ 菜单栏 ============ -->
+      <Border DockPanel.Dock="Top" Height="34"
+              Background="{DynamicResource AntBgPanelBrush}"
+              BorderBrush="{DynamicResource AntSplitBrush}"
+              BorderThickness="0,0,0,1">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Orientation="Horizontal" Spacing="2" Margin="6,0,0,0" VerticalAlignment="Center">
+            <Button Classes="ant-menu-item" Content="系统(S)">
+              <Button.Flyout>
+                <MenuFlyout>
+                  <MenuItem Header="修改密码" InputGesture="Ctrl+P" Click="OnChangePasswordClick" />
+                  <MenuItem Header="退出登录" Click="OnLogoutClick" />
+                  <Separator />
+                  <MenuItem Header="关于本系统" Click="OnAboutClick" />
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+
+            <Button Classes="ant-menu-item" Content="前台操作(O)">
+              <Button.Flyout>
+                <MenuFlyout>
+                  <MenuItem Header="入住登记" InputGesture="F2" Tag="checkin" Click="OnNavigateMenuClick" />
+                  <MenuItem Header="预定管理" Tag="reservations" Click="OnNavigateMenuClick" />
+                  <MenuItem Header="在住 / 退房结算" Tag="stay" Click="OnNavigateMenuClick" />
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+
+            <Button Classes="ant-menu-item" Content="记录查询(Q)">
+              <Button.Flyout>
+                <MenuFlyout>
+                  <MenuItem Header="入住 / 账单记录" Tag="records" Click="OnNavigateMenuClick" />
+                  <MenuItem Header="操作日志" Tag="logs" Click="OnNavigateMenuClick" />
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+
+            <Button Classes="ant-menu-item" Content="统计报表(R)">
+              <Button.Flyout>
+                <MenuFlyout>
+                  <MenuItem Header="经营统计报表" Tag="report" Click="OnNavigateMenuClick" />
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+
+            <Button Classes="ant-menu-item" Content="基础信息(M)" IsVisible="{Binding IsAdmin}">
+              <Button.Flyout>
+                <MenuFlyout>
+                  <MenuItem Header="房间管理" Tag="rooms" Click="OnNavigateMenuClick" />
+                  <MenuItem Header="房型管理" Tag="roomtypes" Click="OnNavigateMenuClick" />
+                  <MenuItem Header="操作员账号" Tag="accounts" Click="OnNavigateMenuClick" />
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+
+            <Button Classes="ant-menu-item" Content="帮助(H)">
+              <Button.Flyout>
+                <MenuFlyout>
+                  <MenuItem Header="快捷键说明" Click="OnShortcutsClick" />
+                  <MenuItem Header="关于本系统" Click="OnAboutClick" />
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6"
+                      VerticalAlignment="Center" Margin="0,0,14,0">
+            <PathIcon Data="{x:Static icons:AntIcons.Clock}"
+                      Width="12" Height="12"
+                      Foreground="{DynamicResource AntTextTertiaryBrush}"
+                      VerticalAlignment="Center" />
+            <TextBlock Text="{Binding ClockText}"
+                       FontSize="12"
+                       Foreground="{DynamicResource AntTextTertiaryBrush}"
+                       VerticalAlignment="Center" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ============ 状态栏 ============ -->
+      <Border DockPanel.Dock="Bottom" Height="28"
+              Background="{DynamicResource AntBgPanelBrush}"
+              BorderBrush="{DynamicResource AntSplitBrush}"
+              BorderThickness="0,1,0,0">
+        <Grid ColumnDefinitions="*,Auto" Margin="12,0">
+          <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+            <Border Classes="status-dot" />
+            <TextBlock Text="{Binding UserDisplay, StringFormat='操作员：{0}'}"
+                       FontSize="11"
+                       Foreground="{DynamicResource AntTextSecondaryBrush}"
+                       VerticalAlignment="Center" />
+            <Border Width="1" Height="12" Background="{DynamicResource AntSplitBrush}" />
+            <TextBlock Text="{Binding StatusSummary}"
+                       FontSize="11"
+                       Foreground="{DynamicResource AntTextSecondaryBrush}"
+                       VerticalAlignment="Center" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <TextBlock Text="HospiKeeper · v1.0"
+                       FontSize="11"
+                       Foreground="{DynamicResource AntTextTertiaryBrush}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ============ 主体 ============ -->
+      <Grid ColumnDefinitions="214,*">
+
+        <!-- 左侧导航 -->
+        <Border Background="{DynamicResource AntBgPanelBrush}"
+                BorderBrush="{DynamicResource AntSplitBrush}"
+                BorderThickness="0,0,1,0">
+          <Grid RowDefinitions="*,Auto">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8,6">
+              <ItemsControl ItemsSource="{Binding NavigationGroups}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:NavigationGroupViewModel">
+                    <StackPanel>
+                      <TextBlock Classes="ant-nav-group" Text="{Binding Title}" />
+                      <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:NavigationItemViewModel">
+                            <Button Classes="ant-nav"
+                                    Classes.active="{Binding IsActive}"
+                                    Command="{Binding SelectCommand}">
+                              <Grid ColumnDefinitions="18,*,Auto">
+                                <PathIcon Data="{Binding Icon}" Width="14" Height="14"
+                                          VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding Title}"
+                                           FontSize="13" VerticalAlignment="Center" />
+                                <Border Grid.Column="2" Classes="ant-badge"
+                                        IsVisible="{Binding HasBadge}">
+                                  <TextBlock Text="{Binding Badge}" />
+                                </Border>
+                              </Grid>
+                            </Button>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+
+            <Border Grid.Row="1" BorderBrush="{DynamicResource AntSplitBrush}"
+                    BorderThickness="0,1,0,0" Padding="12,10">
+              <Grid ColumnDefinitions="34,*,Auto" RowDefinitions="Auto,Auto">
+                <Border Grid.RowSpan="2" Width="30" Height="30" CornerRadius="15"
+                        Background="{DynamicResource AntPrimaryBgBrush}"
+                        VerticalAlignment="Center">
+                  <TextBlock Text="{Binding UserInitial}"
+                             FontSize="13"
+                             FontWeight="SemiBold"
+                             Foreground="{DynamicResource AntPrimaryBrush}"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Grid.Column="1" Text="{Binding UserDisplay}"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource AntTextBrush}"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding RoleText}"
+                           FontSize="10"
+                           Foreground="{DynamicResource AntTextTertiaryBrush}" />
+                <StackPanel Grid.Column="2" Grid.RowSpan="2" Orientation="Horizontal"
+                            Spacing="2" VerticalAlignment="Center">
+                  <controls:AntButton Variant="Text" Width="28" Height="28" Padding="0"
+                                      Command="{Binding ChangePasswordCommand}"
+                                      ToolTip.Tip="修改密码">
+                    <PathIcon Data="{x:Static icons:AntIcons.Settings}" Width="13" Height="13" />
+                  </controls:AntButton>
+                  <controls:AntButton Variant="Link" Content="退出"
+                                      Command="{Binding LogoutCommand}" />
+                </StackPanel>
+              </Grid>
+            </Border>
+          </Grid>
+        </Border>
+
+        <!-- 工作区 -->
+        <Border Grid.Column="1" Background="{DynamicResource AntBgLayoutBrush}">
+          <ContentControl Content="{Binding CurrentPage}" />
+        </Border>
+      </Grid>
+    </DockPanel>
+
+    <!-- ============ 模态弹窗 ============ -->
+    <Grid ZIndex="100" IsVisible="{Binding Dialog.IsOpen}">
+      <Border Background="#40000000" />
+      <ScrollViewer HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    VerticalScrollBarVisibility="Auto"
+                    MaxHeight="780"
+                    Margin="20">
+        <controls:AntModal Title="{Binding Dialog.Current.Title}"
+                           ModalWidth="{Binding Dialog.Current.Width}"
+                           CloseCommand="{Binding Dialog.CloseCommand}">
+          <ContentControl Content="{Binding Dialog.Current}" />
+        </controls:AntModal>
+      </ScrollViewer>
+    </Grid>
+
+    <!-- ============ Toast ============ -->
+    <ItemsControl ZIndex="200"
+                  ItemsSource="{Binding Toasts.Items}"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Top"
+                  Margin="0,86,24,0"
+                  MaxWidth="480"
+                  IsHitTestVisible="False">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="svc:ToastItem">
+          <controls:AntToast Kind="{Binding Kind}"
+                             Content="{Binding Message}"
+                             Margin="0,0,0,8" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </Grid>
+</Window>

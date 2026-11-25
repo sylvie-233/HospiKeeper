@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             x:Class="HospiKeeper.Desktop.Views.Dialogs.ConfirmDialogView"
+             x:DataType="dialogs:ConfirmDialogViewModel">
+
+  <StackPanel Spacing="22">
+    <TextBlock Text="{Binding Message}" FontSize="13" TextWrapping="Wrap"
+               Foreground="{DynamicResource AntTextSecondaryBrush}" LineHeight="22" />
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <controls:AntButton Content="{Binding CancelText}" Command="{Binding CancelCommand}" />
+      <controls:AntButton Variant="{Binding OkVariant}" Content="{Binding OkText}"
+                          Command="{Binding OkCommand}" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

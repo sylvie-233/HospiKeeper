@@ -1,0 +1,113 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             x:Class="HospiKeeper.Desktop.Views.Dialogs.BillDetailDialogView"
+             x:DataType="dialogs:BillDetailDialogViewModel">
+
+  <StackPanel Spacing="12">
+
+    <Border Classes="ticket-head">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="3">
+          <TextBlock Classes="ticket-no" Text="{Binding No}" />
+          <TextBlock Classes="ticket-sub" Text="{Binding GuestName}" />
+          <TextBlock Classes="ticket-sub" Text="{Binding CheckInNo, StringFormat='入住单 {0}'}" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="2">
+          <TextBlock Classes="ticket-room-no" Text="{Binding RoomNo}" HorizontalAlignment="Right" />
+          <TextBlock Classes="ticket-room-type" Text="{Binding RoomType}" HorizontalAlignment="Right" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Classes="ticket-grid">
+      <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" RowSpacing="10">
+        <StackPanel Spacing="1">
+          <TextBlock Classes="ticket-label" Text="入住时间" />
+          <TextBlock Classes="ticket-value" Text="{Binding CheckInText}" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Spacing="1">
+          <TextBlock Classes="ticket-label" Text="退房时间" />
+          <TextBlock Classes="ticket-value" Text="{Binding CheckoutText}" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" Spacing="1">
+          <TextBlock Classes="ticket-label" Text="计费方式" />
+          <TextBlock Classes="ticket-value" Text="{Binding UnitsText}" />
+        </StackPanel>
+        <StackPanel Grid.Row="1" Spacing="1">
+          <TextBlock Classes="ticket-label" Text="经办人" />
+          <TextBlock Classes="ticket-value" Text="{Binding OperatorName}" />
+        </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="1">
+          <TextBlock Classes="ticket-label" Text="结算时间" />
+          <TextBlock Classes="ticket-value" Text="{Binding CreatedText}" />
+        </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="2" Spacing="1">
+          <TextBlock Classes="ticket-label" Text="已收押金" />
+          <TextBlock Classes="ticket-value" Text="{Binding DepositText}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <StackPanel Spacing="6">
+      <TextBlock Classes="ticket-section" Text="结算明细" />
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Text="房费" FontSize="12" />
+        <TextBlock Grid.Column="1" Text="{Binding RoomFeeText}" FontSize="12" Classes="text-money" />
+      </Grid>
+      <ItemsControl ItemsSource="{Binding Extras}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="dialogs:ExtraLineViewModel">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="{Binding Item}" FontSize="12" Foreground="{DynamicResource AntTextSecondaryBrush}" />
+              <TextBlock Grid.Column="1" Text="{Binding AmountText}" FontSize="12" Classes="text-money" />
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Text="追加消费合计" FontSize="12" Foreground="{DynamicResource AntTextSecondaryBrush}" />
+        <TextBlock Grid.Column="1" Text="{Binding ExtraTotalText}" FontSize="12" Classes="text-money" />
+      </Grid>
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Text="损坏扣费" FontSize="12" Foreground="{DynamicResource AntTextSecondaryBrush}" />
+        <TextBlock Grid.Column="1" Text="{Binding DamageText}" FontSize="12" Classes="text-money" />
+      </Grid>
+    </StackPanel>
+
+    <Border Classes="ticket-total">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Text="应收合计（房费 + 追加 + 损坏）" FontSize="12"
+                   Foreground="{DynamicResource AntTextSecondaryBrush}" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Text="{Binding TotalText}" Classes="ticket-big" />
+      </Grid>
+    </Border>
+
+    <Border Classes="ticket-result"
+            Classes.refund="{Binding NeedsRefund}"
+            Classes.even="{Binding IsEven}">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="2">
+          <TextBlock Classes="ticket-label" Text="结算差额（应收 − 押金）" />
+          <TextBlock Text="{Binding ResultText}"
+                     FontSize="19" FontWeight="Bold"
+                     Classes.text-danger="{Binding NeedsPayment}"
+                     Classes.text-success="{Binding NeedsRefund}"
+                     Classes.text-primary="{Binding IsEven}" />
+        </StackPanel>
+        <TextBlock Grid.Column="1" Text="{Binding DiffText}" FontSize="20" FontWeight="Bold"
+                   Classes="text-money" VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+
+    <Border Classes="ticket-note">
+      <StackPanel Spacing="2">
+        <TextBlock Classes="ticket-label" Text="备注" />
+        <TextBlock Text="{Binding NoteText}" FontSize="12" TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+
+    <controls:AntButton HorizontalAlignment="Right" Content="关闭" Command="{Binding CloseCommand}" />
+  </StackPanel>
+</UserControl>

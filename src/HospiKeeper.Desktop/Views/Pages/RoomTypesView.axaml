@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:icons="using:HospiKeeper.UI.Icons"
+             x:Class="HospiKeeper.Desktop.Views.Pages.RoomTypesView"
+             x:DataType="pages:RoomTypesPageViewModel">
+
+  <Grid Margin="16" RowDefinitions="Auto,*">
+
+    <controls:AntPageHeader Title="房型管理" Subtitle="房型名称、基础定价；改名将同步所有房间（管理员）">
+      <controls:AntPageHeader.Extra>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Text="{Binding CountText}" FontSize="12"
+                     Foreground="{DynamicResource AntTextTertiaryBrush}" VerticalAlignment="Center" />
+          <controls:AntButton Command="{Binding RefreshCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Data="{x:Static icons:AntIcons.Refresh}" Width="13" Height="13" />
+              <TextBlock Text="刷新" />
+            </StackPanel>
+          </controls:AntButton>
+          <controls:AntButton Variant="Primary" Command="{Binding AddCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Data="{x:Static icons:AntIcons.Plus}" Width="12" Height="12" />
+              <TextBlock Text="新增房型" />
+            </StackPanel>
+          </controls:AntButton>
+        </StackPanel>
+      </controls:AntPageHeader.Extra>
+    </controls:AntPageHeader>
+
+    <controls:AntCard Grid.Row="1" Padding="0" ClipToBounds="True">
+      <controls:AntTable ItemsSource="{Binding Rows}" EmptyText="暂无房型">
+        <controls:AntTable.Columns>
+          <controls:AntTableColumn Header="房型名称" Binding="Name" Width="1.2*" CellClasses="text-strong" />
+          <controls:AntTableColumn Header="基础定价" Binding="PriceText" Width="1*" CellClasses="text-money" />
+          <controls:AntTableColumn Header="房间数" Binding="RoomCountText" Width="0.8*" />
+          <controls:AntTableColumn Header="备注" Binding="NoteText" Width="2.6*" CellClasses="text-secondary" />
+          <controls:AntTableColumn Header="操作" Width="150">
+            <controls:AntTableColumn.CellTemplate>
+              <DataTemplate x:DataType="pages:RoomTypeRowViewModel">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                  <controls:AntButton Variant="Link" Size="Small" Content="编辑"
+                                      Command="{Binding EditCommand}" />
+                  <controls:AntButton Variant="Link" Size="Small" Content="删除"
+                                      Foreground="{DynamicResource AntErrorBrush}"
+                                      Command="{Binding DeleteCommand}" />
+                </StackPanel>
+              </DataTemplate>
+            </controls:AntTableColumn.CellTemplate>
+          </controls:AntTableColumn>
+        </controls:AntTable.Columns>
+      </controls:AntTable>
+    </controls:AntCard>
+  </Grid>
+</UserControl>

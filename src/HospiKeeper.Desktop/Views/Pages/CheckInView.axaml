@@ -1,0 +1,192 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:icons="using:HospiKeeper.UI.Icons"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="HospiKeeper.Desktop.Views.Pages.CheckInView"
+             x:DataType="pages:CheckInPageViewModel">
+
+  <Grid Margin="16" RowDefinitions="Auto,*">
+    <controls:AntPageHeader Title="入住登记" Subtitle="散客入住、议价、押金与同住人登记">
+      <controls:AntPageHeader.Extra>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <controls:AntButton Command="{Binding ResetCommand}">重置表单</controls:AntButton>
+        </StackPanel>
+      </controls:AntPageHeader.Extra>
+    </controls:AntPageHeader>
+
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+      <Grid ColumnDefinitions="2*,*" ColumnSpacing="14" Margin="0,0,0,10">
+
+        <controls:AntCard>
+          <StackPanel Spacing="12">
+            <Border Classes="ant-alert-info" IsVisible="{Binding HasReservation}">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <PathIcon Data="{x:Static icons:AntIcons.Calendar}" Width="14" Height="14"
+                          Foreground="{DynamicResource AntPrimaryBrush}" />
+                <TextBlock Text="{Binding ReservationBanner}" FontSize="12"
+                           Foreground="{DynamicResource AntPrimaryBrush}" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="ant-alert-error"
+                    IsVisible="{Binding SubmitError, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+              <TextBlock Text="{Binding SubmitError}" FontSize="12" TextWrapping="Wrap"
+                         Foreground="{DynamicResource AntErrorBrush}" />
+            </Border>
+
+            <controls:AntSectionTitle Title="客人信息" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+              <controls:AntFormItem Label="客人姓名" Required="True" ErrorText="{Binding GuestNameError}">
+                <TextBox Text="{Binding GuestName}" PlaceholderText="请输入姓名" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="手机号" Required="True" ErrorText="{Binding GuestPhoneError}">
+                <TextBox Text="{Binding GuestPhone}" PlaceholderText="11 位手机号" MaxLength="11" />
+              </controls:AntFormItem>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+              <controls:AntFormItem Label="身份证号" Required="True" ErrorText="{Binding GuestIdCardError}">
+                <TextBox Text="{Binding GuestIdCard}" PlaceholderText="18 位身份证号" MaxLength="18" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="入住房间" Required="True" ErrorText="{Binding RoomError}">
+                <ComboBox ItemsSource="{Binding RoomOptions}"
+                          SelectedItem="{Binding SelectedRoom}"
+                          HorizontalAlignment="Stretch">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="pages:CheckInRoomOption">
+                      <TextBlock Text="{Binding DisplayText}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </controls:AntFormItem>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+              <controls:AntFormItem Label="入住时间" Required="True" ErrorText="{Binding TimeError}">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                  <TextBox Text="{Binding CheckInTimeText}" PlaceholderText="yyyy-MM-dd HH:mm" />
+                  <controls:AntButton Grid.Column="1" Variant="Link" Content="现在"
+                                      Command="{Binding SetNowCommand}" />
+                </Grid>
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="预计退房时间" Required="True">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                  <TextBox Text="{Binding PlanOutTimeText}" PlaceholderText="yyyy-MM-dd HH:mm" />
+                  <controls:AntButton Grid.Column="1" Variant="Link" Content="次日 12:00"
+                                      Command="{Binding SetNextDayNoonCommand}" />
+                </Grid>
+              </controls:AntFormItem>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+              <controls:AntFormItem Label="成交单价（元/晚）" Required="True" ErrorText="{Binding PriceError}">
+                <TextBox Text="{Binding PriceText}" PlaceholderText="≥ 底价" />
+              </controls:AntFormItem>
+              <controls:AntFormItem Grid.Column="1" Label="押金（元）" Required="True" ErrorText="{Binding DepositError}">
+                <TextBox Text="{Binding DepositText}" PlaceholderText="默认取房间押金标准" />
+              </controls:AntFormItem>
+            </Grid>
+
+            <TextBlock Text="{Binding PriceHint}" FontSize="11"
+                       Foreground="{DynamicResource AntTextTertiaryBrush}" />
+
+            <Border Classes="ant-divider" />
+
+            <controls:AntSectionTitle Title="同住人登记">
+              <controls:AntSectionTitle.Extra>
+                <controls:AntButton Variant="Link" Command="{Binding AddCompanionCommand}">
+                  <StackPanel Orientation="Horizontal" Spacing="4">
+                    <PathIcon Data="{x:Static icons:AntIcons.Plus}" Width="11" Height="11" />
+                    <TextBlock Text="添加同住人" />
+                  </StackPanel>
+                </controls:AntButton>
+              </controls:AntSectionTitle.Extra>
+            </controls:AntSectionTitle>
+
+            <Grid ColumnDefinitions="1.2*,1*,1.4*,Auto" ColumnSpacing="8">
+              <TextBlock Text="姓名" FontSize="11" Foreground="{DynamicResource AntTextTertiaryBrush}" />
+              <TextBlock Grid.Column="1" Text="手机号" FontSize="11" Foreground="{DynamicResource AntTextTertiaryBrush}" />
+              <TextBlock Grid.Column="2" Text="身份证号" FontSize="11" Foreground="{DynamicResource AntTextTertiaryBrush}" />
+            </Grid>
+
+            <ItemsControl ItemsSource="{Binding Companions}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="pages:CompanionRowViewModel">
+                  <Grid ColumnDefinitions="1.2*,1*,1.4*,Auto" ColumnSpacing="8" Margin="0,0,0,6">
+                    <TextBox Text="{Binding Name}" PlaceholderText="姓名" />
+                    <TextBox Grid.Column="1" Text="{Binding Phone}" PlaceholderText="选填" MaxLength="11" />
+                    <TextBox Grid.Column="2" Text="{Binding IdCard}" PlaceholderText="选填" MaxLength="18" />
+                    <controls:AntButton Grid.Column="3" Variant="Link" Content="删除"
+                                        Foreground="{DynamicResource AntErrorBrush}"
+                                        Command="{Binding RemoveCommand}" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="{Binding CompanionError}" FontSize="11"
+                       Foreground="{DynamicResource AntErrorBrush}"
+                       IsVisible="{Binding CompanionError, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}" />
+
+            <controls:AntFormItem Label="备注">
+              <TextBox Text="{Binding Note}" Height="64" AcceptsReturn="True" TextWrapping="Wrap"
+                       PlaceholderText="选填，如特殊需求、到店说明等" VerticalContentAlignment="Top" Padding="9,7" />
+            </controls:AntFormItem>
+          </StackPanel>
+        </controls:AntCard>
+
+        <StackPanel Grid.Column="1" Spacing="12">
+          <controls:AntCard Header="费用试算">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="入住晚数" FontSize="12" Foreground="{DynamicResource AntTextSecondaryBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding NightsText}" FontWeight="SemiBold" />
+              </Grid>
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="房费" FontSize="12" Foreground="{DynamicResource AntTextSecondaryBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding RoomFeeText}" Classes="text-money" />
+              </Grid>
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="押金" FontSize="12" Foreground="{DynamicResource AntTextSecondaryBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding DepositText, StringFormat='¥{0}'}" />
+              </Grid>
+              <Border Classes="ant-divider" />
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="应收合计" FontSize="13" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1" Text="{Binding TotalText}" FontSize="22" FontWeight="Bold"
+                           Classes="text-money" />
+              </Grid>
+              <TextBlock Text="{Binding PriceWarning}" FontSize="11"
+                         Foreground="{DynamicResource AntErrorBrush}"
+                         IsVisible="{Binding PriceWarning, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}" />
+              <controls:AntButton Variant="Primary" Size="Large"
+                                  HorizontalAlignment="Stretch"
+                                  Command="{Binding SubmitCommand}"
+                                  Content="确认入住" Margin="0,4,0,0" />
+              <controls:AntButton Variant="Text"
+                                  HorizontalAlignment="Stretch"
+                                  Command="{Binding ResetCommand}"
+                                  Content="清空表单" />
+            </StackPanel>
+          </controls:AntCard>
+
+          <controls:AntCard Header="计费说明" Padding="14,12">
+            <StackPanel Spacing="6">
+              <TextBlock Text="· 房费 = 成交单价 × 晚数，不足一晚按一晚计。"
+                         FontSize="11" Foreground="{DynamicResource AntTextTertiaryBrush}" TextWrapping="Wrap" />
+              <TextBlock Text="· 应收合计 = 房费 + 押金。"
+                         FontSize="11" Foreground="{DynamicResource AntTextTertiaryBrush}" TextWrapping="Wrap" />
+              <TextBlock Text="· 成交单价不得低于房间底价。"
+                         FontSize="11" Foreground="{DynamicResource AntTextTertiaryBrush}" TextWrapping="Wrap" />
+              <TextBlock Text="· 提交后房间转为「已入住」，并生成 I 开头入住单。"
+                         FontSize="11" Foreground="{DynamicResource AntTextTertiaryBrush}" TextWrapping="Wrap" />
+            </StackPanel>
+          </controls:AntCard>
+        </StackPanel>
+      </Grid>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

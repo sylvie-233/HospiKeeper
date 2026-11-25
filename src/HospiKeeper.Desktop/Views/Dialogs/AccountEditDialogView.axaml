@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="HospiKeeper.Desktop.Views.Dialogs.AccountEditDialogView"
+             x:DataType="dialogs:AccountEditDialogViewModel">
+
+  <StackPanel Spacing="12">
+    <Border Classes="ant-alert-error"
+            IsVisible="{Binding SubmitError, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+      <TextBlock Text="{Binding SubmitError}" FontSize="12" TextWrapping="Wrap"
+                 Foreground="{DynamicResource AntErrorBrush}" />
+    </Border>
+
+    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+      <controls:AntFormItem Label="登录账号" Required="True" ErrorText="{Binding UsernameError}">
+        <TextBox Text="{Binding Username}" PlaceholderText="唯一登录名" />
+      </controls:AntFormItem>
+      <controls:AntFormItem Grid.Column="1" Label="姓名" Required="True" ErrorText="{Binding RealNameError}">
+        <TextBox Text="{Binding RealName}" PlaceholderText="真实姓名" />
+      </controls:AntFormItem>
+    </Grid>
+
+    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+      <controls:AntFormItem Label="角色">
+        <ComboBox ItemsSource="{Binding RoleOptions}" SelectedItem="{Binding SelectedRole}"
+                  IsEnabled="{Binding CanEditRoleStatus}" HorizontalAlignment="Stretch">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="dialogs:RoleOption">
+              <TextBlock Text="{Binding Text}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+      </controls:AntFormItem>
+      <controls:AntFormItem Grid.Column="1" Label="状态">
+        <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding SelectedStatus}"
+                  IsEnabled="{Binding CanEditRoleStatus}" HorizontalAlignment="Stretch">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="dialogs:StatusOption">
+              <TextBlock Text="{Binding Text}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+      </controls:AntFormItem>
+    </Grid>
+
+    <controls:AntFormItem Label="密码" ErrorText="{Binding PasswordError}">
+      <TextBox Text="{Binding Password}" PasswordChar="●" PlaceholderText="{Binding PasswordHint}" />
+    </controls:AntFormItem>
+
+    <TextBlock Text="{Binding PasswordHint}" FontSize="11"
+               Foreground="{DynamicResource AntTextTertiaryBrush}" />
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <controls:AntButton Content="取消" Command="{Binding Host.CloseCommand}" />
+      <controls:AntButton Variant="Primary" Content="保存账号" Command="{Binding SubmitCommand}" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

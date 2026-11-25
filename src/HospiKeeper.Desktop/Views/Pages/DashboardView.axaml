@@ -1,0 +1,122 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:icons="using:HospiKeeper.UI.Icons"
+             x:Class="HospiKeeper.Desktop.Views.Pages.DashboardView"
+             x:DataType="pages:DashboardPageViewModel">
+
+  <Grid Margin="16" RowDefinitions="Auto,Auto,*">
+
+    <controls:AntPageHeader Title="房态看板" Subtitle="实时房态、快捷操作与今日概况">
+      <controls:AntPageHeader.Extra>
+        <controls:AntButton Command="{Binding RefreshCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <PathIcon Data="{x:Static icons:AntIcons.Refresh}" Width="13" Height="13" />
+            <TextBlock Text="刷新" />
+          </StackPanel>
+        </controls:AntButton>
+      </controls:AntPageHeader.Extra>
+    </controls:AntPageHeader>
+
+    <controls:AntCard Grid.Row="1" Padding="14,12" Margin="0,0,0,12">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <TextBlock Text="筛选" FontSize="12" Foreground="{DynamicResource AntTextTertiaryBrush}"
+                     VerticalAlignment="Center" Margin="0,0,4,0" />
+          <ComboBox Width="130"
+                    ItemsSource="{Binding FloorOptions}"
+                    SelectedItem="{Binding SelectedFloor}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="pages:FloorFilterOption">
+                <TextBlock Text="{Binding Text}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <ComboBox Width="130"
+                    ItemsSource="{Binding RoomTypeOptions}"
+                    SelectedItem="{Binding SelectedRoomType}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="pages:RoomTypeFilterOption">
+                <TextBlock Text="{Binding Text}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <TextBlock Text="{Binding SummaryText}"
+                     FontSize="12"
+                     Foreground="{DynamicResource AntTextTertiaryBrush}"
+                     VerticalAlignment="Center"
+                     Margin="8,0,0,0" />
+        </StackPanel>
+
+        <ItemsControl Grid.Column="3" ItemsSource="{Binding Legends}" VerticalAlignment="Center">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="14" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="pages:LegendItemViewModel">
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Border Width="9" Height="9" CornerRadius="2" Background="{Binding Brush}"
+                        VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Text}" FontSize="12"
+                           Foreground="{DynamicResource AntTextSecondaryBrush}" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Grid>
+    </controls:AntCard>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+      <StackPanel>
+        <ItemsControl ItemsSource="{Binding FloorGroups}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="pages:FloorGroupViewModel">
+              <StackPanel Margin="0,0,0,8">
+                <Grid ColumnDefinitions="Auto,*,Auto" Margin="2,0,2,8">
+                  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Border Width="3" Height="14" CornerRadius="2"
+                            Background="{DynamicResource AntPrimaryBrush}" />
+                    <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{DynamicResource AntTextBrush}" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="2" Text="{Binding CountText}" FontSize="11"
+                             Foreground="{DynamicResource AntTextTertiaryBrush}"
+                             VerticalAlignment="Center" />
+                </Grid>
+
+                <ItemsControl ItemsSource="{Binding Rooms}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="pages:RoomCardViewModel">
+                      <controls:AntRoomCard Width="158" Height="102" Margin="0,0,10,10"
+                                            RoomNo="{Binding RoomNo}"
+                                            TypeName="{Binding TypeName}"
+                                            PriceText="{Binding PriceText}"
+                                            GuestText="{Binding GuestText}"
+                                            StatusText="{Binding StatusText}"
+                                            State="{Binding State}"
+                                            Command="{Binding OpenActionsCommand}"
+                                            ToolTip.Tip="点击查看快捷操作" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <controls:AntEmpty IsVisible="{Binding IsEmpty}"
+                           Title="没有符合条件的房间"
+                           Description="调整楼层 / 房型筛选后再试"
+                           Icon="{x:Static icons:AntIcons.Door}" />
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

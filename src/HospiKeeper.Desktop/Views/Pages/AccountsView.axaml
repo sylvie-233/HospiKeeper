@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:icons="using:HospiKeeper.UI.Icons"
+             x:Class="HospiKeeper.Desktop.Views.Pages.AccountsView"
+             x:DataType="pages:AccountsPageViewModel">
+
+  <Grid Margin="16" RowDefinitions="Auto,*">
+
+    <controls:AntPageHeader Title="操作员账号" Subtitle="账号、角色与启停；不能停用当前登录账号（管理员）">
+      <controls:AntPageHeader.Extra>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Text="{Binding CountText}" FontSize="12"
+                     Foreground="{DynamicResource AntTextTertiaryBrush}" VerticalAlignment="Center" />
+          <controls:AntButton Command="{Binding RefreshCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Data="{x:Static icons:AntIcons.Refresh}" Width="13" Height="13" />
+              <TextBlock Text="刷新" />
+            </StackPanel>
+          </controls:AntButton>
+          <controls:AntButton Variant="Primary" Command="{Binding AddCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Data="{x:Static icons:AntIcons.Plus}" Width="12" Height="12" />
+              <TextBlock Text="新增账号" />
+            </StackPanel>
+          </controls:AntButton>
+        </StackPanel>
+      </controls:AntPageHeader.Extra>
+    </controls:AntPageHeader>
+
+    <controls:AntCard Grid.Row="1" Padding="0" ClipToBounds="True">
+      <controls:AntTable ItemsSource="{Binding Rows}" EmptyText="暂无账号">
+        <controls:AntTable.Columns>
+          <controls:AntTableColumn Header="登录账号" Binding="Username" Width="1.1*" CellClasses="text-strong" />
+          <controls:AntTableColumn Header="姓名" Binding="RealName" Width="0.9*" />
+          <controls:AntTableColumn Header="角色" Width="90">
+            <controls:AntTableColumn.CellTemplate>
+              <DataTemplate x:DataType="pages:AccountRowViewModel">
+                <controls:AntTag Variant="{Binding RoleVariant}" Content="{Binding RoleText}" />
+              </DataTemplate>
+            </controls:AntTableColumn.CellTemplate>
+          </controls:AntTableColumn>
+          <controls:AntTableColumn Header="状态" Width="82">
+            <controls:AntTableColumn.CellTemplate>
+              <DataTemplate x:DataType="pages:AccountRowViewModel">
+                <controls:AntTag Variant="{Binding StatusVariant}" Content="{Binding StatusText}" />
+              </DataTemplate>
+            </controls:AntTableColumn.CellTemplate>
+          </controls:AntTableColumn>
+          <controls:AntTableColumn Header="最后登录" Binding="LastLoginText" Width="1.2*" CellClasses="text-secondary" />
+          <controls:AntTableColumn Header="操作" Width="200">
+            <controls:AntTableColumn.CellTemplate>
+              <DataTemplate x:DataType="pages:AccountRowViewModel">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                  <controls:AntButton Variant="Link" Size="Small" Content="编辑"
+                                      Command="{Binding EditCommand}" />
+                  <controls:AntButton Variant="Link" Size="Small" Content="{Binding ToggleText}"
+                                      IsVisible="{Binding CanToggle}" Command="{Binding ToggleCommand}" />
+                  <controls:AntButton Variant="Link" Size="Small" Content="删除"
+                                      IsVisible="{Binding CanDelete}"
+                                      Foreground="{DynamicResource AntErrorBrush}"
+                                      Command="{Binding DeleteCommand}" />
+                  <controls:AntTag Variant="Processing" Content="当前账号" IsVisible="{Binding IsSelf}" />
+                </StackPanel>
+              </DataTemplate>
+            </controls:AntTableColumn.CellTemplate>
+          </controls:AntTableColumn>
+        </controls:AntTable.Columns>
+      </controls:AntTable>
+    </controls:AntCard>
+  </Grid>
+</UserControl>

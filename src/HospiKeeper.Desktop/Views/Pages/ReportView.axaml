@@ -1,0 +1,164 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
+             xmlns:contracts="using:HospiKeeper.Contracts"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:primitives="using:Avalonia.Controls.Primitives"
+             xmlns:icons="using:HospiKeeper.UI.Icons"
+             x:Class="HospiKeeper.Desktop.Views.Pages.ReportView"
+             x:DataType="pages:ReportPageViewModel">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="16">
+
+      <controls:AntPageHeader Title="统计报表" Subtitle="营收、入住率与房型经营分析（近 30 天）">
+        <controls:AntPageHeader.Extra>
+          <controls:AntButton Command="{Binding RefreshCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Data="{x:Static icons:AntIcons.Refresh}" Width="13" Height="13" />
+              <TextBlock Text="刷新" />
+            </StackPanel>
+          </controls:AntButton>
+        </controls:AntPageHeader.Extra>
+      </controls:AntPageHeader>
+
+      <!-- 指标卡 -->
+      <ItemsControl ItemsSource="{Binding Stats}" Margin="0,0,0,4">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <primitives:UniformGrid Columns="4" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="pages:StatCardViewModel">
+            <controls:AntStatCard Title="{Binding Title}"
+                                  Value="{Binding Value}"
+                                  SubText="{Binding SubText}"
+                                  Icon="{Binding Icon}"
+                                  IconBackground="{Binding IconBackground}"
+                                  IconForeground="{Binding IconForeground}"
+                                  TrendText="{Binding TrendText}"
+                                  TrendBrush="{Binding TrendBrush}"
+                                  Margin="0,0,10,10" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- 近 7 日营收 -->
+      <controls:AntCard Margin="0,2,0,12">
+        <controls:AntCard.Header>
+          <TextBlock Text="近 7 日营收（元）" />
+        </controls:AntCard.Header>
+        <controls:AntCard.Extra>
+          <TextBlock Text="{Binding WeekSummary}" FontSize="12" FontWeight="Normal"
+                     Foreground="{DynamicResource AntTextTertiaryBrush}" />
+        </controls:AntCard.Extra>
+        <controls:AntBarChart Height="190" Items="{Binding WeekBars}"
+                              BarBrush="{DynamicResource AntPrimaryBrush}"
+                              LabelBrush="{DynamicResource AntTextTertiaryBrush}"
+                              ValueBrush="{DynamicResource AntTextSecondaryBrush}"
+                              GridBrush="{DynamicResource AntSplitBrush}" />
+      </controls:AntCard>
+
+      <!-- 时间段查询 -->
+      <controls:AntCard Margin="0,0,0,12">
+        <controls:AntCard.Header>
+          <TextBlock Text="时间段营收查询" />
+        </controls:AntCard.Header>
+        <controls:AntCard.Extra>
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <controls:AntButton Size="Small" Content="近 7 日" Command="{Binding Last7Command}" />
+            <controls:AntButton Size="Small" Content="近 30 日" Command="{Binding Last30Command}" />
+          </StackPanel>
+        </controls:AntCard.Extra>
+
+        <StackPanel Spacing="12">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <CalendarDatePicker Width="140" SelectedDate="{Binding DateFrom}" PlaceholderText="开始日期" />
+            <TextBlock Text="至" VerticalAlignment="Center" FontSize="12"
+                       Foreground="{DynamicResource AntTextTertiaryBrush}" />
+            <CalendarDatePicker Width="140" SelectedDate="{Binding DateTo}" PlaceholderText="结束日期" />
+            <controls:AntButton Variant="Primary" Content="查询" Command="{Binding QueryRangeCommand}" />
+          </StackPanel>
+
+          <Border Classes="ticket-grid">
+            <Grid ColumnDefinitions="*,*,*,*">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="ticket-label" Text="区间合计" />
+                <TextBlock Classes="ticket-big" FontSize="17" Text="{Binding RangeTotalText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="2">
+                <TextBlock Classes="ticket-label" Text="日均营收" />
+                <TextBlock Classes="ticket-value" FontSize="16" FontWeight="SemiBold" Text="{Binding RangeAverageText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="2">
+                <TextBlock Classes="ticket-label" Text="最高 / 最低单日" />
+                <TextBlock Classes="ticket-value" FontSize="16" FontWeight="SemiBold" Text="{Binding RangeMaxMinText}" />
+              </StackPanel>
+              <StackPanel Grid.Column="3" Spacing="2">
+                <TextBlock Classes="ticket-label" Text="较上一周期" />
+                <TextBlock Text="{Binding RangeChangeText}" FontSize="16" FontWeight="SemiBold"
+                           Foreground="{Binding RangeChangeBrush}" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <controls:AntBarChart Height="170" Items="{Binding RangeBars}"
+                                BarBrush="{DynamicResource AntPrimaryBrush}"
+                                LabelBrush="{DynamicResource AntTextTertiaryBrush}"
+                                ValueBrush="{DynamicResource AntTextSecondaryBrush}"
+                                GridBrush="{DynamicResource AntSplitBrush}" />
+
+          <controls:AntTable ItemsSource="{Binding RangeRows}" Height="240" EmptyText="暂无区间数据">
+            <controls:AntTable.Columns>
+              <controls:AntTableColumn Header="日期" Binding="DateText" Width="1*" />
+              <controls:AntTableColumn Header="营收（元）" Binding="RevenueText" Width="1.2*" CellClasses="text-money" />
+              <controls:AntTableColumn Header="环比前日" Width="1.1*">
+                <controls:AntTableColumn.CellTemplate>
+                  <DataTemplate x:DataType="pages:RevenueDayRowViewModel">
+                    <TextBlock Text="{Binding DayOverDayText}"
+                               Classes.text-success="{Binding IsUp}"
+                               Classes.text-danger="{Binding IsDown}" />
+                  </DataTemplate>
+                </controls:AntTableColumn.CellTemplate>
+              </controls:AntTableColumn>
+              <controls:AntTableColumn Header="区间占比" Binding="ShareText" Width="1*" CellClasses="text-secondary" />
+            </controls:AntTable.Columns>
+          </controls:AntTable>
+        </StackPanel>
+      </controls:AntCard>
+
+      <!-- 房型经营分析 -->
+      <controls:AntCard>
+        <controls:AntCard.Header>
+          <TextBlock Text="房型经营分析" />
+        </controls:AntCard.Header>
+        <controls:AntTable ItemsSource="{Binding RoomTypes}" Height="230" EmptyText="暂无房型数据">
+          <controls:AntTable.Columns>
+            <controls:AntTableColumn Header="房型" Binding="TypeName" Width="1.2*" CellClasses="text-strong" />
+            <controls:AntTableColumn Header="标价" Width="1*">
+              <controls:AntTableColumn.CellTemplate>
+                <DataTemplate x:DataType="contracts:RoomTypeStat">
+                  <TextBlock Text="{Binding BasePrice, StringFormat='¥{0:0.00}'}" Classes="text-money" />
+                </DataTemplate>
+              </controls:AntTableColumn.CellTemplate>
+            </controls:AntTableColumn>
+            <controls:AntTableColumn Header="当前房态" Binding="StatusSummary" Width="2.2*" CellClasses="text-secondary" />
+            <controls:AntTableColumn Header="近期入住率" Width="2.2*">
+              <controls:AntTableColumn.CellTemplate>
+                <DataTemplate x:DataType="contracts:RoomTypeStat">
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                    <ProgressBar Value="{Binding OccupancyRate}" Maximum="100" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" FontSize="12" FontWeight="SemiBold"
+                               Text="{Binding OccupancyRate, StringFormat='{}{0:0}%'}"
+                               VerticalAlignment="Center" />
+                  </Grid>
+                </DataTemplate>
+              </controls:AntTableColumn.CellTemplate>
+            </controls:AntTableColumn>
+          </controls:AntTable.Columns>
+        </controls:AntTable>
+      </controls:AntCard>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

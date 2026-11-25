@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="HospiKeeper.Desktop.Views.Dialogs.NewReservationDialogView"
+             x:DataType="dialogs:NewReservationDialogViewModel">
+
+  <StackPanel Spacing="12">
+    <Border Classes="ant-alert-error"
+            IsVisible="{Binding SubmitError, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+      <TextBlock Text="{Binding SubmitError}" FontSize="12" TextWrapping="Wrap"
+                 Foreground="{DynamicResource AntErrorBrush}" />
+    </Border>
+
+    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+      <controls:AntFormItem Label="客人姓名" Required="True" ErrorText="{Binding GuestNameError}">
+        <TextBox Text="{Binding GuestName}" PlaceholderText="请输入姓名" />
+      </controls:AntFormItem>
+      <controls:AntFormItem Grid.Column="1" Label="联系电话" Required="True" ErrorText="{Binding GuestPhoneError}">
+        <TextBox Text="{Binding GuestPhone}" PlaceholderText="11 位手机号" MaxLength="11" />
+      </controls:AntFormItem>
+    </Grid>
+
+    <controls:AntFormItem Label="预定房间" Required="True" ErrorText="{Binding RoomError}">
+      <ComboBox ItemsSource="{Binding RoomOptions}" SelectedItem="{Binding SelectedRoom}"
+                HorizontalAlignment="Stretch">
+        <ComboBox.ItemTemplate>
+          <DataTemplate x:DataType="dialogs:RoomOptionViewModel">
+            <TextBlock Text="{Binding DisplayText}" />
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
+    </controls:AntFormItem>
+
+    <controls:AntFormItem Label="预计到店时间" Required="True" ErrorText="{Binding ArriveTimeError}">
+      <TextBox Text="{Binding ArriveTimeText}" PlaceholderText="yyyy-MM-dd HH:mm" />
+    </controls:AntFormItem>
+
+    <controls:AntFormItem Label="备注">
+      <TextBox Text="{Binding Note}" Height="62" AcceptsReturn="True" TextWrapping="Wrap"
+               PlaceholderText="选填" VerticalContentAlignment="Top" Padding="9,7" />
+    </controls:AntFormItem>
+
+    <Border Classes="ant-alert-info">
+      <TextBlock Text="提交后房间将变为「预定」状态，待到店后可一键转入入住。"
+                 FontSize="11"
+                 Foreground="{DynamicResource AntPrimaryBrush}"
+                 TextWrapping="Wrap" />
+    </Border>
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <controls:AntButton Content="取消" Command="{Binding Host.CloseCommand}" />
+      <controls:AntButton Variant="Primary" Content="确认预定" Command="{Binding SubmitCommand}" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

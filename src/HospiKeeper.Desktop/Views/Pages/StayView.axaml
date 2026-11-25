@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:icons="using:HospiKeeper.UI.Icons"
+             x:Class="HospiKeeper.Desktop.Views.Pages.StayView"
+             x:DataType="pages:StayPageViewModel">
+
+  <Grid Margin="16" RowDefinitions="Auto,Auto,*">
+
+    <controls:AntPageHeader Title="在住 / 退房结算" Subtitle="追加消费、损坏扣费与押金抵扣">
+      <controls:AntPageHeader.Extra>
+        <controls:AntButton Command="{Binding RefreshCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <PathIcon Data="{x:Static icons:AntIcons.Refresh}" Width="13" Height="13" />
+            <TextBlock Text="刷新" />
+          </StackPanel>
+        </controls:AntButton>
+      </controls:AntPageHeader.Extra>
+    </controls:AntPageHeader>
+
+    <controls:AntCard Grid.Row="1" Padding="14,12" Margin="0,0,0,12">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <TextBox Width="220" Text="{Binding Keyword}"
+                 PlaceholderText="房号 / 姓名 / 手机号" />
+        <TextBlock Grid.Column="2" Text="{Binding CountText}" FontSize="12"
+                   Foreground="{DynamicResource AntTextTertiaryBrush}" VerticalAlignment="Center" />
+      </Grid>
+    </controls:AntCard>
+
+    <controls:AntCard Grid.Row="2" Padding="0" ClipToBounds="True">
+      <controls:AntTable ItemsSource="{Binding Rows}" EmptyText="暂无在住客人">
+        <controls:AntTable.Columns>
+          <controls:AntTableColumn Header="房号" Binding="RoomNo" Width="0.7*" CellClasses="text-strong" />
+          <controls:AntTableColumn Header="客人" Binding="GuestName" Width="0.9*" />
+          <controls:AntTableColumn Header="电话" Binding="GuestPhone" Width="1.1*" />
+          <controls:AntTableColumn Header="入住时间" Binding="CheckInText" Width="1*" />
+          <controls:AntTableColumn Header="预计退房" Binding="PlanOutText" Width="1*" />
+          <controls:AntTableColumn Header="单价" Binding="PriceText" Width="0.8*" />
+          <controls:AntTableColumn Header="押金" Binding="DepositText" Width="0.8*" />
+          <controls:AntTableColumn Header="已产生费用" Binding="CostText" Width="1*" CellClasses="text-money" />
+          <controls:AntTableColumn Header="追加消费" Binding="ExtraCountText" Width="1.1*" CellClasses="text-secondary" />
+          <controls:AntTableColumn Header="操作" Width="210">
+            <controls:AntTableColumn.CellTemplate>
+              <DataTemplate x:DataType="pages:StayRowViewModel">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <controls:AntButton Variant="Link" Size="Small" Content="退房结算"
+                                      Command="{Binding CheckoutCommand}" />
+                  <controls:AntButton Variant="Link" Size="Small" Content="追加消费"
+                                      Command="{Binding AddExtraCommand}" />
+                  <controls:AntButton Variant="Link" Size="Small" Content="详情"
+                                      Command="{Binding DetailCommand}" />
+                </StackPanel>
+              </DataTemplate>
+            </controls:AntTableColumn.CellTemplate>
+          </controls:AntTableColumn>
+        </controls:AntTable.Columns>
+      </controls:AntTable>
+    </controls:AntCard>
+  </Grid>
+</UserControl>

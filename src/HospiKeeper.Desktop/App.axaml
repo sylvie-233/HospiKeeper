@@ -1,0 +1,99 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
+             xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
+             xmlns:pageViews="using:HospiKeeper.Desktop.Views.Pages"
+             xmlns:dialogViews="using:HospiKeeper.Desktop.Views.Dialogs"
+             x:Class="HospiKeeper.Desktop.App"
+             RequestedThemeVariant="Light">
+
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://HospiKeeper.UI/Theme/AntResources.axaml" />
+        <ResourceInclude Source="avares://HospiKeeper.UI/Theme/AntControls.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+
+    </ResourceDictionary>
+  </Application.Resources>
+
+  <Application.DataTemplates>
+      <!-- 页面 -->
+      <DataTemplate DataType="pages:DashboardPageViewModel">
+        <pageViews:DashboardView />
+      </DataTemplate>
+      <DataTemplate DataType="pages:CheckInPageViewModel">
+        <pageViews:CheckInView />
+      </DataTemplate>
+      <DataTemplate DataType="pages:ReservationsPageViewModel">
+        <pageViews:ReservationsView />
+      </DataTemplate>
+      <DataTemplate DataType="pages:StayPageViewModel">
+        <pageViews:StayView />
+      </DataTemplate>
+      <DataTemplate DataType="pages:RecordsPageViewModel">
+        <pageViews:RecordsView />
+      </DataTemplate>
+      <DataTemplate DataType="pages:ReportPageViewModel">
+        <pageViews:ReportView />
+      </DataTemplate>
+      <DataTemplate DataType="pages:LogsPageViewModel">
+        <pageViews:LogsView />
+      </DataTemplate>
+      <DataTemplate DataType="pages:RoomsPageViewModel">
+        <pageViews:RoomsView />
+      </DataTemplate>
+      <DataTemplate DataType="pages:RoomTypesPageViewModel">
+        <pageViews:RoomTypesView />
+      </DataTemplate>
+      <DataTemplate DataType="pages:AccountsPageViewModel">
+        <pageViews:AccountsView />
+      </DataTemplate>
+
+      <!-- 弹窗 -->
+      <DataTemplate DataType="dialogs:ConfirmDialogViewModel">
+        <dialogViews:ConfirmDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:AboutDialogViewModel">
+        <dialogViews:AboutDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:ChangePasswordDialogViewModel">
+        <dialogViews:ChangePasswordDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:RoomActionDialogViewModel">
+        <dialogViews:RoomActionDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:NewReservationDialogViewModel">
+        <dialogViews:NewReservationDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:AddExtraDialogViewModel">
+        <dialogViews:AddExtraDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:CheckoutDialogViewModel">
+        <dialogViews:CheckoutDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:CheckInDetailDialogViewModel">
+        <dialogViews:CheckInDetailDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:BillDetailDialogViewModel">
+        <dialogViews:BillDetailDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:ReservationDetailDialogViewModel">
+        <dialogViews:ReservationDetailDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:RoomEditDialogViewModel">
+        <dialogViews:RoomEditDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:RoomTypeEditDialogViewModel">
+        <dialogViews:RoomTypeEditDialogView />
+      </DataTemplate>
+      <DataTemplate DataType="dialogs:AccountEditDialogViewModel">
+        <dialogViews:AccountEditDialogView />
+      </DataTemplate>
+  </Application.DataTemplates>
+
+  <Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://HospiKeeper.UI/Theme/AntStyles.axaml" />
+  </Application.Styles>
+</Application>

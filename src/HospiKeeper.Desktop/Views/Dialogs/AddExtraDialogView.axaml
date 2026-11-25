@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="HospiKeeper.Desktop.Views.Dialogs.AddExtraDialogView"
+             x:DataType="dialogs:AddExtraDialogViewModel">
+
+  <StackPanel Spacing="12">
+    <Border Classes="ticket-grid">
+      <Grid ColumnDefinitions="*,*">
+        <StackPanel Spacing="2">
+          <TextBlock Classes="ticket-label" Text="房间 / 客人" />
+          <TextBlock Classes="ticket-value" FontWeight="SemiBold" Text="{Binding RoomGuestText}" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Spacing="2">
+          <TextBlock Classes="ticket-label" Text="入住单号" />
+          <TextBlock Classes="ticket-value" Text="{Binding CheckInNoText}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Classes="ant-alert-error"
+            IsVisible="{Binding SubmitError, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+      <TextBlock Text="{Binding SubmitError}" FontSize="12" TextWrapping="Wrap"
+                 Foreground="{DynamicResource AntErrorBrush}" />
+    </Border>
+
+    <controls:AntFormItem Label="消费项目" Required="True" ErrorText="{Binding ItemError}">
+      <TextBox Text="{Binding Item}" PlaceholderText="如：矿泉水 / 泡面 / 洗衣" />
+    </controls:AntFormItem>
+
+    <controls:AntFormItem Label="金额（元）" Required="True" ErrorText="{Binding AmountError}">
+      <TextBox Text="{Binding AmountText}" PlaceholderText="0.00" />
+    </controls:AntFormItem>
+
+    <TextBlock Text="追加消费会即时计入该入住单，退房结算时统一汇总。"
+               FontSize="11"
+               Foreground="{DynamicResource AntTextTertiaryBrush}" />
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <controls:AntButton Content="取消" Command="{Binding Host.CloseCommand}" />
+      <controls:AntButton Variant="Primary" Content="确认入账" Command="{Binding SubmitCommand}" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

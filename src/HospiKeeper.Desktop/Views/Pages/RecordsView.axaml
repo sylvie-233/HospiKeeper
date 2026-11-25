@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             x:Class="HospiKeeper.Desktop.Views.Pages.RecordsView"
+             x:DataType="pages:RecordsPageViewModel">
+
+  <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*">
+
+    <controls:AntPageHeader Title="入住 / 账单记录" Subtitle="按房号、姓名、手机号与日期检索历史单据" />
+
+    <controls:AntCard Grid.Row="1" Padding="14,12" Margin="0,0,0,10">
+      <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto" ColumnSpacing="8">
+        <TextBox Width="90" Text="{Binding RoomNo}" PlaceholderText="房号" />
+        <TextBox Grid.Column="1" Width="190" Text="{Binding Keyword}" PlaceholderText="姓名 / 手机号" />
+        <CalendarDatePicker Grid.Column="2" Width="138" SelectedDate="{Binding DateFrom}"
+                            PlaceholderText="开始日期" />
+        <CalendarDatePicker Grid.Column="3" Width="138" SelectedDate="{Binding DateTo}"
+                            PlaceholderText="结束日期" />
+        <controls:AntButton Grid.Column="4" Variant="Primary" Content="查询"
+                            Command="{Binding QueryCommand}" />
+        <controls:AntButton Grid.Column="5" Content="重置" Command="{Binding ResetCommand}" />
+        <TextBlock Grid.Column="7" Text="{Binding CountText}" FontSize="12"
+                   Foreground="{DynamicResource AntTextTertiaryBrush}" VerticalAlignment="Center" />
+      </Grid>
+    </controls:AntCard>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="4" Margin="0,0,0,10">
+      <Button Classes="ant-tab" Classes.active="{Binding IsCheckInTab}"
+              Content="入住记录" Command="{Binding ShowCheckInsCommand}" />
+      <Button Classes="ant-tab" Classes.active="{Binding !IsCheckInTab}"
+              Content="退房账单" Command="{Binding ShowBillsCommand}" />
+    </StackPanel>
+
+    <controls:AntCard Grid.Row="3" Padding="0" ClipToBounds="True">
+      <Grid>
+        <controls:AntTable ItemsSource="{Binding CheckInRows}"
+                           EmptyText="暂无符合条件的入住记录"
+                           IsVisible="{Binding IsCheckInTab}">
+          <controls:AntTable.Columns>
+            <controls:AntTableColumn Header="入住单号" Width="1.5*">
+              <controls:AntTableColumn.CellTemplate>
+                <DataTemplate x:DataType="pages:CheckInRowViewModel">
+                  <controls:AntButton Variant="Link" Content="{Binding No}"
+                                      Command="{Binding DetailCommand}" />
+                </DataTemplate>
+              </controls:AntTableColumn.CellTemplate>
+            </controls:AntTableColumn>
+            <controls:AntTableColumn Header="房号" Binding="RoomNo" Width="0.7*" CellClasses="text-strong" />
+            <controls:AntTableColumn Header="客人" Binding="GuestName" Width="0.9*" />
+            <controls:AntTableColumn Header="入住时间" Binding="CheckInText" Width="1.1*" />
+            <controls:AntTableColumn Header="退房时间" Binding="OutText" Width="1.1*" />
+            <controls:AntTableColumn Header="房费" Binding="FeeText" Width="0.9*" CellClasses="text-money" />
+            <controls:AntTableColumn Header="状态" Width="82">
+              <controls:AntTableColumn.CellTemplate>
+                <DataTemplate x:DataType="pages:CheckInRowViewModel">
+                  <controls:AntTag Variant="{Binding StatusVariant}" Content="{Binding StatusText}" />
+                </DataTemplate>
+              </controls:AntTableColumn.CellTemplate>
+            </controls:AntTableColumn>
+            <controls:AntTableColumn Header="经办人" Binding="OperatorName" Width="1.2*" />
+          </controls:AntTable.Columns>
+        </controls:AntTable>
+
+        <controls:AntTable ItemsSource="{Binding BillRows}"
+                           EmptyText="暂无符合条件的退房账单"
+                           IsVisible="{Binding !IsCheckInTab}">
+          <controls:AntTable.Columns>
+            <controls:AntTableColumn Header="结算单号" Width="1.5*">
+              <controls:AntTableColumn.CellTemplate>
+                <DataTemplate x:DataType="pages:BillRowViewModel">
+                  <controls:AntButton Variant="Link" Content="{Binding No}"
+                                      Command="{Binding DetailCommand}" />
+                </DataTemplate>
+              </controls:AntTableColumn.CellTemplate>
+            </controls:AntTableColumn>
+            <controls:AntTableColumn Header="房号" Binding="RoomNo" Width="0.7*" CellClasses="text-strong" />
+            <controls:AntTableColumn Header="客人" Binding="GuestName" Width="0.9*" />
+            <controls:AntTableColumn Header="房费" Binding="RoomFeeText" Width="0.9*" CellClasses="text-money" />
+            <controls:AntTableColumn Header="追加 / 损坏" Binding="ExtraText" Width="1*" />
+            <controls:AntTableColumn Header="押金" Binding="DepositText" Width="0.9*" />
+            <controls:AntTableColumn Header="结算差额" Width="1*">
+              <controls:AntTableColumn.CellTemplate>
+                <DataTemplate x:DataType="pages:BillRowViewModel">
+                  <TextBlock Text="{Binding DiffText}"
+                             Classes.text-danger="{Binding NeedsPayment}"
+                             Classes.text-success="{Binding NeedsRefund}" />
+                </DataTemplate>
+              </controls:AntTableColumn.CellTemplate>
+            </controls:AntTableColumn>
+            <controls:AntTableColumn Header="退房时间" Binding="CheckoutText" Width="1.1*" />
+            <controls:AntTableColumn Header="经办人" Binding="OperatorName" Width="1.2*" />
+          </controls:AntTable.Columns>
+        </controls:AntTable>
+      </Grid>
+    </controls:AntCard>
+  </Grid>
+</UserControl>

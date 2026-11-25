@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="HospiKeeper.Desktop.Views.Dialogs.RoomTypeEditDialogView"
+             x:DataType="dialogs:RoomTypeEditDialogViewModel">
+
+  <StackPanel Spacing="12">
+    <Border Classes="ant-alert-error"
+            IsVisible="{Binding SubmitError, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+      <TextBlock Text="{Binding SubmitError}" FontSize="12" TextWrapping="Wrap"
+                 Foreground="{DynamicResource AntErrorBrush}" />
+    </Border>
+
+    <controls:AntFormItem Label="房型名称" Required="True" ErrorText="{Binding NameError}">
+      <TextBox Text="{Binding Name}" PlaceholderText="如 单人间 / 双人间 / 大床房" />
+    </controls:AntFormItem>
+
+    <controls:AntFormItem Label="基础定价（元/晚）" Required="True" ErrorText="{Binding PriceError}">
+      <TextBox Text="{Binding PriceText}" PlaceholderText="0.00" />
+    </controls:AntFormItem>
+
+    <controls:AntFormItem Label="备注">
+      <TextBox Text="{Binding Note}" Height="64" AcceptsReturn="True" TextWrapping="Wrap"
+               PlaceholderText="选填，如面积、床型说明" VerticalContentAlignment="Top" Padding="9,7" />
+    </controls:AntFormItem>
+
+    <Border Classes="ant-alert-info">
+      <TextBlock Text="改名将同步所有房间的房型名称；修改基础定价会写入「改价」日志，但不会自动改动房间标价。"
+                 FontSize="11" TextWrapping="Wrap"
+                 Foreground="{DynamicResource AntPrimaryBrush}" />
+    </Border>
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <controls:AntButton Content="取消" Command="{Binding Host.CloseCommand}" />
+      <controls:AntButton Variant="Primary" Content="保存房型" Command="{Binding SubmitCommand}" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

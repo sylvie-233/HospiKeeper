@@ -1,0 +1,94 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:icons="using:HospiKeeper.UI.Icons"
+             x:Class="HospiKeeper.Desktop.Views.Pages.RoomsView"
+             x:DataType="pages:RoomsPageViewModel">
+
+  <Grid Margin="16" RowDefinitions="Auto,Auto,*">
+
+    <controls:AntPageHeader Title="房间管理" Subtitle="房间档案、价格标准与维修 / 停用维护（管理员）">
+      <controls:AntPageHeader.Extra>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <controls:AntButton Command="{Binding RefreshCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Data="{x:Static icons:AntIcons.Refresh}" Width="13" Height="13" />
+              <TextBlock Text="刷新" />
+            </StackPanel>
+          </controls:AntButton>
+          <controls:AntButton Variant="Primary" Command="{Binding AddCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Data="{x:Static icons:AntIcons.Plus}" Width="12" Height="12" />
+              <TextBlock Text="新增房间" />
+            </StackPanel>
+          </controls:AntButton>
+        </StackPanel>
+      </controls:AntPageHeader.Extra>
+    </controls:AntPageHeader>
+
+    <controls:AntCard Grid.Row="1" Padding="14,12" Margin="0,0,0,12">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
+        <ComboBox Width="130" ItemsSource="{Binding FloorOptions}" SelectedItem="{Binding SelectedFloor}">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="pages:FloorFilterOption">
+              <TextBlock Text="{Binding Text}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+        <ComboBox Grid.Column="1" Width="130" ItemsSource="{Binding RoomTypeOptions}"
+                  SelectedItem="{Binding SelectedRoomType}">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="pages:RoomTypeFilterOption">
+              <TextBlock Text="{Binding Text}" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+        <TextBlock Grid.Column="3" Text="{Binding CountText}" FontSize="12"
+                   Foreground="{DynamicResource AntTextTertiaryBrush}" VerticalAlignment="Center" />
+      </Grid>
+    </controls:AntCard>
+
+    <controls:AntCard Grid.Row="2" Padding="0" ClipToBounds="True">
+      <controls:AntTable ItemsSource="{Binding Rows}" EmptyText="暂无房间">
+        <controls:AntTable.Columns>
+          <controls:AntTableColumn Header="房号" Binding="RoomNo" Width="0.7*" CellClasses="text-strong" />
+          <controls:AntTableColumn Header="楼层" Binding="FloorText" Width="0.6*" />
+          <controls:AntTableColumn Header="房型" Binding="TypeName" Width="0.9*" />
+          <controls:AntTableColumn Header="床位" Binding="BedsText" Width="0.5*" />
+          <controls:AntTableColumn Header="标价" Binding="PriceText" Width="0.8*" CellClasses="text-money" />
+          <controls:AntTableColumn Header="底价" Binding="MinPriceText" Width="0.8*" />
+          <controls:AntTableColumn Header="押金" Binding="DepositText" Width="0.8*" />
+          <controls:AntTableColumn Header="设施" Binding="FeatureText" Width="1.1*" CellClasses="text-secondary" />
+          <controls:AntTableColumn Header="状态" Width="82">
+            <controls:AntTableColumn.CellTemplate>
+              <DataTemplate x:DataType="pages:RoomRowViewModel">
+                <controls:AntTag Variant="{Binding StatusVariant}" Content="{Binding StatusText}" />
+              </DataTemplate>
+            </controls:AntTableColumn.CellTemplate>
+          </controls:AntTableColumn>
+          <controls:AntTableColumn Header="操作" Width="250">
+            <controls:AntTableColumn.CellTemplate>
+              <DataTemplate x:DataType="pages:RoomRowViewModel">
+                <WrapPanel Orientation="Horizontal">
+                  <controls:AntButton Variant="Link" Size="Small" Content="编辑"
+                                      Command="{Binding EditCommand}" />
+                  <controls:AntButton Variant="Link" Size="Small" Content="维修"
+                                      IsVisible="{Binding CanRepair}" Command="{Binding RepairCommand}" />
+                  <controls:AntButton Variant="Link" Size="Small" Content="停用"
+                                      IsVisible="{Binding CanDisable}" Command="{Binding DisableCommand}" />
+                  <controls:AntButton Variant="Link" Size="Small" Content="恢复"
+                                      IsVisible="{Binding CanRestore}" Command="{Binding RestoreCommand}" />
+                  <controls:AntButton Variant="Link" Size="Small" Content="删除"
+                                      IsVisible="{Binding CanDelete}"
+                                      Foreground="{DynamicResource AntErrorBrush}"
+                                      Command="{Binding DeleteCommand}" />
+                </WrapPanel>
+              </DataTemplate>
+            </controls:AntTableColumn.CellTemplate>
+          </controls:AntTableColumn>
+        </controls:AntTable.Columns>
+      </controls:AntTable>
+    </controls:AntCard>
+  </Grid>
+</UserControl>

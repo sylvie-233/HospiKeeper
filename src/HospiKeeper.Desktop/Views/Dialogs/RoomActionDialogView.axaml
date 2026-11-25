@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             x:Class="HospiKeeper.Desktop.Views.Dialogs.RoomActionDialogView"
+             x:DataType="dialogs:RoomActionDialogViewModel">
+
+  <StackPanel Spacing="14">
+    <StackPanel Spacing="2">
+      <TextBlock Text="{Binding Heading}" FontSize="17" FontWeight="SemiBold"
+                 Foreground="{DynamicResource AntTextBrush}" />
+      <TextBlock Text="{Binding Subheading}" FontSize="12"
+                 Foreground="{DynamicResource AntTextTertiaryBrush}" />
+    </StackPanel>
+
+    <ItemsControl ItemsSource="{Binding Actions}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="dialogs:RoomActionItemViewModel">
+          <controls:AntButton Height="58"
+                              Margin="0,0,0,8"
+                              HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Stretch"
+                              Padding="14,8"
+                              Command="{Binding ExecuteCommand}">
+            <StackPanel Spacing="2">
+              <TextBlock Text="{Binding Title}"
+                         FontSize="13"
+                         FontWeight="SemiBold"
+                         Classes.text-danger="{Binding IsDanger}" />
+              <TextBlock Text="{Binding Description}"
+                         FontSize="11"
+                         Foreground="{DynamicResource AntTextTertiaryBrush}" />
+            </StackPanel>
+          </controls:AntButton>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <controls:AntButton HorizontalAlignment="Right" Content="取消"
+                        Command="{Binding CancelCommand}" />
+  </StackPanel>
+</UserControl>

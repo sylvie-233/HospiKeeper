@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:icons="using:HospiKeeper.UI.Icons"
+             x:Class="HospiKeeper.Desktop.Views.Dialogs.AboutDialogView"
+             x:DataType="dialogs:AboutDialogViewModel">
+
+  <StackPanel Spacing="16">
+    <StackPanel HorizontalAlignment="Center" Spacing="8">
+      <Border Width="58" Height="58" CornerRadius="14" HorizontalAlignment="Center"
+              Background="{DynamicResource AntPrimaryBrush}">
+        <PathIcon Data="{x:Static icons:AntIcons.Home}" Width="28" Height="28" Foreground="#FFFFFF" />
+      </Border>
+      <StackPanel HorizontalAlignment="Center" Spacing="2">
+        <TextBlock Text="云栖民宿管理系统" FontSize="18" FontWeight="SemiBold"
+                   Foreground="{DynamicResource AntTextBrush}" HorizontalAlignment="Center" />
+        <TextBlock Text="{Binding Version}" FontSize="12"
+                   Foreground="{DynamicResource AntTextTertiaryBrush}" HorizontalAlignment="Center" />
+      </StackPanel>
+    </StackPanel>
+
+    <TextBlock Text="{Binding Description}" FontSize="13" TextWrapping="Wrap" LineHeight="22"
+               Foreground="{DynamicResource AntTextSecondaryBrush}" TextAlignment="Center" />
+
+    <Border Classes="ticket-grid">
+      <StackPanel Spacing="8">
+        <Grid ColumnDefinitions="Auto,*">
+          <TextBlock Text="技术栈" FontSize="12" Foreground="{DynamicResource AntTextTertiaryBrush}" />
+          <TextBlock Grid.Column="1" Text="{Binding Architecture}" FontSize="12" TextWrapping="Wrap" />
+        </Grid>
+        <Grid ColumnDefinitions="Auto,*">
+          <TextBlock Text="数据服务" FontSize="12" Foreground="{DynamicResource AntTextTertiaryBrush}" />
+          <TextBlock Grid.Column="1" Text="HospiKeeper.Api · MySQL" FontSize="12" />
+        </Grid>
+      </StackPanel>
+    </Border>
+
+    <controls:AntButton Variant="Primary" HorizontalAlignment="Right"
+                        Content="知道了" Command="{Binding CloseCommand}" />
+  </StackPanel>
+</UserControl>

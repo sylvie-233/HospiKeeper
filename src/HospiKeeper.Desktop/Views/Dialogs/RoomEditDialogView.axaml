@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
+             xmlns:domain="using:HospiKeeper.Domain.Entities"
+             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             x:Class="HospiKeeper.Desktop.Views.Dialogs.RoomEditDialogView"
+             x:DataType="dialogs:RoomEditDialogViewModel">
+
+  <StackPanel Spacing="12">
+    <Border Classes="ant-alert-error"
+            IsVisible="{Binding SubmitError, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+      <TextBlock Text="{Binding SubmitError}" FontSize="12" TextWrapping="Wrap"
+                 Foreground="{DynamicResource AntErrorBrush}" />
+    </Border>
+
+    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+      <controls:AntFormItem Label="房号" Required="True" ErrorText="{Binding RoomNoError}">
+        <TextBox Text="{Binding RoomNo}" PlaceholderText="如 101" />
+      </controls:AntFormItem>
+      <controls:AntFormItem Grid.Column="1" Label="楼层" Required="True" ErrorText="{Binding FloorError}">
+        <TextBox Text="{Binding FloorText}" PlaceholderText="1 - 99" />
+      </controls:AntFormItem>
+      <controls:AntFormItem Grid.Column="2" Label="床位数" Required="True" ErrorText="{Binding BedsError}">
+        <TextBox Text="{Binding BedsText}" PlaceholderText="1 - 10" />
+      </controls:AntFormItem>
+    </Grid>
+
+    <controls:AntFormItem Label="房型" Required="True" ErrorText="{Binding TypeError}">
+      <ComboBox ItemsSource="{Binding RoomTypes}" SelectedItem="{Binding SelectedRoomType}"
+                HorizontalAlignment="Stretch">
+        <ComboBox.ItemTemplate>
+          <DataTemplate x:DataType="domain:RoomType">
+            <TextBlock Text="{Binding Name}" />
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
+    </controls:AntFormItem>
+
+    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+      <controls:AntFormItem Label="标价（元/晚）" Required="True" ErrorText="{Binding PriceError}">
+        <TextBox Text="{Binding PriceText}" PlaceholderText="0.00" />
+      </controls:AntFormItem>
+      <controls:AntFormItem Grid.Column="1" Label="底价（元/晚）" Required="True" ErrorText="{Binding MinPriceError}">
+        <TextBox Text="{Binding MinPriceText}" PlaceholderText="议价下限" />
+      </controls:AntFormItem>
+      <controls:AntFormItem Grid.Column="2" Label="押金标准（元）" Required="True" ErrorText="{Binding DepositError}">
+        <TextBox Text="{Binding DepositText}" PlaceholderText="0.00" />
+      </controls:AntFormItem>
+    </Grid>
+
+    <StackPanel Orientation="Horizontal" Spacing="24">
+      <CheckBox Content="带窗" IsChecked="{Binding HasWindow}" />
+      <CheckBox Content="独立卫浴" IsChecked="{Binding HasBath}" />
+    </StackPanel>
+
+    <controls:AntFormItem Label="备注">
+      <TextBox Text="{Binding Note}" Height="58" AcceptsReturn="True" TextWrapping="Wrap"
+               PlaceholderText="选填，如维修原因、朝向等" VerticalContentAlignment="Top" Padding="9,7" />
+    </controls:AntFormItem>
+
+    <Border Classes="ant-alert-info">
+      <TextBlock Text="房态由看板快捷操作维护；删除房间前请确认无在住 / 预定 / 历史单据。"
+                 FontSize="11" TextWrapping="Wrap"
+                 Foreground="{DynamicResource AntPrimaryBrush}" />
+    </Border>
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <controls:AntButton Content="取消" Command="{Binding Host.CloseCommand}" />
+      <controls:AntButton Variant="Primary" Content="保存房间" Command="{Binding SubmitCommand}" />
+    </StackPanel>
+  </StackPanel>
+</UserControl>

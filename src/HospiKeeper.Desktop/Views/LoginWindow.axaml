@@ -1,0 +1,103 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:HospiKeeper.Desktop.ViewModels"
+        xmlns:controls="using:HospiKeeper.UI.Controls"
+        xmlns:icons="using:HospiKeeper.UI.Icons"
+        xmlns:conv="using:Avalonia.Data.Converters"
+        x:Class="HospiKeeper.Desktop.Views.LoginWindow"
+        x:DataType="vm:LoginViewModel"
+        Title="登录 - 云栖民宿管理系统"
+        Width="460"
+        Height="540"
+        CanResize="False"
+        WindowStartupLocation="Manual"
+        WindowDecorations="BorderOnly"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        Background="#E8E8E8"
+        FontFamily="{DynamicResource AntFontFamily}"
+        Opened="OnOpened">
+
+  <Border Background="#FFFFFF">
+    <Grid RowDefinitions="178,*">
+
+      <!-- 品牌区 -->
+      <Border Grid.Row="0" Name="Hero" PointerPressed="OnHeroPointerPressed">
+        <Border.Background>
+          <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+            <GradientStop Color="#0E5FD8" Offset="0" />
+            <GradientStop Color="#1677FF" Offset="0.55" />
+            <GradientStop Color="#4096FF" Offset="1" />
+          </LinearGradientBrush>
+        </Border.Background>
+        <Grid>
+          <Button Classes="win-btn close"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Top"
+                  Width="40"
+                  Height="32"
+                  Click="OnCloseClick"
+                  ToolTip.Tip="关闭">
+            <PathIcon Data="{x:Static icons:AntIcons.Close}" Width="11" Height="11" />
+          </Button>
+
+          <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+            <Border Width="58" Height="58" CornerRadius="14"
+                    Background="#2EFFFFFF" HorizontalAlignment="Center">
+              <PathIcon Data="{x:Static icons:AntIcons.Home}" Width="28" Height="28" Foreground="#FFFFFF" />
+            </Border>
+            <TextBlock Text="云栖民宿管理系统"
+                       FontSize="21"
+                       FontWeight="Bold"
+                       Foreground="#FFFFFF"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="HospiKeeper · 开房 / 退房 / 房态 / 账单"
+                       FontSize="12"
+                       Foreground="#CCFFFFFF"
+                       HorizontalAlignment="Center" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- 登录表单 -->
+      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="38,28,38,24" Spacing="14">
+          <StackPanel Spacing="3">
+            <TextBlock Text="操作员登录" FontSize="18" FontWeight="SemiBold"
+                       Foreground="{DynamicResource AntTextBrush}" />
+            <TextBlock Text="使用前台或管理员账号进入系统"
+                       FontSize="12"
+                       Foreground="{DynamicResource AntTextTertiaryBrush}" />
+          </StackPanel>
+
+          <Border Classes="ant-alert-error"
+                  IsVisible="{Binding ErrorText, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding ErrorText}"
+                       FontSize="12"
+                       Foreground="{DynamicResource AntErrorBrush}"
+                       TextWrapping="Wrap" />
+          </Border>
+
+          <controls:AntFormItem Label="登录账号" Required="True">
+            <TextBox Text="{Binding Username}" PlaceholderText="请输入操作员账号" />
+          </controls:AntFormItem>
+
+          <controls:AntFormItem Label="密码" Required="True">
+            <TextBox Text="{Binding Password}"
+                     PasswordChar="●"
+                     PlaceholderText="请输入密码" />
+          </controls:AntFormItem>
+
+          <controls:AntButton Variant="Primary"
+                              Size="Large"
+                              HorizontalAlignment="Stretch"
+                              IsDefault="True"
+                              Command="{Binding LoginCommand}"
+                              Content="登 录"
+                              Margin="0,4,0,0" />
+
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Border>
+</Window>
