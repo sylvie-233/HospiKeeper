@@ -288,6 +288,10 @@ dotnet ef database update \
   - 主题：`Theme/AntResources.axaml`、`Theme/AntControls.axaml`、`Theme/AntStyles.axaml`
 - 页面统一使用 `AntPageHeader` + `AntCard` + `AntTable` 的组合，风格参考 Ant Design（主色 `#1677FF`，28-32px 紧凑控件）。
 - Avalonia 12 已废弃 `DataGrid`；表格统一使用自研 `AntTable`。
+- `AntTable` 默认 `PageSize=10` 并自动分页；不足一页时自动隐藏分页条。
+  - 固定高度表格（如报表区间表）可通过 `PageSize` 调整每页条数；`PageSize=0` 可关闭分页。
+  - 不要在 ViewModel 中重复实现客户端分页；将来接服务端分页时再引入 `Total` / `PageIndex` 参数。
+  - 文本列会自动附加 Tooltip，列宽不足时可悬停查看完整内容。
 - Desktop 使用 MVVM：View 只绑定 ViewModel，业务调用全部经 `IHospiKeeperApi`。
 - `Desktop/GlobalUsings.cs` 用别名把 `RoomDto` 等契约类型映射回旧名称；不要新增 `using HospiKeeper.Domain.Entities;`。
 - 弹窗统一由 `DialogService` 管理；成功 / 失败提示统一走 `ToastService`。

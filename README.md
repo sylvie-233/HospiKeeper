@@ -105,7 +105,7 @@ Contracts/
 - `AntFormItem`：标签、必填星号、错误信息
 - `AntModal`：主窗口内模态弹窗容器
 - `AntRoomCard`：六种房态渐变卡片与交互态
-- `AntTable` / `AntTableColumn`：替代废弃 DataGrid 的轻量数据表格
+- `AntTable` / `AntTableColumn`：替代废弃 DataGrid 的轻量数据表格，内置分页（默认 10 条/页，不足一页自动隐藏）
 - `AntBarChart`：自绘柱状图，无图表库依赖
 - `AntEmpty`、`AntToast`、`AntIcons`
 - `Theme/`：Ant Design 色彩 Token、控件主题、输入框 / 下拉 / 菜单 / 票据等统一样式
