@@ -27,6 +27,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IRecordService, RecordService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IGuestBookingService, GuestBookingService>();
 
         services.AddSingleton<IHotelCacheInvalidator, HotelCacheInvalidator>();
 

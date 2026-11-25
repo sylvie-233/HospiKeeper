@@ -17,4 +17,10 @@ public static class CacheDurations
     public static readonly TimeSpan RoomTypes = TimeSpan.FromSeconds(60);
     /// <summary>报表缓存时长。</summary>
     public static readonly TimeSpan Reports = TimeSpan.FromSeconds(60);
+
+    /// <summary>游客端房型可订量缓存时长。</summary>
+    public static readonly TimeSpan GuestAvailability = TimeSpan.FromSeconds(15);
+
+    /// <summary>游客端首页统计缓存时长。</summary>
+    public static readonly TimeSpan GuestSummary = TimeSpan.FromSeconds(60);
 }

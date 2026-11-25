@@ -67,7 +67,8 @@ public sealed class ApiAuthMiddleware
            || path.StartsWith("/health", StringComparison.OrdinalIgnoreCase)
            || path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase)
            || path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase)
-           || path.StartsWith("/api/auth/login", StringComparison.OrdinalIgnoreCase);
+           || path.StartsWith("/api/auth/login", StringComparison.OrdinalIgnoreCase)
+           || path.StartsWith("/api/public", StringComparison.OrdinalIgnoreCase);
 
     private static async Task UnauthorizedAsync(HttpContext context, string message)
     {

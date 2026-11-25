@@ -14,6 +14,11 @@ public sealed class HospiKeeperOpenApiOperationTransformer : IOpenApiOperationTr
         "api/auth/login"
     ];
 
+    private static readonly string[] PublicPrefixes =
+    [
+        "api/public"
+    ];
+
     public Task TransformAsync(
         OpenApiOperation operation,
         OpenApiOperationTransformerContext context,
@@ -26,11 +31,17 @@ public sealed class HospiKeeperOpenApiOperationTransformer : IOpenApiOperationTr
             return Task.CompletedTask;
         }
 
-        if (PublicPaths.Contains(relativePath, StringComparer.OrdinalIgnoreCase))
+        if (PublicPaths.Contains(relativePath, StringComparer.OrdinalIgnoreCase)
+            || PublicPrefixes.Any(prefix =>
+                relativePath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
         {
             operation.Security = [];
             AddResponse(operation, context, "400", "请求参数或业务校验失败。");
-            AddResponse(operation, context, "401", "账号或密码错误。");
+            if (relativePath.Equals("api/auth/login", StringComparison.OrdinalIgnoreCase))
+            {
+                AddResponse(operation, context, "401", "账号或密码错误。");
+            }
+
             return Task.CompletedTask;
         }
 

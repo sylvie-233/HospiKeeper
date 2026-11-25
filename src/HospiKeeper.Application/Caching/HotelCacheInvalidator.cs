@@ -33,5 +33,7 @@ public sealed class HotelCacheInvalidator : IHotelCacheInvalidator
         await _cache.RemoveAsync(CacheKeys.Counts, cancellationToken);
         await _cache.RemoveAsync(CacheKeys.ReportSnapshot, cancellationToken);
         await _cache.RemoveByPrefixAsync(CacheKeys.ReportRangePrefix, cancellationToken);
+        await _cache.RemoveAsync(CacheKeys.GuestSummary, cancellationToken);
+        await _cache.RemoveByPrefixAsync(CacheKeys.GuestAvailabilityPrefix, cancellationToken);
     }
 }

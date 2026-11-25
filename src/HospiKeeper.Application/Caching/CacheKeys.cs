@@ -35,6 +35,12 @@ public static class CacheKeys
     /// <summary>区间营收前缀。</summary>
     public const string ReportRangePrefix = "reports:range:";
 
+    /// <summary>游客端首页统计。</summary>
+    public const string GuestSummary = "guest:summary";
+
+    /// <summary>游客端房型可订量前缀。</summary>
+    public const string GuestAvailabilityPrefix = "guest:availability:";
+
     /// <summary>按筛选条件生成房间列表 key。</summary>
     public static string Rooms(int? floor, int? typeId, RoomStatus? status)
         => $"rooms:{floor?.ToString() ?? "all"}:{typeId?.ToString() ?? "all"}:{status?.ToString() ?? "all"}";
@@ -46,4 +52,8 @@ public static class CacheKeys
     /// <summary>按日期区间生成营收统计 key。</summary>
     public static string ReportRange(DateTime start, DateTime end)
         => $"{ReportRangePrefix}{start:yyyyMMdd}-{end:yyyyMMdd}";
+
+    /// <summary>按日期区间生成游客房型可订量 key。</summary>
+    public static string GuestAvailability(DateTime checkIn, DateTime checkOut)
+        => $"{GuestAvailabilityPrefix}{checkIn:yyyyMMdd}-{checkOut:yyyyMMdd}";
 }
