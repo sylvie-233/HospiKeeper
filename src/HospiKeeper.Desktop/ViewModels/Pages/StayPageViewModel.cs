@@ -7,7 +7,7 @@ using HospiKeeper.Contracts;
 using HospiKeeper.Desktop.Models;
 using HospiKeeper.Desktop.Services;
 using HospiKeeper.Desktop.ViewModels.Dialogs;
-using HospiKeeper.UI.Icons;
+using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 

@@ -9,8 +9,8 @@ using HospiKeeper.Desktop.ViewModels.Dialogs;
 using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using HospiKeeper.Domain.Services;
-using HospiKeeper.UI.Controls;
-using HospiKeeper.UI.Icons;
+using Sylvie233.UI.Controls;
+using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 

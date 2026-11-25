@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 
-namespace HospiKeeper.UI.Controls;
+namespace Sylvie233.UI.Controls;
 
 /// <summary>带标签与校验信息的表单项容器（Ant Design Form.Item 的轻量实现）。</summary>
 public class AntFormItem : ContentControl

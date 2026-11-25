@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 
-namespace HospiKeeper.UI.Controls;
+namespace Sylvie233.UI.Controls;
 
 public enum AntRoomCardState
 {

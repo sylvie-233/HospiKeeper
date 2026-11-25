@@ -1,8 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
-             xmlns:controls="using:HospiKeeper.UI.Controls"
-             xmlns:icons="using:HospiKeeper.UI.Icons"
+             xmlns:controls="using:Sylvie233.UI.Controls"
+             xmlns:icons="using:Sylvie233.UI.Icons"
              x:Class="HospiKeeper.Desktop.Views.Pages.AccountsView"
              x:DataType="pages:AccountsPageViewModel">
 

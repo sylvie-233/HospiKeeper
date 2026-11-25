@@ -10,7 +10,7 @@ using HospiKeeper.Desktop.Services;
 using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using HospiKeeper.Domain.Services;
-using HospiKeeper.UI.Icons;
+using Sylvie233.UI.Icons;
 using Avalonia.Media;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;

@@ -2,7 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 
-namespace HospiKeeper.UI.Controls;
+namespace Sylvie233.UI.Controls;
 
 /// <summary>AntTable 列定义：文本绑定列或自定义模板列。</summary>
 public sealed class AntTableColumn

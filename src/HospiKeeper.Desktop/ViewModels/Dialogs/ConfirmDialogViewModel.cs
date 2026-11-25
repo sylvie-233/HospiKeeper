@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Desktop.Services;
-using HospiKeeper.UI.Controls;
+using Sylvie233.UI.Controls;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 

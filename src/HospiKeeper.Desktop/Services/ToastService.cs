@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
-using HospiKeeper.UI.Controls;
+using Sylvie233.UI.Controls;
 
 namespace HospiKeeper.Desktop.Services;
 

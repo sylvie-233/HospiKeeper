@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 
-namespace HospiKeeper.UI.Controls;
+namespace Sylvie233.UI.Controls;
 
 /// <summary>统计指标卡：图标 + 数值 + 说明 + 趋势。</summary>
 public class AntStatCard : ContentControl

@@ -10,8 +10,8 @@
   <Application.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
-        <ResourceInclude Source="avares://HospiKeeper.UI/Theme/AntResources.axaml" />
-        <ResourceInclude Source="avares://HospiKeeper.UI/Theme/AntControls.axaml" />
+        <ResourceInclude Source="avares://Sylvie233.UI/Theme/AntResources.axaml" />
+        <ResourceInclude Source="avares://Sylvie233.UI/Theme/AntControls.axaml" />
       </ResourceDictionary.MergedDictionaries>
 
     </ResourceDictionary>
@@ -94,6 +94,6 @@
 
   <Application.Styles>
     <FluentTheme />
-    <StyleInclude Source="avares://HospiKeeper.UI/Theme/AntStyles.axaml" />
+    <StyleInclude Source="avares://Sylvie233.UI/Theme/AntStyles.axaml" />
   </Application.Styles>
 </Application>

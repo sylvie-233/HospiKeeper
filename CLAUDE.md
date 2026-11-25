@@ -41,11 +41,11 @@ HospiKeeper（云栖民宿管理系统）是面向中小型民宿 / 小旅馆的
 HospiKeeper.Domain          实体 / 枚举 / 计费领域服务，无框架依赖
 HospiKeeper.Contracts       前后端共享请求、响应、DTO（API 契约）
 HospiKeeper.Application     业务服务、仓储接口、工作单元 / 缓存端口、缓存失效协调、会话
-Sylvie233.Caching         ICacheService 端口 + Memory / Redis 实现（无业务依赖，可独立复用）
+Sylvie233.Caching           ICacheService 端口 + Memory / Redis 实现（无业务依赖，可独立复用）
 HospiKeeper.Infrastructure  EF Core DbContext / 配置 / 仓储 / 迁移 / 种子
 HospiKeeper.Api             独立 Web API（控制器、鉴权、Swagger）
 HospiKeeper.Client          桌面端 HTTP 客户端
-HospiKeeper.UI              Avalonia 设计系统与自研控件（不依赖业务模块）
+Sylvie233.UI                Avalonia 设计系统与自研控件（不依赖业务模块）
 HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
 ```
 
@@ -55,8 +55,9 @@ HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
 - `Infrastructure → Application / Contracts`
 - `Application → Sylvie233.Caching`（业务层使用共享缓存端口）
 - `Application → Contracts → Domain`
-- `Desktop → Client / Contracts / UI`
-- `UI` 不得引用 `Domain` / `Application` / `Api`
+- `Desktop → Client / Contracts / Sylvie233.UI`
+- `Sylvie233.UI` 不得引用 `Domain` / `Application` / `Api` / `Caching`
+- `Sylvie233.Caching` 不得引用任何 HospiKeeper 业务模块
 
 新增 Blazor 等客户端时：引用 `Contracts` + `Client`，只通过 API 访问业务，不直连数据库。
 
@@ -176,7 +177,7 @@ dotnet ef database update \
 
 ## 9. UI 约定
 
-- 设计系统在 `HospiKeeper.UI`：
+- 设计系统在 `Sylvie233.UI`：
   - 控件：`AntButton / AntTag / AntCard / AntStatCard / AntPageHeader / AntFormItem / AntSectionTitle / AntModal / AntRoomCard / AntBarChart / AntEmpty / AntToast / AntTable / AntIcons`
   - 主题：`Theme/AntResources.axaml`、`Theme/AntControls.axaml`、`Theme/AntStyles.axaml`
 - 页面统一使用 `AntPageHeader` + `AntCard` + `AntTable` 的组合，风格参考 Ant Design（主色 `#1677FF`，28-32px 紧凑控件）。

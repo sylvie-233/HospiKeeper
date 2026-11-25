@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Desktop.Services;
 using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
-using HospiKeeper.UI.Controls;
+using Sylvie233.UI.Controls;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 

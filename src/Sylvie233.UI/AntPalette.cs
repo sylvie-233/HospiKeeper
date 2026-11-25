@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace HospiKeeper.UI;
+namespace Sylvie233.UI;
 
 /// <summary>与 Ant Design 语义色一致的画刷集合，方便 ViewModel 直接提供装填色。</summary>
 public static class AntPalette

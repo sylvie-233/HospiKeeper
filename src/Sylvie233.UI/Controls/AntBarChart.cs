@@ -3,7 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 
-namespace HospiKeeper.UI.Controls;
+namespace Sylvie233.UI.Controls;
 
 public sealed record ChartBar(string Label, double Value);
 

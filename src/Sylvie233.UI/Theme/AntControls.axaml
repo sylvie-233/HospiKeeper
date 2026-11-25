@@ -1,7 +1,7 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="using:HospiKeeper.UI.Controls"
-                    xmlns:icons="using:HospiKeeper.UI.Icons"
+                    xmlns:controls="using:Sylvie233.UI.Controls"
+                    xmlns:icons="using:Sylvie233.UI.Icons"
                     xmlns:conv="using:Avalonia.Data.Converters">
 
   <!-- ============================================================ -->

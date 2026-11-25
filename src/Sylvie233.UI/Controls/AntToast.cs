@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using HospiKeeper.UI.Icons;
+using Sylvie233.UI.Icons;
 
-namespace HospiKeeper.UI.Controls;
+namespace Sylvie233.UI.Controls;
 
 public enum AntToastKind
 {

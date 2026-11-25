@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace HospiKeeper.UI.Icons;
+namespace Sylvie233.UI.Icons;
 
 /// <summary>内置几何图标，供导航、按钮与空状态复用。</summary>
 public static class AntIcons

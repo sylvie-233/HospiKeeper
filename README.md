@@ -10,7 +10,7 @@
 |----|------|
 | 运行时 | .NET 10（LTS） |
 | 桌面客户端 | Avalonia 12.2 · CommunityToolkit.Mvvm 8.4 |
-| UI 设计系统 | 自研 Ant 风格控件库 `HospiKeeper.UI`（TemplatedControl / ControlTheme） |
+| UI 设计系统 | 自研 Ant 风格控件库 `Sylvie233.UI`（TemplatedControl / ControlTheme） |
 | API | ASP.NET Core 10 · Controllers · Swagger |
 | 持久化 | EF Core 10.0.12 · MySql.EntityFrameworkCore 10.0.12（官方 MySQL Provider） |
 | 缓存 | 自研 `Sylvie233.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
@@ -29,7 +29,7 @@ HospiKeeper.slnx
 │  ├─ HospiKeeper.Infrastructure/  # EF Core DbContext、映射、仓储、迁移、演示数据
 │  ├─ HospiKeeper.Api/             # 独立 Web API（Token 鉴权 + REST + Swagger）
 │  ├─ HospiKeeper.Client/          # 桌面端 HTTP 客户端（IHospiKeeperApi）
-│  ├─ HospiKeeper.UI/              # 可复用 UI 设计系统与自研控件
+│  ├─ Sylvie233.UI/              # 可复用 UI 设计系统与自研控件
 │  └─ HospiKeeper.Desktop/         # Avalonia 桌面应用（MVVM 页面 + 弹窗）
 ├─ tests/
 │  └─ HospiKeeper.Tests/           # 领域与业务流程测试（EF Core InMemory）
@@ -39,11 +39,11 @@ HospiKeeper.slnx
 └─ dotnet-tools.json               # 本地 dotnet-ef 工具清单
 ```
 
-依赖方向：`Desktop → Client → Contracts → Domain`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`；`Application → Sylvie233.Caching`（使用共享缓存端口）；`Sylvie233.Caching` 不依赖任何业务模块。UI 模块不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Api`。
+依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`；`Application → Sylvie233.Caching`（使用共享缓存端口）。`Sylvie233.UI` 与 `Sylvie233.Caching` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Api`。
 
 ## 自研 UI 控件库
 
-`HospiKeeper.UI` 不依赖任何第三方 UI 组件，包含：
+`Sylvie233.UI` 不依赖任何第三方 UI 组件，包含：
 
 - `AntButton`：Primary / Default / Danger / Text / Link 变体，Small / Middle / Large 尺寸
 - `AntTag`：默认 / 成功 / 处理中 / 警告 / 失败 / 紫色 / 青色

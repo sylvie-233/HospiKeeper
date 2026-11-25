@@ -9,7 +9,7 @@ using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
 
-namespace HospiKeeper.UI.Controls;
+namespace Sylvie233.UI.Controls;
 
 /// <summary>
 /// 轻量数据表格：固定表头 + 可滚动行，支持文本列、模板列、列宽与对齐，

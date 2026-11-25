@@ -2,9 +2,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:pages="using:HospiKeeper.Desktop.ViewModels.Pages"
              xmlns:contracts="using:HospiKeeper.Contracts"
-             xmlns:controls="using:HospiKeeper.UI.Controls"
+             xmlns:controls="using:Sylvie233.UI.Controls"
              xmlns:primitives="using:Avalonia.Controls.Primitives"
-             xmlns:icons="using:HospiKeeper.UI.Icons"
+             xmlns:icons="using:Sylvie233.UI.Icons"
              x:Class="HospiKeeper.Desktop.Views.Pages.ReportView"
              x:DataType="pages:ReportPageViewModel">
 
