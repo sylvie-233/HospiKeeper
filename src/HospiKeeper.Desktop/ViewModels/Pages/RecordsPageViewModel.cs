@@ -6,7 +6,6 @@ using HospiKeeper.Client;
 using HospiKeeper.Contracts;
 using HospiKeeper.Desktop.Services;
 using HospiKeeper.Desktop.ViewModels.Dialogs;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using HospiKeeper.Domain.Services;
 using Sylvie233.UI.Controls;
@@ -14,6 +13,7 @@ using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>入住记录表格行。</summary>
 public sealed class CheckInRowViewModel
 {
     public CheckInRowViewModel(CheckInRecord record, RecordsPageViewModel page)
@@ -39,6 +39,7 @@ public sealed class CheckInRowViewModel
     public IRelayCommand DetailCommand { get; }
 }
 
+/// <summary>账单表格行。</summary>
 public sealed class BillRowViewModel
 {
     public BillRowViewModel(CheckoutBill bill, RecordsPageViewModel page)
@@ -62,6 +63,7 @@ public sealed class BillRowViewModel
     public IRelayCommand DetailCommand { get; }
 }
 
+/// <summary>入住 / 账单记录页面。</summary>
 public sealed partial class RecordsPageViewModel : PageViewModelBase
 {
     public RecordsPageViewModel(

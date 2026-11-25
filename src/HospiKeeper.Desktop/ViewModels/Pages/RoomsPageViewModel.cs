@@ -5,13 +5,13 @@ using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Client;
 using HospiKeeper.Desktop.Services;
 using HospiKeeper.Desktop.ViewModels.Dialogs;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using Sylvie233.UI.Controls;
 using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>房间表格行。</summary>
 public sealed class RoomRowViewModel
 {
     public RoomRowViewModel(Room room, RoomsPageViewModel page)
@@ -67,6 +67,7 @@ public sealed class RoomRowViewModel
     public IAsyncRelayCommand RestoreCommand { get; }
 }
 
+/// <summary>房间管理页面。</summary>
 public sealed partial class RoomsPageViewModel : PageViewModelBase
 {
     private bool _filtersLoaded;

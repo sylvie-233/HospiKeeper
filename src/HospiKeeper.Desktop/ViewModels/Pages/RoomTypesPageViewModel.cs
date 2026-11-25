@@ -5,11 +5,11 @@ using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Client;
 using HospiKeeper.Desktop.Services;
 using HospiKeeper.Desktop.ViewModels.Dialogs;
-using HospiKeeper.Domain.Entities;
 using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>房型表格行。</summary>
 public sealed class RoomTypeRowViewModel
 {
     public RoomTypeRowViewModel(RoomType type, int roomCount, RoomTypesPageViewModel page)
@@ -30,6 +30,7 @@ public sealed class RoomTypeRowViewModel
     public IAsyncRelayCommand DeleteCommand { get; }
 }
 
+/// <summary>房型管理页面。</summary>
 public sealed partial class RoomTypesPageViewModel : PageViewModelBase
 {
     public RoomTypesPageViewModel(

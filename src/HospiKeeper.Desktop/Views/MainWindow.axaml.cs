@@ -4,6 +4,7 @@ using HospiKeeper.Desktop.ViewModels;
 
 namespace HospiKeeper.Desktop.Views;
 
+/// <summary>主窗口：侧边导航、页面宿主与状态栏。</summary>
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel = null!;

@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HospiKeeper.Desktop;
 
+/// <summary>Avalonia 应用入口：构建 DI 容器并切换登录 / 主窗口。</summary>
 public partial class App : Application
 {
     public IServiceProvider? Services { get; private set; }

@@ -7,7 +7,6 @@ using HospiKeeper.Client;
 using HospiKeeper.Contracts;
 using HospiKeeper.Desktop.Models;
 using HospiKeeper.Desktop.Services;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using HospiKeeper.Domain.Services;
 using Sylvie233.UI.Icons;
@@ -15,12 +14,14 @@ using Avalonia.Media;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>入住登记的可选房间。</summary>
 public sealed record CheckInRoomOption(Room Room, bool IsReserved)
 {
     public string DisplayText =>
         $"{Room.RoomNo} · {Room.TypeName} · ¥{Room.Price:0.##}" + (IsReserved ? "（预定）" : string.Empty);
 }
 
+/// <summary>同住人输入行。</summary>
 public sealed partial class CompanionRowViewModel : ObservableObject
 {
     public CompanionRowViewModel(Action<CompanionRowViewModel> remove)
@@ -40,6 +41,7 @@ public sealed partial class CompanionRowViewModel : ObservableObject
     public IRelayCommand RemoveCommand { get; }
 }
 
+/// <summary>入住登记页面。</summary>
 public sealed partial class CheckInPageViewModel : PageViewModelBase
 {
     private static readonly Regex PhoneRegex = new(@"^1[3-9]\d{9}$", RegexOptions.Compiled);

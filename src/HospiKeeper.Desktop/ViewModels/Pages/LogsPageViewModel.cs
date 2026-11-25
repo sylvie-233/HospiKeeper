@@ -5,11 +5,11 @@ using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Client;
 using HospiKeeper.Contracts;
 using HospiKeeper.Desktop.Services;
-using HospiKeeper.Domain.Entities;
 using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>操作日志表格行。</summary>
 public sealed record LogRowViewModel(OperationLog Log)
 {
     public string TimeText => Log.CreatedAt.ToString("yyyy-MM-dd HH:mm");
@@ -20,6 +20,7 @@ public sealed record LogRowViewModel(OperationLog Log)
     public string BizNo => Log.BizNo ?? "—";
 }
 
+/// <summary>操作日志页面。</summary>
 public sealed partial class LogsPageViewModel : PageViewModelBase
 {
     public LogsPageViewModel(

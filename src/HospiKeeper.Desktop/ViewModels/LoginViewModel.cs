@@ -5,6 +5,7 @@ using HospiKeeper.Desktop.Services;
 
 namespace HospiKeeper.Desktop.ViewModels;
 
+/// <summary>登录窗口 ViewModel。</summary>
 public sealed partial class LoginViewModel : ObservableObject
 {
     private readonly IHospiKeeperApi _api;

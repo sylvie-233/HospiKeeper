@@ -3,8 +3,10 @@ using HospiKeeper.Desktop.Services;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>房间快捷操作定义。</summary>
 public sealed record RoomActionItem(string Title, string Description, bool IsDanger, Func<Task> Execute);
 
+/// <summary>房间快捷操作展示项。</summary>
 public sealed class RoomActionItemViewModel
 {
     public RoomActionItemViewModel(RoomActionDialogViewModel owner, RoomActionItem item)
@@ -32,6 +34,7 @@ public sealed class RoomActionItemViewModel
     public IAsyncRelayCommand ExecuteCommand { get; }
 }
 
+/// <summary>房间快捷操作弹窗。</summary>
 public sealed class RoomActionDialogViewModel : DialogViewModelBase
 {
     public RoomActionDialogViewModel(

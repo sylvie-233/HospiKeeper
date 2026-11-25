@@ -5,10 +5,10 @@ using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Client;
 using HospiKeeper.Contracts;
 using HospiKeeper.Desktop.Services;
-using HospiKeeper.Domain.Entities;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>房间新增 / 编辑弹窗。</summary>
 public sealed partial class RoomEditDialogViewModel : DialogViewModelBase
 {
     private readonly IHospiKeeperApi _api;

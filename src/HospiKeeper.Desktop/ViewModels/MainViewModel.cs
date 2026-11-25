@@ -12,6 +12,7 @@ using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels;
 
+/// <summary>主窗口 ViewModel：导航菜单、当前页面与用户操作。</summary>
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly ClientSession _session;

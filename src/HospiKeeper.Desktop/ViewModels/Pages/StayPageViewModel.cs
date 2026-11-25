@@ -11,6 +11,7 @@ using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>在住表格行。</summary>
 public sealed class StayRowViewModel
 {
     public StayRowViewModel(StayInfo stay, StayPageViewModel page)
@@ -41,6 +42,7 @@ public sealed class StayRowViewModel
     public IRelayCommand DetailCommand { get; }
 }
 
+/// <summary>在住页面。</summary>
 public sealed partial class StayPageViewModel : PageViewModelBase
 {
     public StayPageViewModel(

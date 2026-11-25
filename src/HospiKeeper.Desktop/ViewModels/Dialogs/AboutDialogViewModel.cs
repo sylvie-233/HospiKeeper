@@ -3,6 +3,7 @@ using HospiKeeper.Desktop.Services;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>关于弹窗。</summary>
 public sealed class AboutDialogViewModel : DialogViewModelBase
 {
     public AboutDialogViewModel(DialogService host) : base(host)

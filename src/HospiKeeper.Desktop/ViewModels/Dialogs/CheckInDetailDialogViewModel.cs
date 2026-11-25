@@ -1,12 +1,12 @@
 using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Desktop.Services;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using HospiKeeper.Domain.Services;
 using Sylvie233.UI.Controls;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>入住详情弹窗。</summary>
 public sealed class CheckInDetailDialogViewModel : DialogViewModelBase
 {
     private readonly CheckInRecord _record;

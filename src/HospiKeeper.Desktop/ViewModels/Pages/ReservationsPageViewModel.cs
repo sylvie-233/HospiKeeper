@@ -6,15 +6,16 @@ using HospiKeeper.Client;
 using HospiKeeper.Desktop.Models;
 using HospiKeeper.Desktop.Services;
 using HospiKeeper.Desktop.ViewModels.Dialogs;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using Sylvie233.UI.Controls;
 using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>预定状态筛选项。</summary>
 public sealed record ReservationStatusOption(ReservationStatus? Value, string Text);
 
+/// <summary>预定表格行。</summary>
 public sealed class ReservationRowViewModel
 {
     public ReservationRowViewModel(
@@ -57,6 +58,7 @@ public sealed class ReservationRowViewModel
     public IRelayCommand DetailCommand { get; }
 }
 
+/// <summary>预定管理页面。</summary>
 public sealed partial class ReservationsPageViewModel : PageViewModelBase
 {
     public ReservationsPageViewModel(

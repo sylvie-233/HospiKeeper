@@ -3,6 +3,7 @@ using HospiKeeper.Desktop.Services;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>弹窗 ViewModel 基类，提供关闭回调。</summary>
 public abstract class DialogViewModelBase : ObservableObject
 {
     protected DialogViewModelBase(DialogService host) => Host = host;

@@ -7,7 +7,6 @@ using HospiKeeper.Contracts;
 using HospiKeeper.Desktop.Models;
 using HospiKeeper.Desktop.Services;
 using HospiKeeper.Desktop.ViewModels.Dialogs;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using Sylvie233.UI;
 using Sylvie233.UI.Controls;
@@ -15,6 +14,7 @@ using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>房态看板页面。</summary>
 public sealed partial class DashboardPageViewModel : PageViewModelBase
 {
     private bool _filtersLoaded;
@@ -339,12 +339,16 @@ public sealed partial class DashboardPageViewModel : PageViewModelBase
     };
 }
 
+/// <summary>楼层筛选项。</summary>
 public sealed record FloorFilterOption(int? Value, string Text);
 
+/// <summary>房型筛选项。</summary>
 public sealed record RoomTypeFilterOption(int? Value, string Text);
 
+/// <summary>房态图例项。</summary>
 public sealed record LegendItemViewModel(string Text, IBrush Brush);
 
+/// <summary>按楼层分组的房间卡片。</summary>
 public sealed class FloorGroupViewModel
 {
     public FloorGroupViewModel(int floor, IReadOnlyList<RoomCardViewModel> rooms)
@@ -359,6 +363,7 @@ public sealed class FloorGroupViewModel
     public string CountText => $"{Rooms.Count} 间";
 }
 
+/// <summary>房态看板上的房间卡片。</summary>
 public sealed class RoomCardViewModel
 {
     public RoomCardViewModel(

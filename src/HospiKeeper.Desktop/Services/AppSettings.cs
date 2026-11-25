@@ -2,6 +2,7 @@ using System.Text.Json;
 
 namespace HospiKeeper.Desktop.Services;
 
+/// <summary>桌面端本地配置（API 地址）。</summary>
 public sealed class AppSettings
 {
     public string ApiBaseUrl { get; private init; } = "http://localhost:5080";

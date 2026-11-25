@@ -6,6 +6,7 @@ using HospiKeeper.Desktop.Services;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>修改密码弹窗。</summary>
 public sealed partial class ChangePasswordDialogViewModel : DialogViewModelBase
 {
     private readonly IHospiKeeperApi _api;

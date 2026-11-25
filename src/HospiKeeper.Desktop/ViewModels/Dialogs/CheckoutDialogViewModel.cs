@@ -5,16 +5,18 @@ using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Client;
 using HospiKeeper.Contracts;
 using HospiKeeper.Desktop.Services;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using HospiKeeper.Domain.Services;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>计费方式下拉选项。</summary>
 public sealed record BillingModeOption(BillingMode Value, string Text);
 
+/// <summary>账单消费明细展示行。</summary>
 public sealed record ExtraLineViewModel(string Item, string AmountText);
 
+/// <summary>退房结算弹窗。</summary>
 public sealed partial class CheckoutDialogViewModel : DialogViewModelBase
 {
     private readonly IHospiKeeperApi _api;

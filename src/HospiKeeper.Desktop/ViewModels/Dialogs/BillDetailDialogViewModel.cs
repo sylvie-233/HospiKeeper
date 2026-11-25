@@ -1,10 +1,10 @@
 using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Desktop.Services;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>账单详情弹窗。</summary>
 public sealed class BillDetailDialogViewModel : DialogViewModelBase
 {
     private readonly CheckoutBill _bill;

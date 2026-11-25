@@ -8,10 +8,13 @@ using HospiKeeper.Domain.Enums;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>角色下拉选项。</summary>
 public sealed record RoleOption(UserRole Value, string Text);
 
+/// <summary>状态下拉选项。</summary>
 public sealed record StatusOption(AccountStatus Value, string Text);
 
+/// <summary>账号新增 / 编辑弹窗。</summary>
 public sealed partial class AccountEditDialogViewModel : DialogViewModelBase
 {
     private readonly IHospiKeeperApi _api;

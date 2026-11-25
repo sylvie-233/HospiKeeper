@@ -4,6 +4,7 @@ using Sylvie233.UI.Controls;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>通用确认弹窗。</summary>
 public sealed class ConfirmDialogViewModel : DialogViewModelBase
 {
     private readonly TaskCompletionSource<bool> _completion;

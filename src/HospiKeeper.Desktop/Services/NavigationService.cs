@@ -1,5 +1,6 @@
 namespace HospiKeeper.Desktop.Services;
 
+/// <summary>页面导航 key 常量。</summary>
 public static class PageKeys
 {
     public const string Dashboard = "dashboard";

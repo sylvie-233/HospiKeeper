@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace HospiKeeper.Desktop.ViewModels;
 
+/// <summary>侧边导航项。</summary>
 public sealed partial class NavigationItemViewModel : ObservableObject
 {
     public NavigationItemViewModel(string key, string title, Geometry icon, Action select)
@@ -31,6 +32,7 @@ public sealed partial class NavigationItemViewModel : ObservableObject
     partial void OnBadgeChanged(int value) => OnPropertyChanged(nameof(HasBadge));
 }
 
+/// <summary>侧边导航分组。</summary>
 public sealed class NavigationGroupViewModel
 {
     public NavigationGroupViewModel(string title, int order)

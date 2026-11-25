@@ -8,6 +8,7 @@ using Sylvie233.Logging;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>页面 ViewModel 基类：统一依赖、数据变更通知与异常提示。</summary>
 public abstract class PageViewModelBase : ObservableObject
 {
     protected PageViewModelBase(

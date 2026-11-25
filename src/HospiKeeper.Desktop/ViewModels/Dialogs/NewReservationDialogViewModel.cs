@@ -5,15 +5,16 @@ using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Client;
 using HospiKeeper.Contracts;
 using HospiKeeper.Desktop.Services;
-using HospiKeeper.Domain.Entities;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>可预定房间下拉选项。</summary>
 public sealed record RoomOptionViewModel(Room Room)
 {
     public string DisplayText => $"{Room.RoomNo} · {Room.TypeName} · ¥{Room.Price:0.##}";
 }
 
+/// <summary>新建预定弹窗。</summary>
 public sealed partial class NewReservationDialogViewModel : DialogViewModelBase
 {
     private static readonly Regex PhoneRegex = new(@"^1[3-9]\d{9}$", RegexOptions.Compiled);

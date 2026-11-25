@@ -5,6 +5,7 @@ using Sylvie233.UI.Controls;
 
 namespace HospiKeeper.Desktop.Services;
 
+/// <summary>一条轻提示。</summary>
 public sealed class ToastItem
 {
     public ToastItem(string message, AntToastKind kind)
@@ -17,6 +18,7 @@ public sealed class ToastItem
     public AntToastKind Kind { get; }
 }
 
+/// <summary>全局轻提示队列，线程安全地切换到 UI 线程。</summary>
 public sealed class ToastService : ObservableObject
 {
     public ObservableCollection<ToastItem> Items { get; } = new();

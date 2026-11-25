@@ -11,6 +11,7 @@ using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>报表指标卡。</summary>
 public sealed class StatCardViewModel
 {
     public string Title { get; init; } = string.Empty;
@@ -23,6 +24,7 @@ public sealed class StatCardViewModel
     public IBrush? TrendBrush { get; init; }
 }
 
+/// <summary>区间营收表格行。</summary>
 public sealed class RevenueDayRowViewModel
 {
     public string DateText { get; init; } = string.Empty;
@@ -33,6 +35,7 @@ public sealed class RevenueDayRowViewModel
     public bool IsDown { get; init; }
 }
 
+/// <summary>统计报表页面。</summary>
 public sealed partial class ReportPageViewModel : PageViewModelBase
 {
     public ReportPageViewModel(

@@ -3,10 +3,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Client;
 using HospiKeeper.Desktop.Services;
-using HospiKeeper.Domain.Entities;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>追加消费弹窗。</summary>
 public sealed partial class AddExtraDialogViewModel : DialogViewModelBase
 {
     private readonly IHospiKeeperApi _api;

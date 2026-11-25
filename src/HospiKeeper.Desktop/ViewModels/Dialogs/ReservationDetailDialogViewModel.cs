@@ -1,11 +1,11 @@
 using CommunityToolkit.Mvvm.Input;
 using HospiKeeper.Desktop.Services;
-using HospiKeeper.Domain.Entities;
 using HospiKeeper.Domain.Enums;
 using Sylvie233.UI.Controls;
 
 namespace HospiKeeper.Desktop.ViewModels.Dialogs;
 
+/// <summary>预定详情弹窗。</summary>
 public sealed class ReservationDetailDialogViewModel : DialogViewModelBase
 {
     private readonly Reservation _reservation;

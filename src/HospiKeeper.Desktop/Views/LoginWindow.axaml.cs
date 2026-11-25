@@ -4,6 +4,7 @@ using HospiKeeper.Desktop.ViewModels;
 
 namespace HospiKeeper.Desktop.Views;
 
+/// <summary>登录窗口。</summary>
 public partial class LoginWindow : Window
 {
     public LoginWindow()

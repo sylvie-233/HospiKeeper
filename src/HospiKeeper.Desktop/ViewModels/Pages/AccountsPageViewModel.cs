@@ -12,6 +12,7 @@ using Sylvie233.UI.Icons;
 
 namespace HospiKeeper.Desktop.ViewModels.Pages;
 
+/// <summary>账号表格行。</summary>
 public sealed class AccountRowViewModel
 {
     public AccountRowViewModel(UserDto user, AccountsPageViewModel page)
@@ -40,6 +41,7 @@ public sealed class AccountRowViewModel
     public IAsyncRelayCommand DeleteCommand { get; }
 }
 
+/// <summary>账号管理页面。</summary>
 public sealed partial class AccountsPageViewModel : PageViewModelBase
 {
     private readonly ClientSession _session;
