@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HospiKeeper.Api.Controllers;
 
+/// <summary>登录、当前用户、退出与修改密码。</summary>
 [ApiController]
 [Route("api/auth")]
+[Tags("认证")]
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
@@ -19,6 +21,7 @@ public sealed class AuthController : ControllerBase
         _tokens = tokens;
     }
 
+/// <summary>登录并签发 Bearer 令牌。</summary>
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login(
         [FromBody] LoginRequest request,
@@ -34,10 +37,12 @@ public sealed class AuthController : ControllerBase
         return Ok(new LoginResponse(token, expiresAt, result.User.ToDto()));
     }
 
+/// <summary>获取当前登录用户。</summary>
     [HttpGet("me")]
     public ActionResult<UserDto> Me([FromServices] SessionContext session)
         => Ok(session.RequireUser().ToDto());
 
+/// <summary>退出登录并吊销当前令牌。</summary>
     [HttpPost("logout")]
     public async Task<IActionResult> Logout(
         [FromServices] SessionContext session,
@@ -52,6 +57,7 @@ public sealed class AuthController : ControllerBase
         return NoContent();
     }
 
+/// <summary>修改当前账号密码。</summary>
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(
         [FromBody] ChangePasswordRequest request,
