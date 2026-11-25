@@ -109,7 +109,7 @@
                                 ValueBrush="{DynamicResource AntTextSecondaryBrush}"
                                 GridBrush="{DynamicResource AntSplitBrush}" />
 
-          <controls:AntTable ItemsSource="{Binding RangeRows}" Height="240" EmptyText="暂无区间数据">
+          <controls:AntTable ItemsSource="{Binding RangeRows}" Height="320" PageSize="5" EmptyText="暂无区间数据">
             <controls:AntTable.Columns>
               <controls:AntTableColumn Header="日期" Binding="DateText" Width="1*" />
               <controls:AntTableColumn Header="营收（元）" Binding="RevenueText" Width="1.2*" CellClasses="text-money" />

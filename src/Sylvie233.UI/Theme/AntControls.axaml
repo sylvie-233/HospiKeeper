@@ -559,7 +559,7 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border Background="{TemplateBinding Background}">
-          <Grid RowDefinitions="Auto,*">
+          <Grid RowDefinitions="Auto,*,Auto">
             <Border Background="{DynamicResource AntBgPanelBrush}"
                     BorderBrush="{DynamicResource AntSplitBrush}"
                     BorderThickness="0,0,0,1"
@@ -576,6 +576,10 @@
                            Text="{TemplateBinding EmptyText}" />
               </StackPanel>
             </ScrollViewer>
+            <Border Name="PART_Pagination"
+                    Grid.Row="2"
+                    Classes="ant-pagination"
+                    IsVisible="False" />
           </Grid>
         </Border>
       </ControlTemplate>
