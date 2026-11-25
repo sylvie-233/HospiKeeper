@@ -106,6 +106,7 @@ pwsh ./manage.ps1 dev
 
 ```powershell
 pwsh ./manage.ps1 up              # 启动 MySQL + Redis + API 并等待就绪
+pwsh ./manage.ps1 up -Target redis # 仅启动 Redis
 pwsh ./manage.ps1 status          # 查看 MySQL / Redis / API 状态与地址
 pwsh ./manage.ps1 logs -Target api -Follow
 pwsh ./manage.ps1 logs -Target redis -Follow
