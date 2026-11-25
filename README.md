@@ -10,6 +10,7 @@
 |----|------|
 | 运行时 | .NET 10（LTS） |
 | 桌面客户端 | Avalonia 12.2 · CommunityToolkit.Mvvm 8.4 |
+| 游客 Web | Blazor Web App（Interactive Server SSR）· HttpClient 调用 Web API |
 | UI 设计系统 | 自研 Ant 风格控件库 `Sylvie233.UI`（TemplatedControl / ControlTheme） |
 | API | ASP.NET Core 10 · Controllers · OpenAPI 3.1 · Scalar |
 | 持久化 | EF Core 10.0.12 · MySql.EntityFrameworkCore 10.0.12（官方 MySQL Provider） |
@@ -17,7 +18,7 @@
 | 缓存 | 自研 `Sylvie233.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
 | 日志 | 自研 `Sylvie233.Logging`：Serilog 4 · 控制台 + 按天滚动文件 · 结构化字段 |
 | 基础设施 | MySQL 8 · Redis 7（`Scripts/docker-compose.yml`，3306 / 6379） |
-| 测试 | xUnit · EF Core InMemory（30 个用例） |
+| 测试 | xUnit · EF Core InMemory（34 个用例） |
 
 ## 解决方案结构
 
@@ -34,7 +35,8 @@ HospiKeeper.slnx
 │  ├─ HospiKeeper.Api/             # 独立 Web API（组合根、Token 鉴权、OpenAPI / Scalar）
 │  ├─ HospiKeeper.Client/          # 桌面端 HTTP 客户端（IHospiKeeperApi）
 │  ├─ Sylvie233.UI/              # 可复用 UI 设计系统与自研控件
-│  └─ HospiKeeper.Desktop/         # Avalonia 桌面应用（MVVM 页面 + 弹窗）
+│  ├─ HospiKeeper.Desktop/         # Avalonia 桌面应用（MVVM 页面 + 弹窗）
+│  └─ HospiKeeper.Web/             # 游客在线预订 Web（Blazor Server SSR，仅调用 API）
 ├─ tests/
 │  └─ HospiKeeper.Tests/           # 领域与业务流程测试（EF Core InMemory）
 ├─ Docs/                           # 原型、功能设计、MySQL 数据库设计参考
@@ -44,7 +46,7 @@ HospiKeeper.slnx
 └─ dotnet-tools.json               # 本地 dotnet-ef 工具清单
 ```
 
-依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI` 与 `Sylvie233.Logging`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`，并引用 `Sylvie233.Database`；`Application → Sylvie233.Caching`（使用共享缓存端口）。桌面端只消费 `Contracts` 中的 DTO，不直接使用 EF 实体。`Sylvie233.UI`、`Sylvie233.Caching`、`Sylvie233.Logging`、`Sylvie233.Database` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Sylvie233.Logging` / `Api`。
+依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI` 与 `Sylvie233.Logging`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`，并引用 `Sylvie233.Database`；`Application → Sylvie233.Caching`（使用共享缓存端口）。桌面端只消费 `Contracts` 中的 DTO，不直接使用 EF 实体。`HospiKeeper.Web → Client / Contracts`（只通过公开 API 访问业务，不直连数据库）。`Sylvie233.UI`、`Sylvie233.Caching`、`Sylvie233.Logging`、`Sylvie233.Database` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Sylvie233.Logging` / `Api`。
 
 ## 分层与契约
 
@@ -149,6 +151,18 @@ dotnet run --project src/HospiKeeper.Api
 dotnet run --project src/HospiKeeper.Desktop
 ```
 
+### 4. 启动游客预订 Web
+
+先确保 API 已启动，然后：
+
+```bash
+dotnet run --project src/HospiKeeper.Web
+```
+
+- 游客门户：`http://localhost:5081`
+- 页面：首页 `/`、客房预订 `/rooms`、我的预订 `/mine`
+- Web 使用 Blazor Web App（Interactive Server 服务端渲染），只通过 `HttpClient` 调用 API，不连接数据库。
+
 或者使用根目录运维脚本一键启动 MySQL、API 后打开桌面端：
 
 ```powershell
@@ -195,6 +209,32 @@ API 使用 ASP.NET Core 10 内置的 `Microsoft.AspNetCore.OpenApi` 生成 **Ope
 1. 控制器加 `[Tags("...")]` 分组；
 2. 接口与控制器补 `<summary>` 中文注释；
 3. 公开接口需要在 `HospiKeeperOpenApiOperationTransformer` 中取消 Bearer 要求。
+
+## 游客预订 Web（Blazor）
+
+`HospiKeeper.Web` 是面向游客的在线预订门户，与桌面端共用同一套 API 与数据库：
+
+- 技术形态：**Blazor Web App + Interactive Server 渲染**，首屏由服务端输出，交互在 Blazor Server 电路内完成；
+- 数据访问：只调用 `HospiKeeper.Api` 的公开接口，不引用 EF Core / MySQL；
+- 预订模型：**只订房型 + 日期段，不锁具体房间**，到店由前台在桌面端分配房间并转入住；
+- 库存口径：`可售房数 − 日期段重叠的待到店预订数`，提交时在服务端事务内二次校验；
+- 页面：首页营销与查询、客房预订、我的预订（手机号查询 / 在线取消）。
+
+公开 API：
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/public/summary` | 首页统计 |
+| GET | `/api/public/room-types?checkIn=&checkOut=` | 房型实时可订量 |
+| POST | `/api/public/reservations` | 提交预订 |
+| GET | `/api/public/reservations?phone=` | 手机号查询 |
+| POST | `/api/public/reservations/{resNo}/cancel` | 游客取消 |
+
+配置：`src/HospiKeeper.Web/appsettings.json` → `Api:BaseUrl`（默认 `http://localhost:5080`）。
+
+> 数据库 v1.1：`reservation` 增加 `type_id / check_in_date / check_out_date / channel / guest_id_card / unit_price`，
+> `room_id` 与 `room_no` 允许为空。按项目约定，本次结构变更**直接维护 `Docs/民宿管理系统-数据库设计-v1.sql`**，
+> 不生成 EF 迁移；API 启动时由 `ReservationSchemaUpgrader` 做幂等结构检查与旧数据回填。
 
 ## 初始账号
 
@@ -270,6 +310,18 @@ Redis 连接可通过 `Cache__RedisConnectionString` / `REDIS_PORT`（compose �
 ```
 
 可通过 `HOSPITKEEPER_API_URL` 覆盖。
+
+### 游客 Web API 地址
+
+`src/HospiKeeper.Web/appsettings.json`：
+
+```json
+{
+  "Api": {
+    "BaseUrl": "http://localhost:5080"
+  }
+}
+```
 
 ## EF Core 迁移
 
@@ -412,7 +464,7 @@ HotelDataInitializer
 dotnet test
 ```
 
-当前覆盖：计费口径、登录 / 停用 / 越权、账号唯一性、改密、入住校验、预定 / 取消 / 转入住、追加消费、退房结算、房间历史保护、前台数据隔离、报表指标与区间统计、缓存读写 / 防击穿 / 前缀失效 / 入住后房态缓存失效、契约 DTO 反序列化。
+当前覆盖：计费口径、登录 / 停用 / 越权、账号唯一性、改密、入住校验、预定 / 取消 / 转入住、追加消费、退房结算、房间历史保护、前台数据隔离、报表指标与区间统计、缓存读写 / 防击穿 / 前缀失效 / 入住后房态缓存失效、契约 DTO 反序列化、游客房型库存 / 免锁房下单 / 取消 / 转入住衔接。
 
 ## 后续 Blazor 模块
 

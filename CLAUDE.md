@@ -33,6 +33,7 @@ HospiKeeper（云栖民宿管理系统）是面向中小型民宿 / 小旅馆的
 | 日志 | `Sylvie233.Logging`（Serilog 4 · 控制台 + 滚动文件） |
 | 测试 | xUnit 2.9 + EF Core InMemory |
 | 客户端 | `HospiKeeper.Client` 内手写 `HttpClient` 封装 |
+| 游客 Web | Blazor Web App（Interactive Server SSR）· `HospiKeeper.Web` |
 
 版本统一由根目录 `Directory.Packages.props` 管理；不要在子项目中硬编码版本。
 
@@ -50,6 +51,7 @@ HospiKeeper.Api             独立 Web API（组合根、控制器、鉴权、Op
 HospiKeeper.Client          桌面端 HTTP 客户端
 Sylvie233.UI                Avalonia 设计系统与自研控件（不依赖业务模块）
 HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
+HospiKeeper.Web             Blazor Web App 游客预订门户（只调用 API，不直连数据库）
 ```
 
 依赖方向必须保持：
@@ -59,6 +61,7 @@ HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
 - `Application → Sylvie233.Caching`（业务层使用共享缓存端口）
 - `Application → Contracts → Domain`
 - `Desktop → Client / Contracts / Sylvie233.UI / Sylvie233.Logging`（只消费 DTO；Domain 仅用于枚举 / 计费结果）
+- `Web → Client / Contracts / Sylvie233.Logging`（Blazor 服务端渲染，只通过公开 API 访问业务）
 - `Api → Sylvie233.Logging`
 - `Sylvie233.UI` 不得引用 `Domain` / `Application` / `Api` / `Caching` / `Logging`
 - `Sylvie233.Caching` 不得引用任何 HospiKeeper 业务模块
@@ -116,6 +119,10 @@ dotnet run --project src/HospiKeeper.Api
 # 启动桌面端
 dotnet run --project src/HospiKeeper.Desktop
 
+# 启动游客预订 Web（先启动 API）
+dotnet run --project src/HospiKeeper.Web
+# http://localhost:5081
+
 # 本地运维（根目录 manage.ps1）
 pwsh ./manage.ps1 up
 pwsh ./manage.ps1 status
@@ -161,7 +168,9 @@ dotnet ef database update \
 - 工作单元：`EfUnitOfWork` 聚合仓储，`SaveChangesAsync` 统一提交，保证一次业务动作的多表变更原子性。
 - 业务服务只依赖 `IUnitOfWork`，不出现 `DbContext` / EF API。
 - 单据序号：`DocumentNumberRepository` 使用 `doc_sequence` 表，`FindAsync` 会优先读取当前上下文已跟踪的行，避免同一工作单元内重复序号。
-- 启动初始化：`HotelDataInitializer` 先调用共享 `IDatabaseMigrator`，再执行 `DemoDataSeeder`。
+- 启动初始化：`HotelDataInitializer` 先调用共享 `IDatabaseMigrator`，再执行 `ReservationSchemaUpgrader`，最后执行 `DemoDataSeeder`。
+- **游客预订 v1.1 例外**：`reservation` 的房型 / 日期段 / 渠道字段直接维护 `Docs/民宿管理系统-数据库设计-v1.sql`，
+  由 `ReservationSchemaUpgrader` 在启动时幂等补列并回填旧数据；不要为这些字段生成 dotnet-ef 迁移。
 - 测试使用 `Microsoft.EntityFrameworkCore.InMemory`，通过 `ServiceTestContext` 构造完整服务栈并调用 `DemoDataSeeder.SeedAsync`。
 
 新增实体时需同步：
@@ -232,7 +241,7 @@ dotnet ef database update \
 ## 10. API 约定
 
 - 路由统一 `api/<resource>`，返回 `Contracts` DTO；JSON 枚举以字符串输出。
-- 登录：`POST /api/auth/login` 返回 Bearer Token；除 `/health`、`/scalar`、`/openapi`、登录接口外均需 `Authorization: Bearer`。
+- 登录：`POST /api/auth/login` 返回 Bearer Token；除 `/health`、`/scalar`、`/openapi`、登录接口与 `/api/public` 游客接口外均需 `Authorization: Bearer`。
 - Token 为内存会话（12 小时）；服务端每次请求重新加载用户，角色 / 停用状态即时生效。
 - 业务异常 `DomainException` 由 `ExceptionHandlingMiddleware` 转为 400；`ForbiddenException` 转为 403；未处理异常返回 500。
 - 请求 DTO 的 DataAnnotations 校验失败由 `ApiBehaviorOptions.InvalidModelStateResponseFactory` 转为 400 `ApiErrorResponse`。
@@ -281,7 +290,7 @@ dotnet ef database update \
 
 - 位置：`tests/HospiKeeper.Tests`
 - `ServiceTestContext` 使用 EF Core InMemory + `DemoDataSeeder` 构造完整业务栈，并默认登录 `admin`。
-- 新增业务规则必须补充测试；当前覆盖 30 个用例。
+- 新增业务规则必须补充测试；当前覆盖 34 个用例。
 - 不要用测试去连接真实 MySQL；需要集成验证时直接启动 API 进行手工 / curl 冒烟。
 
 ## 14. Git 与协作
@@ -308,13 +317,23 @@ dotnet test
 - 不提交 `bin/`、`obj/`、本地日志、数据库文件或密钥。
 - `appsettings.json` 中为本地开发默认口令，生产部署必须改为环境变量 / 密钥管理。
 
-## 15. 后续 Blazor 模块
+## 15. Blazor Web 模块
 
-计划新增 `src/HospiKeeper.Blazor` 时：
+`src/HospiKeeper.Web` 是游客预订门户，已实现首页 / 客房预订 / 我的预订三页。
 
-1. 引用 `HospiKeeper.Contracts` 与 `HospiKeeper.Client`；
-2. 通过 `HospiKeeper.Api` 登录并携带 Bearer Token，不在 Web 端直连 EF Core / MySQL；
-3. 复用现有权限、业务规则与单据编号逻辑；
-4. 若需要统一视觉，可将 Ant Design Token 映射为 Blazor CSS 变量；Avalonia 控件不可在 Blazor 中复用；
-5. 如需缓存共享，继续复用 API 侧缓存，不要在 Blazor 端自建缓存；
-6. 新增项目后更新 `HospiKeeper.slnx`、README 与本文件。
+约定：
+
+- 技术形态：**Blazor Web App + Interactive Server**（服务端渲染，非 WebAssembly）；
+- 只通过 `HospiKeeper.Client.IGuestBookingApi` 调用 `HospiKeeper.Api`，不引用 EF Core / MySQL；
+- 页面路由：`/`、`/rooms`、`/mine`；日期条件通过 query string 传递；
+- 预订模型：只锁房型 + 日期段，不锁具体房间；到店由桌面端「转入住」选择该房型空闲房并回填 `room_id`；
+- 公开接口统一 `/api/public/*`，在 `ApiAuthMiddleware` 中免鉴权；OpenAPI 中通过 `PublicPrefixes` 取消 Bearer 要求；
+- 库存计算集中在 `GuestBookingService`，UI 不重复实现；提交时通过 `IUnitOfWork.ExecuteInTransactionAsync` 做事务内二次校验；
+- 游客端不改变任何 `room.status`；
+- Web 日志：`logs/web-*.log`，配置项与 API 相同（`Logging:Sylvie233`）。
+
+后续新增 Web 页面时：
+
+1. 引用 `Contracts` 与 `Client`，不要新增数据库访问；
+2. 新增公开 API 时同步更新 `PublicBookingController`、`ApiAuthMiddleware.IsPublic` 与 OpenAPI 公开路径；
+3. 新增页面后更新本文件与 README。
