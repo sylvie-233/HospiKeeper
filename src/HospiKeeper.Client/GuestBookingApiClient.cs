@@ -15,6 +15,9 @@ public sealed class GuestBookingApiClient : IGuestBookingApi
 
     public GuestBookingApiClient(HttpClient http) => _http = http;
 
+    public async Task<SiteSettings> GetPublicSettingsAsync(CancellationToken cancellationToken = default)
+        => await GetAsync<SiteSettings>("api/public/settings", cancellationToken);
+
     public async Task<HotelSummaryDto> GetSummaryAsync(CancellationToken cancellationToken = default)
         => await GetAsync<HotelSummaryDto>("api/public/summary", cancellationToken);
 

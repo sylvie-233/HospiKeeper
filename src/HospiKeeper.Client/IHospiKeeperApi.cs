@@ -176,6 +176,17 @@ public interface IHospiKeeperApi
         string? keyword = null,
         CancellationToken cancellationToken = default);
 
+    /// <summary>读取公开的游客 Web / 桌面端静态配置。</summary>
+    Task<SiteSettings> GetPublicSiteSettingsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>读取系统配置（仅管理员）。</summary>
+    Task<SiteSettings> GetSiteSettingsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>保存系统配置（仅管理员）。</summary>
+    Task<SiteSettings> UpdateSiteSettingsAsync(
+        SiteSettings settings,
+        CancellationToken cancellationToken = default);
+
     /// <summary>获取报表概览。</summary>
     Task<ReportSnapshot> GetReportSnapshotAsync(CancellationToken cancellationToken = default);
 

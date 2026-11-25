@@ -35,6 +35,9 @@ public static class CacheKeys
     /// <summary>区间营收前缀。</summary>
     public const string ReportRangePrefix = "reports:range:";
 
+    /// <summary>系统静态配置（Redis 持久 key，无 TTL）。</summary>
+    public const string SiteSettings = "config:site";
+
     /// <summary>游客端首页统计。</summary>
     public const string GuestSummary = "guest:summary";
 

@@ -11,8 +11,18 @@ namespace HospiKeeper.Api.Controllers;
 public sealed class PublicBookingController : ControllerBase
 {
     private readonly IGuestBookingService _guest;
+    private readonly ISiteSettingsService _settings;
 
-    public PublicBookingController(IGuestBookingService guest) => _guest = guest;
+    public PublicBookingController(IGuestBookingService guest, ISiteSettingsService settings)
+    {
+        _guest = guest;
+        _settings = settings;
+    }
+
+    /// <summary>游客端展示的静态配置（品牌、首页文案、联系方式等）。</summary>
+    [HttpGet("settings")]
+    public async Task<ActionResult<SiteSettings>> Settings(CancellationToken cancellationToken)
+        => Ok(await _settings.GetPublicAsync(cancellationToken));
 
     /// <summary>首页统计数据。</summary>
     [HttpGet("summary")]

@@ -227,6 +227,19 @@ public sealed class HospiKeeperApiClient : IHospiKeeperApi
         return await GetAsync<List<OperationLogDto>>(url, cancellationToken);
     }
 
+    public async Task<SiteSettings> GetPublicSiteSettingsAsync(CancellationToken cancellationToken = default)
+        => await GetAsync<SiteSettings>("api/public/settings", cancellationToken);
+
+    public async Task<SiteSettings> GetSiteSettingsAsync(CancellationToken cancellationToken = default)
+        => await GetAsync<SiteSettings>("api/settings", cancellationToken);
+
+    public async Task<SiteSettings> UpdateSiteSettingsAsync(
+        SiteSettings settings,
+        CancellationToken cancellationToken = default)
+        => await SendAsync<SiteSettings>(
+            CreateRequest(HttpMethod.Put, "api/settings", settings),
+            cancellationToken);
+
     public async Task<ReportSnapshot> GetReportSnapshotAsync(CancellationToken cancellationToken = default)
         => await GetAsync<ReportSnapshot>("api/reports/snapshot", cancellationToken);
 

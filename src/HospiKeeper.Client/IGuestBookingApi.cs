@@ -5,6 +5,9 @@ namespace HospiKeeper.Client;
 /// <summary>游客预订门户访问 HospiKeeper.Api 公开接口的契约。</summary>
 public interface IGuestBookingApi
 {
+    /// <summary>游客 Web 静态配置（品牌、首页文案、联系方式）。</summary>
+    Task<SiteSettings> GetPublicSettingsAsync(CancellationToken cancellationToken = default);
+
     /// <summary>首页统计数据。</summary>
     Task<HotelSummaryDto> GetSummaryAsync(CancellationToken cancellationToken = default);
 
