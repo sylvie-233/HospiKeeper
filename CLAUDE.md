@@ -319,6 +319,16 @@ dotnet ef database update \
 - Desktop 使用 MVVM：View 只绑定 ViewModel，业务调用全部经 `IHospiKeeperApi`。
 - `Desktop/GlobalUsings.cs` 用别名把 `RoomDto` 等契约类型映射回旧名称；不要新增 `using HospiKeeper.Domain.Entities;`。
 - 弹窗统一由 `DialogService` 管理；成功 / 失败提示统一走 `ToastService`。
+- 交互动效约定：
+  - 页面切换时 `PageHost` 淡入（180ms）；
+  - 弹窗遮罩与 `AntModal` 打开淡入（160ms），关闭由 `DialogService` 立即收起；
+  - Toast 淡入 / 淡出，队列最多 4 条，错误停留时间更长；
+  - 按钮、表格行使用 Avalonia `Transitions`，不要在页面里手写动画代码。
+- 统计报表布局：
+  - 顶部 4 列指标卡（8 张）；
+  - 近 7 日营收与房型经营分析左右并排（1.45 : 1）；
+  - 下方时间段营收明细：日期查询 + 今日 / 近 3 日 / 近 7 日 / 近 30 日快捷区间 + 汇总 + 分页表格；
+  - 区间占比使用 `ProgressBar`，金额 / 占比列右对齐。
 - 页面不展示演示账号、测试口令等演示信息。
 - 新控件需同时提供 C# 属性与 `ControlTheme`，并在 `AntControls.axaml` / `AntStyles.axaml` 中注册。
 

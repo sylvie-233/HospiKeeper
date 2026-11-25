@@ -107,8 +107,9 @@ Contracts/
 - `AntRoomCard`：六种房态渐变卡片与交互态
 - `AntTable` / `AntTableColumn`：替代废弃 DataGrid 的轻量数据表格，内置分页（默认 10 条/页，不足一页自动隐藏）
 - `AntBarChart`：自绘柱状图，无图表库依赖
-- `AntEmpty`、`AntToast`、`AntIcons`
+- `AntEmpty`、`AntToast`（淡入淡出、最多 4 条）、`AntIcons`
 - `Theme/`：Ant Design 色彩 Token、控件主题、输入框 / 下拉 / 菜单 / 票据等统一样式
+- 交互动效：页面切换淡入、弹窗 / 遮罩淡入、Toast 淡入淡出、按钮与表格行 hover 过渡
 
 ## 快速开始
 
