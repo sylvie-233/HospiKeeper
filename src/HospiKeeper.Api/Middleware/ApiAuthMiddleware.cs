@@ -9,7 +9,7 @@ namespace HospiKeeper.Api.Middleware;
 
 /// <summary>
 /// Bearer 令牌鉴权：校验令牌 → 还原数据库中的用户 → 写入本次请求的 SessionContext。
-/// 登录 / 健康检查 / Swagger 无需令牌。
+/// 登录 / 健康检查 / OpenAPI 文档与 Scalar 页面无需令牌。
 /// </summary>
 public sealed class ApiAuthMiddleware
 {
@@ -65,7 +65,8 @@ public sealed class ApiAuthMiddleware
     private static bool IsPublic(string path)
         => path.Equals("/", StringComparison.OrdinalIgnoreCase)
            || path.StartsWith("/health", StringComparison.OrdinalIgnoreCase)
-           || path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)
+           || path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase)
+           || path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase)
            || path.StartsWith("/api/auth/login", StringComparison.OrdinalIgnoreCase);
 
     private static async Task UnauthorizedAsync(HttpContext context, string message)

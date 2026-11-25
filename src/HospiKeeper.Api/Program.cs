@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using HospiKeeper.Api.Middleware;
+using HospiKeeper.Api.OpenApi;
 using HospiKeeper.Api.Security;
 using HospiKeeper.Application.Abstractions;
 using HospiKeeper.Application.Abstractions.Caching;
@@ -7,6 +8,7 @@ using HospiKeeper.Application.Caching;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Application.Services;
 using HospiKeeper.Infrastructure.Persistence;
+using Scalar.AspNetCore;
 using Serilog;
 using Sylvie233.Caching;
 using Sylvie233.Database;
@@ -57,8 +59,11 @@ try
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         });
 
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
+    builder.Services.AddOpenApi("v1", options =>
+    {
+        options.AddDocumentTransformer<HospiKeeperOpenApiDocumentTransformer>();
+        options.AddOperationTransformer<HospiKeeperOpenApiOperationTransformer>();
+    });
     builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
@@ -83,12 +88,22 @@ try
     });
     app.UseMiddleware<ExceptionHandlingMiddleware>();
     app.UseCors();
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
+
+    // 接口文档只在开发环境开放，生产环境不暴露 OpenAPI / Scalar。
+    if (app.Environment.IsDevelopment())
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "HospiKeeper API v1");
-        options.RoutePrefix = "swagger";
-    });
+        app.MapOpenApi();
+        app.MapScalarApiReference(options => options
+            .WithTitle("HospiKeeper API")
+            .AddDocument(
+                "v1",
+                "HospiKeeper API",
+                "/openapi/{documentName}.json",
+                isDefault: true,
+                agentKey: null)
+            .AddPreferredSecuritySchemes(HospiKeeperOpenApiDocumentTransformer.SecuritySchemeName));
+    }
+
     app.UseMiddleware<ApiAuthMiddleware>();
 
     app.MapGet("/health", () => Results.Ok(new
@@ -96,7 +111,10 @@ try
         status = "ok",
         storage = "mysql",
         time = DateTime.Now
-    }));
+    }))
+    .WithTags("健康检查")
+    .WithSummary("健康检查")
+    .WithDescription("返回 API 与存储状态，无需鉴权。");
 
     app.MapControllers();
     app.Run();
