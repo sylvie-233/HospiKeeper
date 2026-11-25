@@ -11,5 +11,6 @@
   <ItemGroup>
     <ProjectReference Include="..\HospiKeeper.Application\HospiKeeper.Application.csproj" />
     <ProjectReference Include="..\HospiKeeper.Contracts\HospiKeeper.Contracts.csproj" />
+    <ProjectReference Include="..\Sylvie233.Database\Sylvie233.Database.csproj" />
   </ItemGroup>
 </Project>
