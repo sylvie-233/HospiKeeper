@@ -28,7 +28,8 @@ HospiKeeper（云栖民宿管理系统）是面向中小型民宿 / 小旅馆的
 | ASP.NET Core | 10（Web API + Controllers + Swagger） |
 | EF Core | 10.0.12 |
 | MySQL Provider | `MySql.EntityFrameworkCore` 10.0.12（官方 Provider，底层 MySql.Data） |
-| MySQL | 8（Docker Compose） |
+| MySQL / Redis | MySQL 8 · Redis 7（Docker Compose） |
+| 缓存 | `HospiKeeper.Caching`（Memory / Redis 可切换）· StackExchange.Redis 3.4 |
 | 测试 | xUnit 2.9 + EF Core InMemory |
 | 客户端 | `HospiKeeper.Client` 内手写 `HttpClient` 封装 |
 
@@ -39,7 +40,8 @@ HospiKeeper（云栖民宿管理系统）是面向中小型民宿 / 小旅馆的
 ```
 HospiKeeper.Domain          实体 / 枚举 / 计费领域服务，无框架依赖
 HospiKeeper.Contracts       前后端共享请求、响应、DTO（API 契约）
-HospiKeeper.Application     业务服务、仓储接口、工作单元接口、会话
+HospiKeeper.Application     业务服务、仓储接口、工作单元 / 缓存端口、缓存失效协调、会话
+HospiKeeper.Caching         Memory / Redis 缓存实现（实现 Application 的 ICacheService）
 HospiKeeper.Infrastructure  EF Core DbContext / 配置 / 仓储 / 迁移 / 种子
 HospiKeeper.Api             独立 Web API（控制器、鉴权、Swagger）
 HospiKeeper.Client          桌面端 HTTP 客户端
@@ -51,6 +53,7 @@ HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
 
 - `Api → Application / Infrastructure / Contracts`
 - `Infrastructure → Application / Contracts`
+- `Caching → Application`（实现缓存端口；Application 不引用 Caching）
 - `Application → Contracts → Domain`
 - `Desktop → Client / Contracts / UI`
 - `UI` 不得引用 `Domain` / `Application` / `Api`
@@ -64,7 +67,7 @@ HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
 dotnet build HospiKeeper.slnx
 dotnet test
 
-# 启动 MySQL
+# 启动 MySQL + Redis
 docker compose -f Scripts/docker-compose.yml up -d --wait
 
 # 启动 API（http://localhost:5080，Swagger /swagger）
@@ -78,6 +81,8 @@ pwsh ./manage.ps1 up
 pwsh ./manage.ps1 status
 pwsh ./manage.ps1 dev
 pwsh ./manage.ps1 logs -Target api -Follow
+pwsh ./manage.ps1 logs -Target redis -Follow
+pwsh ./manage.ps1 cli -Target redis
 pwsh ./manage.ps1 reset -Force
 pwsh ./manage.ps1 migrate
 ```
@@ -123,7 +128,23 @@ dotnet ef database update \
 5. EF 迁移；
 6. 业务服务与测试。
 
-## 6. 业务规则
+## 6. 缓存约定
+
+- 端口：`ICacheService`（`src/HospiKeeper.Application/Abstractions/Caching`）。
+- 实现：`src/HospiKeeper.Caching`
+  - `Memory`：`IMemoryCache` + key 注册表；
+  - `Redis`：`StackExchange.Redis`，支持前缀批量清理。
+- 切换：`appsettings.json` → `Cache:Provider`（`Redis` / `Memory`），或环境变量 `Cache__Provider`。
+- 业务 key 只能通过 `src/HospiKeeper.Application/Caching/CacheKeys.cs` 定义；TTL 通过 `CacheDurations.cs` 统一维护。
+- 写操作成功（`SaveChangesAsync` 之后）必须调用 `IHotelCacheInvalidator` 对应方法：
+  - 房间 / 房型 → `InvalidateRoomsAsync`
+  - 入住 / 退房 / 预定 / 追加消费 → `InvalidateFrontDeskAsync`
+- 当前缓存范围：看板、房态汇总、在住、预定、房间、空闲房、楼层、房型、报表快照、区间营收。
+- `GetOrCreateAsync` 内部有按 key 的进程内防击穿锁；缓存失败按 miss 处理，不阻断业务。
+- 新增读多写少接口时：在 Application 服务中调用 `_cache.GetOrCreateAsync`，并在相关写操作中补失效逻辑；不要直接在 Controller 中写缓存。
+- Redis 服务由 compose 管理：`hospikeeper-redis`，`localhost:6379`，不持久化缓存数据。
+
+## 7. 业务规则
 
 - **房态**：`Free / Occupied / Reserved / Cleaning / Repair / Disabled`；看板颜色与文案由 UI 映射。
 - **计费**：
@@ -144,7 +165,7 @@ dotnet ef database update \
 - **房型改名**：同步所有房间冗余 `TypeName`；改价写「改价」日志。
 - **账号**：不能停用 / 删除当前登录账号；至少保留一名启用管理员。
 
-## 7. API 约定
+## 8. API 约定
 
 - 路由统一 `api/<resource>`，返回领域实体或 `Contracts` DTO；JSON 枚举以字符串输出。
 - 登录：`POST /api/auth/login` 返回 Bearer Token；除 `/health`、`/swagger`、登录接口外均需 `Authorization: Bearer`。
@@ -153,7 +174,7 @@ dotnet ef database update \
 - 控制器保持轻薄：参数绑定 → 调用 Application 服务 → 返回结果；不要在控制器写业务逻辑。
 - 桌面端接入点：`HospiKeeper.Client/IHospiKeeperApi` / `HospiKeeperApiClient`。
 
-## 8. UI 约定
+## 9. UI 约定
 
 - 设计系统在 `HospiKeeper.UI`：
   - 控件：`AntButton / AntTag / AntCard / AntStatCard / AntPageHeader / AntFormItem / AntSectionTitle / AntModal / AntRoomCard / AntBarChart / AntEmpty / AntToast / AntTable / AntIcons`
@@ -165,7 +186,7 @@ dotnet ef database update \
 - 页面不展示演示账号、测试口令等演示信息。
 - 新控件需同时提供 C# 属性与 `ControlTheme`，并在 `AntControls.axaml` / `AntStyles.axaml` 中注册。
 
-## 9. 代码风格
+## 10. 代码风格
 
 - 命名空间与类型命名使用英文；用户可见文案使用中文。
 - 使用 `Directory.Build.props` 中的 `Nullable`、`ImplicitUsings`；不要关闭可空检查。
@@ -175,14 +196,14 @@ dotnet ef database update \
 - 不要在 Application / Domain 引入 EF Core、Avalonia 或 ASP.NET Core 依赖。
 - 删除不再使用的代码、图标、样式与包；不要保留“以后可能用到”的空实现。
 
-## 10. 测试
+## 11. 测试
 
 - 位置：`tests/HospiKeeper.Tests`
 - `ServiceTestContext` 使用 EF Core InMemory + `DemoDataSeeder` 构造完整业务栈，并默认登录 `admin`。
-- 新增业务规则必须补充测试；当前覆盖 25 个用例。
+- 新增业务规则必须补充测试；当前覆盖 29 个用例。
 - 不要用测试去连接真实 MySQL；需要集成验证时直接启动 API 进行手工 / curl 冒烟。
 
-## 11. Git 与协作
+## 12. Git 与协作
 
 - 项目按阶段 / 模块提交，**直接在 `main` 分支操作**（该项目的约定）。
 - 提交信息建议使用：
@@ -206,7 +227,7 @@ dotnet test
 - 不提交 `bin/`、`obj/`、本地日志、数据库文件或密钥。
 - `appsettings.json` 中为本地开发默认口令，生产部署必须改为环境变量 / 密钥管理。
 
-## 12. 后续 Blazor 模块
+## 13. 后续 Blazor 模块
 
 计划新增 `src/HospiKeeper.Blazor` 时：
 
@@ -214,4 +235,5 @@ dotnet test
 2. 通过 `HospiKeeper.Api` 登录并携带 Bearer Token，不在 Web 端直连 EF Core / MySQL；
 3. 复用现有权限、业务规则与单据编号逻辑；
 4. 若需要统一视觉，可将 Ant Design Token 映射为 Blazor CSS 变量；Avalonia 控件不可在 Blazor 中复用；
-5. 新增项目后更新 `HospiKeeper.slnx`、README 与本文件。
+5. 如需缓存共享，继续复用 API 侧缓存，不要在 Blazor 端自建缓存；
+6. 新增项目后更新 `HospiKeeper.slnx`、README 与本文件。

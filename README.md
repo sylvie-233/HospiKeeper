@@ -13,8 +13,9 @@
 | UI 设计系统 | 自研 Ant 风格控件库 `HospiKeeper.UI`（TemplatedControl / ControlTheme） |
 | API | ASP.NET Core 10 · Controllers · Swagger |
 | 持久化 | EF Core 10.0.12 · MySql.EntityFrameworkCore 10.0.12（官方 MySQL Provider） |
-| 数据库 | MySQL 8（`Scripts/docker-compose.yml`，端口 3306） |
-| 测试 | xUnit · EF Core InMemory（25 个用例） |
+| 缓存 | 自研 `HospiKeeper.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
+| 基础设施 | MySQL 8 · Redis 7（`Scripts/docker-compose.yml`，3306 / 6379） |
+| 测试 | xUnit · EF Core InMemory（29 个用例） |
 
 ## 解决方案结构
 
@@ -23,7 +24,8 @@ HospiKeeper.slnx
 ├─ src/
 │  ├─ HospiKeeper.Domain/          # 实体、枚举、计费领域服务（无框架依赖）
 │  ├─ HospiKeeper.Contracts/       # 客户端/API 共享请求、响应与 API DTO
-│  ├─ HospiKeeper.Application/     # 业务服务 + 仓储抽象 + 工作单元抽象
+│  ├─ HospiKeeper.Application/     # 业务服务 + 仓储/工作单元/缓存抽象
+│  ├─ HospiKeeper.Caching/         # Memory / Redis 缓存实现（StackExchange.Redis）
 │  ├─ HospiKeeper.Infrastructure/  # EF Core DbContext、映射、仓储、迁移、演示数据
 │  ├─ HospiKeeper.Api/             # 独立 Web API（Token 鉴权 + REST + Swagger）
 │  ├─ HospiKeeper.Client/          # 桌面端 HTTP 客户端（IHospiKeeperApi）
@@ -37,7 +39,7 @@ HospiKeeper.slnx
 └─ dotnet-tools.json               # 本地 dotnet-ef 工具清单
 ```
 
-依赖方向：`Desktop → Client → Contracts → Domain`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`。UI 模块不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Api`。
+依赖方向：`Desktop → Client → Contracts → Domain`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`；`Caching → Application`（实现缓存端口）。UI 模块不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Api`。
 
 ## 自研 UI 控件库
 
@@ -61,24 +63,22 @@ HospiKeeper.slnx
 - .NET 10 SDK
 - Docker Desktop（MySQL 8）
 
-### 1. 启动 MySQL
+### 1. 启动 MySQL / Redis
 
 ```bash
 docker compose -f Scripts/docker-compose.yml up -d --wait
 ```
 
-数据库连接信息（与 compose 一致）：
+连接信息（与 compose 一致）：
 
 ```text
-Host=127.0.0.1
-Port=3306
-Database=hospikeeper
-User=hospikeeper
-Password=123456
+MySQL   Host=127.0.0.1 Port=3306 Database=hospikeeper User=hospikeeper Password=123456
+Redis   localhost:6379（无密码，仅作为缓存）
 ```
 
 > 数据库表结构与演示数据由 API 启动时的 EF Core Migrations 自动创建；
 > `Docs/民宿管理系统-数据库设计-v1.sql` 保留为设计参考，不再由 compose 自动执行。
+> Redis 以 `--maxmemory 256mb --maxmemory-policy allkeys-lru` 运行，不持久化缓存数据。
 
 ### 2. 启动 API
 
@@ -105,14 +105,16 @@ pwsh ./manage.ps1 dev
 常用运维命令：
 
 ```powershell
-pwsh ./manage.ps1 up            # 启动 MySQL + API 并等待就绪
-pwsh ./manage.ps1 status        # 查看 MySQL / API 状态与地址
+pwsh ./manage.ps1 up              # 启动 MySQL + Redis + API 并等待就绪
+pwsh ./manage.ps1 status          # 查看 MySQL / Redis / API 状态与地址
 pwsh ./manage.ps1 logs -Target api -Follow
-pwsh ./manage.ps1 build         # 构建解决方案
-pwsh ./manage.ps1 test          # 运行测试
-pwsh ./manage.ps1 migrate       # 应用 EF Core 迁移
-pwsh ./manage.ps1 reset -Force  # 清空数据卷后重建环境
-pwsh ./manage.ps1 down          # 停止 API 与容器
+pwsh ./manage.ps1 logs -Target redis -Follow
+pwsh ./manage.ps1 cli -Target redis
+pwsh ./manage.ps1 build           # 构建解决方案
+pwsh ./manage.ps1 test            # 运行测试
+pwsh ./manage.ps1 migrate         # 应用 EF Core 迁移
+pwsh ./manage.ps1 reset -Force    # 清空数据卷后重建环境
+pwsh ./manage.ps1 down            # 停止 API 与容器
 ```
 
 ## 初始账号
@@ -150,6 +152,25 @@ pwsh ./manage.ps1 down          # 停止 API 与容器
 - `HOSPITKEEPER_DB_NAME` / `MYSQL_DATABASE`
 - `HOSPITKEEPER_DB_USER` / `MYSQL_USER`
 - `HOSPITKEEPER_DB_PASSWORD` / `MYSQL_PASSWORD`
+
+### 缓存配置
+
+`src/HospiKeeper.Api/appsettings.json`：
+
+```json
+{
+  "Cache": {
+    "Provider": "Redis",
+    "InstanceName": "hospikeeper:",
+    "DefaultExpirationSeconds": 60,
+    "RedisConnectionString": "localhost:6379",
+    "RedisDatabase": 0
+  }
+}
+```
+
+切换为进程内缓存只需把 `Provider` 改为 `Memory`（或设置环境变量 `Cache__Provider=Memory`），无需改动业务代码；
+Redis 连接可通过 `Cache__RedisConnectionString` / `REDIS_PORT`（compose 端口）调整。
 
 ### 桌面端 API 地址
 
@@ -200,6 +221,29 @@ GRANT ALL PRIVILEGES ON hospikeeper.* TO 'hospikeeper'@'%';
 FLUSH PRIVILEGES;"
 ```
 
+## 缓存模块
+
+`HospiKeeper.Caching` 对上层暴露统一的 `ICacheService`，业务服务只依赖接口：
+
+- **Memory**：`IMemoryCache` + key 注册表，适合单进程调试；
+- **Redis**：`StackExchange.Redis` 直连，支持多实例共享、前缀清理、TTL；
+- 统一的 `GetAsync / SetAsync / GetOrCreateAsync / RemoveAsync / RemoveByPrefixAsync`；
+- `GetOrCreateAsync` 内置进程内防击穿锁；Redis 异常时降级为回源，不阻断业务；
+- 业务 key 统一由 `CacheKeys` 定义，TTL 统一由 `CacheDurations` 定义；
+- `IHotelCacheInvalidator` 集中处理房间 / 前台 / 报表相关缓存失效，写操作成功后统一调用。
+
+当前缓存范围：
+
+| 数据 | 缓存 key | TTL | 失效触发 |
+|------|----------|-----|----------|
+| 房态看板 | `board` | 15s | 房间 / 入住 / 退房 / 预定变更 |
+| 房态汇总 | `counts` | 15s | 同上 |
+| 在住列表 | `stays:all` | 15s | 入住 / 退房 / 追加消费 |
+| 预定列表 | `reservations:*` | 30s | 预定创建 / 取消 / 转入住 |
+| 房间列表 / 空闲房 / 楼层 | `rooms:*` | 60s | 房间 / 房型 / 房态变更 |
+| 房型列表 | `roomtypes:all` | 60s | 房型变更 |
+| 报表快照 / 区间营收 | `reports:*` | 60s | 房间或前台业务变更 |
+
 ## 权限约定
 
 - API 使用 Bearer Token（内存会话，12 小时有效）；每个请求由服务端重新加载用户角色与状态。
@@ -221,7 +265,7 @@ FLUSH PRIVILEGES;"
 dotnet test
 ```
 
-当前覆盖：计费口径、登录 / 停用 / 越权、账号唯一性、改密、入住校验、预定 / 取消 / 转入住、追加消费、退房结算、房间历史保护、前台数据隔离、报表指标与区间统计。
+当前覆盖：计费口径、登录 / 停用 / 越权、账号唯一性、改密、入住校验、预定 / 取消 / 转入住、追加消费、退房结算、房间历史保护、前台数据隔离、报表指标与区间统计、缓存读写 / 防击穿 / 前缀失效 / 入住后房态缓存失效。
 
 ## 后续 Blazor 模块
 

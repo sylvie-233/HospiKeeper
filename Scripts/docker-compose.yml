@@ -1,7 +1,7 @@
 # ============================================================================
-# HospiKeeper 本地环境 MySQL 编排
+# HospiKeeper 本地环境 MySQL / Redis 编排
 #
-# 启动：    docker compose -f Scripts/docker-compose.yml up -d
+# 启动：    docker compose -f Scripts/docker-compose.yml up -d --wait
 # 停止：    docker compose -f Scripts/docker-compose.yml down
 # 重置：    docker compose -f Scripts/docker-compose.yml down -v（会清空数据）
 #
@@ -38,6 +38,20 @@ services:
       timeout: 5s
       retries: 20
       start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: hospikeeper-redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
 volumes:
   mysql_data:

@@ -1,45 +1,46 @@
 <#
 .SYNOPSIS
-    HospiKeeper 本地环境运维脚本（MySQL 容器 + ASP.NET Core API + Avalonia 桌面端）。
+    HospiKeeper 本地环境运维脚本（MySQL / Redis 容器 + ASP.NET Core API + Avalonia 桌面端）。
 
 .DESCRIPTION
     统一封装本地开发与运维操作：
-      · Docker MySQL 的启动、停止、状态、日志、客户端与重置；
+      · Docker MySQL / Redis 的启动、停止、状态、日志、客户端与重置；
       · ASP.NET Core API 的构建、启动、停止、健康检查与日志；
       · EF Core 迁移的生成和应用；
       · 解决方案构建 / 测试；
       · Avalonia 桌面端启动。
-    API 以本地进程方式运行（PID 写入 .run/，日志写入 logs/），MySQL 由 docker compose 管理。
+    API 以本地进程方式运行（PID 写入 .run/，日志写入 logs/），MySQL / Redis 由 docker compose 管理。
 
 .PARAMETER Action
     要执行的操作，默认 status：
-      up         启动 MySQL，并构建 / 启动 API，等待就绪
+      up         启动 MySQL / Redis，并构建 / 启动 API，等待就绪
       down       停止 API，并移除全部 compose 容器（保留 MySQL 数据卷）
-      restart    重启目标服务（MySQL 容器 / 本地 API）
+      restart    重启目标服务（MySQL / Redis 容器 / 本地 API）
       reset      删除 MySQL 数据卷后重新启动整套环境（会清空数据库，需确认）
       build      构建整个解决方案
       test       运行全部测试
-      logs       查看本地 API 或 MySQL 日志
-      cli        进入 MySQL 命令行
-      status     查看 MySQL / API 状态与访问地址
+      logs       查看本地 API、MySQL 或 Redis 日志
+      cli        进入 MySQL 命令行（-Target redis 进入 redis-cli）
+      status     查看 MySQL / Redis / API 状态与访问地址
       init       删库重建，并重启 API 由 EF Core 迁移 + 种子数据恢复（需确认）
       migrate    应用 EF Core 迁移到当前数据库
       ef:add     新建 EF Core 迁移（需 -MigrationName）
-      pull       拉取 MySQL 镜像
+      pull       拉取 MySQL / Redis 镜像
       desktop    启动 Avalonia 桌面端
       dev        启动整套环境后打开桌面端
 
 .PARAMETER Target
     操作目标，默认 all（仅部分操作使用）：
       mysql  仅 MySQL
-      api    仅 API（会自动确保 MySQL 已启动）
-      all    MySQL + API
+      redis  仅 Redis
+      api    仅 API（会自动确保 MySQL 与 Redis 已启动）
+      all    MySQL + Redis + API
 
 .PARAMETER Force
     reset / init 跳过二次确认；build 使用 --no-incremental。
 
 .PARAMETER Follow
-    logs 操作是否持续跟踪输出（建议配合 -Target api 或 mysql）。
+    logs 操作是否持续跟踪输出（建议配合 -Target api / mysql / redis）。
 
 .PARAMETER Tail
     logs 显示的最后行数，默认 200。
@@ -58,6 +59,15 @@
 
 .EXAMPLE
     pwsh ./manage.ps1 up -Target mysql
+
+.EXAMPLE
+    pwsh ./manage.ps1 up -Target redis
+
+.EXAMPLE
+    pwsh ./manage.ps1 logs -Target redis -Follow
+
+.EXAMPLE
+    pwsh ./manage.ps1 cli -Target redis
 
 .EXAMPLE
     pwsh ./manage.ps1 dev
@@ -87,7 +97,7 @@ param(
     )]
     [string]$Action = 'status',
 
-    [ValidateSet('mysql', 'api', 'all')]
+    [ValidateSet('mysql', 'redis', 'api', 'all')]
     [string]$Target = 'all',
 
     [switch]$Force,
@@ -125,6 +135,7 @@ $ApiPidFile = Join-Path $RunDir 'api.pid'
 $ApiOutLog = Join-Path $LogDir 'api.log'
 $ApiErrLog = Join-Path $LogDir 'api.error.log'
 $MysqlContainer = 'hospikeeper-mysql'
+$RedisContainer = 'hospikeeper-redis'
 
 function Write-Step {
     param([string]$Message)
@@ -188,8 +199,9 @@ function Get-TargetIncludes {
 
     $services = switch ($Target) {
         'mysql' { @('mysql') }
-        'api' { @('mysql', 'api') }
-        default { @('mysql', 'api') }
+        'redis' { @('redis') }
+        'api' { @('mysql', 'redis', 'api') }
+        default { @('mysql', 'redis', 'api') }
     }
 
     return $services -contains $Service
@@ -286,6 +298,34 @@ function Wait-MySqlHealthy {
     throw "等待 MySQL 就绪超时（${TimeoutSeconds}s）。"
 }
 
+function Wait-RedisHealthy {
+    if ($NoWait) {
+        Write-Warn '已跳过健康检查等待。'
+        return
+    }
+
+    Write-Step "等待 Redis 就绪（最长 ${TimeoutSeconds}s）..."
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        $status = & docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' $RedisContainer 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            switch ($status | Select-Object -First 1) {
+                'healthy' {
+                    Write-Ok 'Redis 已就绪。'
+                    return
+                }
+                'unhealthy' {
+                    throw 'Redis 健康检查失败，请执行：pwsh ./manage.ps1 logs -Target redis -Follow'
+                }
+            }
+        }
+
+        Start-Sleep -Seconds 1
+    }
+
+    throw "等待 Redis 就绪超时（${TimeoutSeconds}s）。"
+}
+
 function Wait-ApiHealthy {
     if ($NoWait) {
         Write-Warn '已跳过健康检查等待。'
@@ -312,6 +352,12 @@ function Start-MySql {
     Write-Step '启动 MySQL 容器...'
     Invoke-Compose -ComposeArgs @('up', '-d', 'mysql')
     Wait-MySqlHealthy
+}
+
+function Start-Redis {
+    Write-Step '启动 Redis 容器...'
+    Invoke-Compose -ComposeArgs @('up', '-d', 'redis')
+    Wait-RedisHealthy
 }
 
 function Build-Api {
@@ -381,6 +427,10 @@ function Invoke-StackUp {
         Start-MySql
     }
 
+    if (Get-TargetIncludes 'redis') {
+        Start-Redis
+    }
+
     if (Get-TargetIncludes 'api') {
         if (Test-ApiHealth -or $null -ne (Get-ApiProcess)) {
             Write-Warn 'API 已在运行，跳过构建与启动；如需应用最新代码请执行 restart。'
@@ -441,6 +491,16 @@ function Show-Status {
         Write-Host "    MySQL：$mysqlStatus" -ForegroundColor $color
     }
 
+    $redisHealth = & docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' $RedisContainer 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warn "Redis 容器（$RedisContainer）尚未创建，执行 pwsh ./manage.ps1 up -Target redis"
+    }
+    else {
+        $redisStatus = $redisHealth | Select-Object -First 1
+        $color = if ($redisStatus -in @('healthy', 'running')) { 'Green' } elseif ($redisStatus -eq 'unhealthy') { 'Red' } else { 'Yellow' }
+        Write-Host "    Redis：$redisStatus" -ForegroundColor $color
+    }
+
     $apiProcess = Get-ApiProcess
     if (Test-ApiHealth) {
         Write-Host '    API  ：healthy' -ForegroundColor Green
@@ -457,6 +517,7 @@ function Show-Status {
     Write-Host "    API        $ApiBaseUrl"
     Write-Host "    Swagger    $ApiBaseUrl/swagger"
     Write-Host "    MySQL      127.0.0.1:3306/hospikeeper"
+    Write-Host "    Redis      localhost:6379"
     Write-Host "    API 日志   $ApiOutLog"
 }
 
@@ -501,6 +562,12 @@ switch ($Action) {
             Write-Step '重启 MySQL 容器...'
             Invoke-Compose -ComposeArgs @('restart', 'mysql')
             Wait-MySqlHealthy
+        }
+
+        if (Get-TargetIncludes 'redis') {
+            Write-Step '重启 Redis 容器...'
+            Invoke-Compose -ComposeArgs @('restart', 'redis')
+            Wait-RedisHealthy
         }
 
         if (Get-TargetIncludes 'api') {
@@ -555,20 +622,34 @@ switch ($Action) {
                 $logArgs += 'mysql'
                 Invoke-Compose -ComposeArgs $logArgs
             }
+            'redis' {
+                $logArgs = @('logs', '--tail', "$Tail")
+                if ($Follow) { $logArgs += '-f' }
+                $logArgs += 'redis'
+                Invoke-Compose -ComposeArgs $logArgs
+            }
             default {
                 Show-ApiLogs
                 Write-Step 'MySQL 最近日志'
                 Invoke-Compose -ComposeArgs @('logs', '--tail', "$Tail", 'mysql')
+                Write-Step 'Redis 最近日志'
+                Invoke-Compose -ComposeArgs @('logs', '--tail', "$Tail", 'redis')
             }
         }
     }
 
     'cli' {
-        Write-Step '进入 MySQL 命令行（输入 exit 退出）...'
-        Invoke-Compose -ComposeArgs @(
-            'exec', 'mysql', 'sh', '-c',
-            'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"'
-        )
+        if ($Target -eq 'redis') {
+            Write-Step '进入 Redis 命令行（输入 exit 退出）...'
+            Invoke-Compose -ComposeArgs @('exec', 'redis', 'redis-cli')
+        }
+        else {
+            Write-Step '进入 MySQL 命令行（输入 exit 退出）...'
+            Invoke-Compose -ComposeArgs @(
+                'exec', 'mysql', 'sh', '-c',
+                'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"'
+            )
+        }
     }
 
     'status' {
@@ -579,6 +660,7 @@ switch ($Action) {
         Confirm-Destructive -Message '将删除并重建数据库，随后由 API 重新执行 EF Core 迁移与演示数据。'
         Stop-Api
         Start-MySql
+        Start-Redis
         Reset-DatabaseInsideContainer
         Build-Api
         Start-Api
@@ -608,8 +690,8 @@ switch ($Action) {
     }
 
     'pull' {
-        Write-Step '拉取 MySQL 镜像...'
-        Invoke-Compose -ComposeArgs @('pull', 'mysql')
+        Write-Step '拉取 MySQL / Redis 镜像...'
+        Invoke-Compose -ComposeArgs @('pull', 'mysql', 'redis')
         Write-Ok '镜像已更新。'
     }
 
