@@ -8,12 +8,14 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\HospiKeeper.Application\HospiKeeper.Application.csproj" />
     <ProjectReference Include="..\Sylvie233.Caching\Sylvie233.Caching.csproj" />
+    <ProjectReference Include="..\Sylvie233.Logging\Sylvie233.Logging.csproj" />
     <ProjectReference Include="..\HospiKeeper.Contracts\HospiKeeper.Contracts.csproj" />
     <ProjectReference Include="..\HospiKeeper.Infrastructure\HospiKeeper.Infrastructure.csproj" />
   </ItemGroup>

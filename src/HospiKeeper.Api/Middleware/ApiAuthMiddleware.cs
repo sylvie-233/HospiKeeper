@@ -22,7 +22,8 @@ public sealed class ApiAuthMiddleware
         HttpContext context,
         ApiTokenStore tokens,
         IAuthService auth,
-        SessionContext session)
+        SessionContext session,
+        ILogger<ApiAuthMiddleware> logger)
     {
         var path = context.Request.Path.Value ?? string.Empty;
         if (IsPublic(path) || HttpMethods.IsOptions(context.Request.Method))
@@ -34,6 +35,7 @@ public sealed class ApiAuthMiddleware
         var header = context.Request.Headers.Authorization.ToString();
         if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
+            logger.LogWarning("未携带访问令牌 {Method} {Path}", context.Request.Method, context.Request.Path);
             await UnauthorizedAsync(context, "缺少登录令牌，请重新登录。");
             return;
         }
@@ -41,6 +43,7 @@ public sealed class ApiAuthMiddleware
         var token = header["Bearer ".Length..].Trim();
         if (!tokens.TryValidate(token, out var userId))
         {
+            logger.LogWarning("访问令牌无效或已过期 {Method} {Path}", context.Request.Method, context.Request.Path);
             await UnauthorizedAsync(context, "登录已过期，请重新登录。");
             return;
         }
@@ -49,6 +52,7 @@ public sealed class ApiAuthMiddleware
         if (user is null || user.Status == AccountStatus.Disabled)
         {
             tokens.Revoke(token);
+            logger.LogWarning("账号不可用（不存在或已停用）UserId={UserId}", userId);
             await UnauthorizedAsync(context, "账号不存在或已停用。");
             return;
         }

@@ -27,6 +27,11 @@ public sealed class ExceptionHandlingMiddleware
             var forbidden = ex.Message.Contains("仅管理员", StringComparison.Ordinal)
                             || ex.Message.Contains("无权", StringComparison.Ordinal)
                             || ex.Message.Contains("不能停用当前", StringComparison.Ordinal);
+            _logger.LogWarning("业务校验失败 {Method} {Path} -> {StatusCode}: {Message}",
+                context.Request.Method, context.Request.Path,
+                forbidden ? StatusCodes.Status403Forbidden : StatusCodes.Status400BadRequest,
+                ex.Message);
+
             context.Response.StatusCode = forbidden ? StatusCodes.Status403Forbidden : StatusCodes.Status400BadRequest;
             await WriteAsync(context, ex.Message);
         }
