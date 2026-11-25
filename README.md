@@ -13,7 +13,7 @@
 | UI 设计系统 | 自研 Ant 风格控件库 `HospiKeeper.UI`（TemplatedControl / ControlTheme） |
 | API | ASP.NET Core 10 · Controllers · Swagger |
 | 持久化 | EF Core 10.0.12 · MySql.EntityFrameworkCore 10.0.12（官方 MySQL Provider） |
-| 缓存 | 自研 `HospiKeeper.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
+| 缓存 | 自研 `Sylvie233.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
 | 基础设施 | MySQL 8 · Redis 7（`Scripts/docker-compose.yml`，3306 / 6379） |
 | 测试 | xUnit · EF Core InMemory（29 个用例） |
 
@@ -24,8 +24,8 @@ HospiKeeper.slnx
 ├─ src/
 │  ├─ HospiKeeper.Domain/          # 实体、枚举、计费领域服务（无框架依赖）
 │  ├─ HospiKeeper.Contracts/       # 客户端/API 共享请求、响应与 API DTO
-│  ├─ HospiKeeper.Application/     # 业务服务 + 仓储/工作单元/缓存抽象
-│  ├─ HospiKeeper.Caching/         # Memory / Redis 缓存实现（StackExchange.Redis）
+│  ├─ HospiKeeper.Application/     # 业务服务 + 仓储/工作单元 + 缓存失效协调
+│  ├─ Sylvie233.Caching/         # ICacheService 端口 + Memory / Redis 实现（无业务依赖）
 │  ├─ HospiKeeper.Infrastructure/  # EF Core DbContext、映射、仓储、迁移、演示数据
 │  ├─ HospiKeeper.Api/             # 独立 Web API（Token 鉴权 + REST + Swagger）
 │  ├─ HospiKeeper.Client/          # 桌面端 HTTP 客户端（IHospiKeeperApi）
@@ -39,7 +39,7 @@ HospiKeeper.slnx
 └─ dotnet-tools.json               # 本地 dotnet-ef 工具清单
 ```
 
-依赖方向：`Desktop → Client → Contracts → Domain`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`；`Caching → Application`（实现缓存端口）。UI 模块不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Api`。
+依赖方向：`Desktop → Client → Contracts → Domain`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`；`Application → Sylvie233.Caching`（使用共享缓存端口）；`Sylvie233.Caching` 不依赖任何业务模块。UI 模块不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Api`。
 
 ## 自研 UI 控件库
 
@@ -224,7 +224,7 @@ FLUSH PRIVILEGES;"
 
 ## 缓存模块
 
-`HospiKeeper.Caching` 对上层暴露统一的 `ICacheService`，业务服务只依赖接口：
+`Sylvie233.Caching` 对上层暴露统一的 `ICacheService`，业务服务只依赖接口：
 
 - **Memory**：`IMemoryCache` + key 注册表，适合单进程调试；
 - **Redis**：`StackExchange.Redis` 直连，支持多实例共享、前缀清理、TTL；

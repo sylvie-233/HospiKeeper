@@ -1,4 +1,5 @@
 using HospiKeeper.Application.Abstractions.Caching;
+using Sylvie233.Caching;
 
 namespace HospiKeeper.Application.Caching;
 

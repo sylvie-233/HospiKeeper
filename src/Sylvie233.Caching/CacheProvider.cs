@@ -1,4 +1,4 @@
-namespace HospiKeeper.Caching;
+namespace Sylvie233.Caching;
 
 public enum CacheProvider
 {

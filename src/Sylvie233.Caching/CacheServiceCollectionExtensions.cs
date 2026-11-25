@@ -1,10 +1,9 @@
-using HospiKeeper.Application.Abstractions.Caching;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
-namespace HospiKeeper.Caching;
+namespace Sylvie233.Caching;
 
 public static class CacheServiceCollectionExtensions
 {

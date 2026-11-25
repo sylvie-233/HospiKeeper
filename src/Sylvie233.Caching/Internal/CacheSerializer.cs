@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace HospiKeeper.Caching.Internal;
+namespace Sylvie233.Caching.Internal;
 
 internal static class CacheSerializer
 {

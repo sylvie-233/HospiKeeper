@@ -29,7 +29,7 @@ HospiKeeper（云栖民宿管理系统）是面向中小型民宿 / 小旅馆的
 | EF Core | 10.0.12 |
 | MySQL Provider | `MySql.EntityFrameworkCore` 10.0.12（官方 Provider，底层 MySql.Data） |
 | MySQL / Redis | MySQL 8 · Redis 7（Docker Compose） |
-| 缓存 | `HospiKeeper.Caching`（Memory / Redis 可切换）· StackExchange.Redis 3.4 |
+| 缓存 | `Sylvie233.Caching`（Memory / Redis 可切换）· StackExchange.Redis 3.4 |
 | 测试 | xUnit 2.9 + EF Core InMemory |
 | 客户端 | `HospiKeeper.Client` 内手写 `HttpClient` 封装 |
 
@@ -41,7 +41,7 @@ HospiKeeper（云栖民宿管理系统）是面向中小型民宿 / 小旅馆的
 HospiKeeper.Domain          实体 / 枚举 / 计费领域服务，无框架依赖
 HospiKeeper.Contracts       前后端共享请求、响应、DTO（API 契约）
 HospiKeeper.Application     业务服务、仓储接口、工作单元 / 缓存端口、缓存失效协调、会话
-HospiKeeper.Caching         Memory / Redis 缓存实现（实现 Application 的 ICacheService）
+Sylvie233.Caching         ICacheService 端口 + Memory / Redis 实现（无业务依赖，可独立复用）
 HospiKeeper.Infrastructure  EF Core DbContext / 配置 / 仓储 / 迁移 / 种子
 HospiKeeper.Api             独立 Web API（控制器、鉴权、Swagger）
 HospiKeeper.Client          桌面端 HTTP 客户端
@@ -53,7 +53,7 @@ HospiKeeper.Desktop         Avalonia 桌面端（MVVM 页面与弹窗）
 
 - `Api → Application / Infrastructure / Contracts`
 - `Infrastructure → Application / Contracts`
-- `Caching → Application`（实现缓存端口；Application 不引用 Caching）
+- `Application → Sylvie233.Caching`（业务层使用共享缓存端口）
 - `Application → Contracts → Domain`
 - `Desktop → Client / Contracts / UI`
 - `UI` 不得引用 `Domain` / `Application` / `Api`
@@ -130,8 +130,8 @@ dotnet ef database update \
 
 ## 6. 缓存约定
 
-- 端口：`ICacheService`（`src/HospiKeeper.Application/Abstractions/Caching`）。
-- 实现：`src/HospiKeeper.Caching`
+- 端口：`ICacheService`（`src/Sylvie233.Caching/ICacheService.cs`）。
+- 实现：`src/Sylvie233.Caching`
   - `Memory`：`IMemoryCache` + key 注册表；
   - `Redis`：`StackExchange.Redis`，支持前缀批量清理。
 - 切换：`appsettings.json` → `Cache:Provider`（`Redis` / `Memory`），或环境变量 `Cache__Provider`。

@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HospiKeeper.Application\HospiKeeper.Application.csproj" />
-    <ProjectReference Include="..\HospiKeeper.Caching\HospiKeeper.Caching.csproj" />
+    <ProjectReference Include="..\Sylvie233.Caching\Sylvie233.Caching.csproj" />
     <ProjectReference Include="..\HospiKeeper.Contracts\HospiKeeper.Contracts.csproj" />
     <ProjectReference Include="..\HospiKeeper.Infrastructure\HospiKeeper.Infrastructure.csproj" />
   </ItemGroup>

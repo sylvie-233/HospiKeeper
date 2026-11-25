@@ -1,11 +1,10 @@
 using System.Collections.Concurrent;
-using HospiKeeper.Application.Abstractions.Caching;
-using HospiKeeper.Caching.Internal;
+using Sylvie233.Caching.Internal;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace HospiKeeper.Caching;
+namespace Sylvie233.Caching;
 
 public sealed class MemoryCacheService : ICacheService
 {

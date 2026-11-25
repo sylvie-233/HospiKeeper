@@ -1,5 +1,5 @@
 using HospiKeeper.Application.Abstractions;
-using HospiKeeper.Application.Abstractions.Caching;
+using Sylvie233.Caching;
 using HospiKeeper.Application.Caching;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Contracts;

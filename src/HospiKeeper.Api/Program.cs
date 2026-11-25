@@ -6,7 +6,7 @@ using HospiKeeper.Application.Abstractions.Caching;
 using HospiKeeper.Application.Caching;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Application.Services;
-using HospiKeeper.Caching;
+using Sylvie233.Caching;
 using HospiKeeper.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);

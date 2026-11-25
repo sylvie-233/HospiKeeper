@@ -1,5 +1,5 @@
 using HospiKeeper.Application.Caching;
-using HospiKeeper.Caching;
+using Sylvie233.Caching;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

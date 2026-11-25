@@ -2,5 +2,6 @@
   <ItemGroup>
     <ProjectReference Include="..\HospiKeeper.Domain\HospiKeeper.Domain.csproj" />
     <ProjectReference Include="..\HospiKeeper.Contracts\HospiKeeper.Contracts.csproj" />
+    <ProjectReference Include="..\Sylvie233.Caching\Sylvie233.Caching.csproj" />
   </ItemGroup>
 </Project>

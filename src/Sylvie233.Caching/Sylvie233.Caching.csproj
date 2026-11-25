@@ -6,7 +6,4 @@
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\HospiKeeper.Application\HospiKeeper.Application.csproj" />
-  </ItemGroup>
 </Project>

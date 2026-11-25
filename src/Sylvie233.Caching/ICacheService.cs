@@ -1,4 +1,4 @@
-namespace HospiKeeper.Application.Abstractions.Caching;
+namespace Sylvie233.Caching;
 
 /// <summary>
 /// 应用级缓存端口。实现可选择内存或 Redis，业务层只依赖此接口。
