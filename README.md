@@ -134,6 +134,7 @@ Redis   localhost:6379（无密码，缓存 + 系统配置持久 key）
 > `Docs/民宿管理系统-数据库设计-v1.sql` 保留为设计参考，不再由 compose 自动执行。
 > Redis 以 `--appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru` 运行：
 > 普通缓存 key 带 TTL，可被淘汰；系统配置 `config:site` 无 TTL，并通过 AOF 持久化。
+> 从旧版本升级时需重建 Redis 容器以应用 AOF：`docker compose -f Scripts/docker-compose.yml up -d --force-recreate redis`。
 
 ### 2. 启动 API
 

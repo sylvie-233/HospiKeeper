@@ -219,6 +219,7 @@ dotnet ef database update \
 - 新增读多写少接口时：在 Application 服务中调用 `_cache.GetOrCreateAsync`，并在相关写操作中补失效逻辑；不要直接在 Controller 中写缓存。
 - Redis 服务由 compose 管理：`hospikeeper-redis`，`localhost:6379`，开启 AOF；
   普通缓存 key 带 TTL，`volatile-lru` 只淘汰带过期时间的 key；系统配置 key 无 TTL。
+- 修改 Redis 启动参数后，开发机需 `docker compose -f Scripts/docker-compose.yml up -d --force-recreate redis` 才能生效。
 - `SetPersistentAsync` 用于写入无 TTL 的持久项（系统配置），返回是否成功；普通缓存继续使用 `SetAsync` + TTL。
 
 ## 8. 日志约定
