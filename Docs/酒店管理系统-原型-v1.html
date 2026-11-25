@@ -1,0 +1,2177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>简易酒店住宿管理系统 · v1 桌面原型（交互版）</title>
+<style>
+  /* ============ Ant Design 风格设计变量 ============ */
+  :root {
+    --primary: #1677ff;
+    --primary-hover: #4096ff;
+    --success: #52c41a;
+    --warning: #faad14;
+    --error: #ff4d4f;
+    --purple: #722ed1;
+    --cyan: #13c2c2;
+    --text: rgba(0,0,0,.88);
+    --text-secondary: rgba(0,0,0,.65);
+    --text-tertiary: rgba(0,0,0,.45);
+    --border: #d9d9d9;
+    --border-split: #f0f0f0;
+    --bg-container: #ffffff;
+    --bg-panel: #fafafa;
+    --radius: 6px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: var(--font); background: #e8e8e8; color: var(--text); font-size: 13px; overflow: hidden; }
+
+  /* ============ 桌面应用窗口框架 ============ */
+  .app-window {
+    position: absolute; inset: 12px; display: flex; flex-direction: column;
+    background: var(--bg-container); border-radius: 8px; overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,.22), 0 0 0 1px rgba(0,0,0,.08);
+  }
+  .titlebar {
+    height: 36px; background: linear-gradient(90deg, #0e5fd8, #1677ff); color: #fff;
+    display: flex; align-items: center; user-select: none; flex-shrink: 0;
+  }
+  .titlebar .app-ico { width: 30px; height: 30px; margin: 0 8px 0 10px; background: rgba(255,255,255,.18); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .titlebar .title { font-size: 13px; font-weight: 500; flex: 1; }
+  .win-btn { width: 44px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: rgba(255,255,255,.9); font-size: 12px; transition: background .15s; }
+  .win-btn:hover { background: rgba(255,255,255,.18); }
+  .win-btn.close:hover { background: var(--error); color: #fff; }
+
+  .menubar {
+    height: 30px; background: var(--bg-panel); border-bottom: 1px solid var(--border-split);
+    display: flex; align-items: center; padding: 0 6px; flex-shrink: 0; user-select: none;
+  }
+  .menubar .mi { padding: 4px 12px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); font-size: 13px; }
+  .menubar .mi:hover { background: rgba(22,119,255,.08); color: var(--primary); }
+  .menubar .clock { margin-left: auto; color: var(--text-tertiary); font-size: 12px; padding-right: 10px; }
+  .mi-wrap { position: relative; }
+  .dropdown { position: absolute; top: calc(100% + 3px); left: 0; min-width: 168px; background: #fff; border: 1px solid var(--border-split); border-radius: 5px; box-shadow: 0 6px 16px rgba(0,0,0,.13); padding: 4px; z-index: 200; display: none; }
+  .dropdown.open { display: block; animation: dialogIn .12s ease; }
+  .dropdown .di { padding: 6px 12px; font-size: 13px; border-radius: 4px; cursor: pointer; white-space: nowrap; display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+  .dropdown .di:hover { background: rgba(22,119,255,.08); color: var(--primary); }
+  .dropdown .di .sc { color: var(--text-tertiary); font-size: 11px; }
+  .dropdown .di.admin-only { display: none; }
+  body.role-admin .dropdown .di.admin-only { display: flex; }
+  .dropdown .sep { height: 1px; background: var(--border-split); margin: 4px 8px; }
+
+  .app-body { flex: 1; display: flex; min-height: 0; }
+
+  /* ---- 左侧树形导航 ---- */
+  .nav {
+    width: 190px; background: var(--bg-panel); border-right: 1px solid var(--border-split);
+    display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .nav-tree { flex: 1; overflow-y: auto; padding: 8px; }
+  .nav-group { font-size: 12px; color: var(--text-tertiary); padding: 10px 10px 4px; letter-spacing: .5px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 4px;
+    cursor: pointer; color: var(--text-secondary); margin-bottom: 1px; transition: all .12s; user-select: none;
+  }
+  .nav-item:hover { background: rgba(22,119,255,.07); color: var(--primary); }
+  .nav-item.active { background: #e6f4ff; color: var(--primary); font-weight: 600; border-right: 2px solid var(--primary); border-radius: 4px 0 0 4px; }
+  .nav-item .ico { width: 16px; text-align: center; }
+  .nav-item .badge { margin-left: auto; background: var(--error); color: #fff; font-size: 10px; border-radius: 8px; padding: 0 5px; line-height: 16px; }
+  .nav-user { padding: 10px 12px; border-top: 1px solid var(--border-split); display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .nav-user .avatar { width: 28px; height: 28px; border-radius: 50%; background: #e6f4ff; color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0; }
+
+  /* ---- 工作区 ---- */
+  .workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .page { display: none; flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px; }
+  .page.active { display: block; animation: fadeIn .18s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(3px);} to { opacity: 1; transform: none;} }
+
+  .page-bar {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    padding: 8px 12px; background: var(--bg-panel); border: 1px solid var(--border-split); border-bottom: none;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .page-bar h2 { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .page-bar h2::before { content: ""; width: 3px; height: 13px; background: var(--primary); border-radius: 2px; }
+  .filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .filter-bar .input, .filter-bar .select { width: 140px; }
+
+  /* ============ Antd 风格控件 ============ */
+  .btn {
+    display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 12px;
+    border-radius: 4px; border: 1px solid var(--border); background: #fff; color: var(--text);
+    font-size: 13px; cursor: pointer; transition: all .15s; font-family: var(--font); white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--primary); color: var(--primary); }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
+  .btn-danger { color: var(--error); border-color: var(--error); }
+  .btn-danger:hover { background: var(--error); color: #fff; }
+  .btn-sm { height: 24px; padding: 0 9px; font-size: 12px; }
+  .btn-link { border: none; background: none; color: var(--primary); padding: 0 4px; height: auto; cursor: pointer; font-size: 13px; }
+  .btn-link:hover { color: var(--primary-hover); }
+  .btn-link.danger { color: var(--error); }
+  .btn-link:disabled { color: var(--text-tertiary); cursor: not-allowed; }
+
+  .tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 3px; font-size: 11px; border: 1px solid; }
+  .tag-free      { color: var(--success);  background: #f6ffed; border-color: #b7eb8f; }
+  .tag-occupied  { color: var(--primary);  background: #e6f4ff; border-color: #91caff; }
+  .tag-reserved  { color: var(--purple);   background: #f9f0ff; border-color: #d3adf7; }
+  .tag-cleaning  { color: var(--cyan);     background: #e6fffb; border-color: #87e8de; }
+  .tag-repair    { color: var(--warning);  background: #fffbe6; border-color: #ffe58f; }
+  .tag-stopped   { color: var(--text-tertiary); background: #fafafa; border-color: var(--border); }
+
+  .panel { background: var(--bg-container); border: 1px solid var(--border-split); border-radius: 0 0 var(--radius) var(--radius); padding: 12px 14px; }
+  .panel-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+  .tab-bar { display: flex; gap: 4px; margin-bottom: -1px; }
+  .tab-item { padding: 7px 16px; font-size: 13px; cursor: pointer; border: 1px solid transparent; border-radius: 4px 4px 0 0; color: var(--text-2); user-select: none; }
+  .tab-item:hover { color: var(--primary); }
+  .tab-item.on { color: var(--primary); font-weight: 600; background: #fff; border-color: var(--border-split) var(--border-split) #fff; }
+  /* ---- 单据式详情对话框 ---- */
+  .dl-head { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #e6f4ff, #f5faff); border: 1px solid #bae0ff; border-radius: 6px; padding: 12px 16px; margin-bottom: 14px; }
+  .dl-head .id { font-size: 17px; font-weight: 700; letter-spacing: .5px; font-variant-numeric: tabular-nums; }
+  .dl-head .sub { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+  .dl-head .room { text-align: right; }
+  .dl-head .room .no { font-size: 20px; font-weight: 700; color: var(--primary); }
+  .dl-head .room .tp { font-size: 12px; color: var(--text-secondary); }
+  .dl-sec-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin: 0 0 8px; display: flex; align-items: center; gap: 6px; }
+  .dl-sec-title::before { content: ""; width: 3px; height: 11px; background: var(--primary); border-radius: 2px; }
+  .dl-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 20px; background: var(--bg-panel); border: 1px solid var(--border-split); border-radius: 6px; padding: 12px 16px; margin-bottom: 14px; }
+  .dl-cell .k { font-size: 11px; color: var(--text-tertiary); }
+  .dl-cell .v { font-size: 13px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .dl-lines { border-top: 1px dashed var(--border-split); }
+  .dl-line { display: flex; justify-content: space-between; padding: 7px 2px; border-bottom: 1px dashed var(--border-split); font-size: 13px; }
+  .dl-line .amt { font-variant-numeric: tabular-nums; }
+  .dl-line.dim { color: var(--text-tertiary); }
+  .dl-total { display: flex; justify-content: space-between; padding: 9px 2px; font-weight: 700; font-size: 13px; }
+  .dl-total .amt { color: #fa8c16; font-size: 16px; }
+  .dl-result { display: flex; justify-content: space-between; align-items: center; background: #fff7e6; border: 1px solid #ffd591; border-radius: 6px; padding: 10px 16px; margin-top: 14px; }
+  .dl-result .t { font-size: 13px; color: var(--text-secondary); }
+  .dl-result .big { font-size: 19px; font-weight: 700; color: #fa8c16; font-variant-numeric: tabular-nums; }
+  .dl-result.blue { background: #e6f4ff; border-color: #91caff; }
+  .dl-result.blue .big { color: var(--primary); }
+  .dl-note { font-size: 12px; color: var(--text-secondary); background: var(--bg-panel); border: 1px dashed var(--border-split); border-radius: 6px; padding: 8px 12px; margin-top: 10px; }
+  .dl-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; flex-shrink: 0; }
+  .dl-guest { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .dl-guest .name { font-size: 15px; font-weight: 700; }
+  .clickable-row { cursor: pointer; }
+  .clickable-row:hover td { background: #f5f8ff; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-weight: 500; color: var(--text-secondary); background: var(--bg-panel); padding: 8px 12px; border-bottom: 1px solid var(--border-split); white-space: nowrap; border-top: 1px solid var(--border-split); }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border-split); }
+  tr:hover td { background: #f5f8ff; }
+  .empty-row td { text-align: center; color: var(--text-tertiary); padding: 24px 0; }
+  .pagination { display: flex; justify-content: flex-end; align-items: center; gap: 6px; padding-top: 10px; color: var(--text-secondary); font-size: 12px; }
+  .page-btn { min-width: 24px; height: 24px; border: 1px solid var(--border); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; background: #fff; font-size: 12px; }
+  .page-btn.current { border-color: var(--primary); color: var(--primary); }
+
+  .form-item { margin-bottom: 12px; }
+  .form-label { display: block; margin-bottom: 4px; font-size: 12px; color: var(--text-secondary); }
+  .form-label .req { color: var(--error); margin-left: 2px; }
+  .input, .select {
+    width: 100%; height: 28px; padding: 0 9px; border: 1px solid var(--border); border-radius: 4px;
+    font-size: 13px; font-family: var(--font); color: var(--text); background: #fff; transition: all .15s; outline: none;
+  }
+  .input:hover, .select:hover { border-color: var(--primary-hover); }
+  .input:focus, .select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(22,119,255,.1); }
+  .input::placeholder { color: var(--text-tertiary); }
+  textarea.input { height: auto; padding: 6px 9px; resize: vertical; }
+  .input.error, .select.error { border-color: var(--error); box-shadow: 0 0 0 2px rgba(255,77,79,.1); }
+  .err-msg { color: var(--error); font-size: 11px; margin-top: 3px; display: none; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .form-tip { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+
+  .radio-group { display: inline-flex; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .radio-group span { padding: 4px 12px; cursor: pointer; font-size: 12px; color: var(--text-secondary); border-right: 1px solid var(--border); transition: all .15s; }
+  .radio-group span:last-child { border-right: none; }
+  .radio-group span.on { background: var(--primary); color: #fff; }
+
+  .stat-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  .stat-box { background: var(--bg-container); border: 1px solid var(--border-split); border-radius: var(--radius); padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .stat-box .ico-box { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .stat-box .num { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .stat-box .label { font-size: 12px; color: var(--text-secondary); }
+  .stat-box .sub { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+  /* ---- 房态看板 ---- */
+  .floor-block { margin-bottom: 14px; }
+  .floor-name { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+  .floor-name::before { content: ""; width: 3px; height: 12px; background: var(--primary); border-radius: 2px; }
+  .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; }
+  .room-card { border-radius: var(--radius); padding: 10px 12px; cursor: pointer; border: 1px solid rgba(0,0,0,.06); transition: all .15s; color: #fff; }
+  .room-card:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.18); }
+  .room-no { font-size: 16px; font-weight: 700; }
+  .room-type { font-size: 11px; opacity: .85; margin-top: 1px; }
+  .room-status { font-size: 11px; margin-top: 7px; display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,.22); padding: 1px 6px; border-radius: 3px; }
+  .room-guest { font-size: 11px; margin-top: 5px; opacity: .9; }
+  .room-free     { background: linear-gradient(135deg, #73d13d, #52c41a); }
+  .room-occupied { background: linear-gradient(135deg, #4096ff, #1677ff); }
+  .room-reserved { background: linear-gradient(135deg, #9254de, #722ed1); }
+  .room-cleaning { background: linear-gradient(135deg, #36cfc9, #13c2c2); }
+  .room-repair   { background: linear-gradient(135deg, #ffc53d, #faad14); }
+  .room-stopped  { background: #bfbfbf; }
+
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; color: var(--text-secondary); font-size: 12px; }
+  .legend .dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: middle; }
+
+  /* ============ 桌面对话框 ============ */
+  .modal-mask {
+    position: absolute; inset: 0; background: rgba(0,0,0,.4); z-index: 100;
+    display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto;
+  }
+  .modal-mask.open { display: flex; }
+  .modal { background: #fff; border-radius: var(--radius); width: 520px; max-width: 100%; box-shadow: 0 12px 32px rgba(0,0,0,.25); animation: dialogIn .18s ease; }
+  .modal-lg { width: 640px; }
+  @keyframes dialogIn { from { opacity: 0; transform: translateY(-10px) scale(.99);} to { opacity: 1; transform: none;} }
+  .modal-header { padding: 12px 18px; border-bottom: 1px solid var(--border-split); font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; background: var(--bg-panel); border-radius: var(--radius) var(--radius) 0 0; }
+  .modal-close { cursor: pointer; color: var(--text-tertiary); font-size: 13px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 14px 18px; }
+  .modal-footer { padding: 10px 18px; border-top: 1px solid var(--border-split); display: flex; justify-content: flex-end; gap: 8px; background: var(--bg-panel); border-radius: 0 0 var(--radius) var(--radius); }
+
+  .summary { background: var(--bg-panel); border: 1px solid var(--border-split); border-radius: var(--radius); padding: 10px 14px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+  .summary .item .k { font-size: 11px; color: var(--text-secondary); margin-bottom: 2px; }
+  .summary .item .v { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .summary .item .v.money { color: #fa8c16; }
+
+  .bar-chart { display: flex; align-items: flex-end; gap: 12px; height: 150px; padding-top: 14px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
+  .bar { width: 58%; max-width: 42px; background: linear-gradient(180deg, #4096ff, #1677ff); border-radius: 3px 3px 0 0; position: relative; }
+  .bar:hover { opacity: .85; }
+  .bar .val { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text-secondary); white-space: nowrap; }
+  .bar-col .name { font-size: 11px; color: var(--text-tertiary); }
+
+  .progress { height: 7px; background: #f0f0f0; border-radius: 4px; overflow: hidden; width: 110px; }
+  .progress .fill { height: 100%; background: var(--primary); border-radius: 4px; }
+  .text-money { color: #fa8c16; font-weight: 600; }
+  .text-strong { font-weight: 600; }
+  .muted { color: var(--text-tertiary); }
+  .mb0 { margin-bottom: 0; }
+
+  /* ---- 底部状态栏 ---- */
+  .statusbar {
+    height: 26px; background: var(--bg-panel); border-top: 1px solid var(--border-split);
+    display: flex; align-items: center; padding: 0 12px; gap: 18px; font-size: 11px; color: var(--text-secondary); flex-shrink: 0; user-select: none;
+  }
+  .statusbar .sb-item { display: flex; align-items: center; gap: 4px; }
+  .statusbar .sb-sep { width: 1px; height: 12px; background: var(--border-split); }
+  .statusbar .right { margin-left: auto; display: flex; gap: 18px; align-items: center; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; }
+
+  /* ============ 角色视图权限 ============ */
+  body.role-front .admin-only { display: none !important; }
+  body.role-admin .front-only { display: none !important; }
+
+  /* ============ 登录窗口 ============ */
+  .login-mask {
+    position: absolute; inset: 0; background: #e8e8e8; z-index: 300;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-mask.hidden { display: none; }
+  .login-window {
+    width: 400px; background: #fff; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,.25), 0 0 0 1px rgba(0,0,0,.08);
+    animation: dialogIn .25s ease;
+  }
+  .login-body { padding: 30px 34px 26px; }
+  .login-head { text-align: center; margin-bottom: 22px; }
+  .login-head .app-ico-lg {
+    width: 56px; height: 56px; margin: 0 auto 12px; border-radius: 14px;
+    background: linear-gradient(135deg, #1677ff, #4096ff); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  .login-head h1 { font-size: 17px; font-weight: 600; }
+  .login-head p { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+  .login-error {
+    background: #fff2f0; border: 1px solid #ffccc7; color: var(--error);
+    font-size: 12px; border-radius: 4px; padding: 7px 10px; margin-bottom: 12px; display: none;
+  }
+  .login-tip {
+    margin-top: 14px; padding: 8px 10px; background: #e6f4ff; border: 1px solid #91caff;
+    border-radius: 4px; font-size: 11px; color: var(--primary); line-height: 1.7;
+  }
+  .login-btn { width: 100%; height: 34px; font-size: 14px; justify-content: center; }
+
+</style>
+</head>
+<body class="role-front">
+
+<!-- ============ 登录窗口（启动页） ============ -->
+<div class="login-mask" id="loginMask">
+  <div class="login-window">
+    <div class="titlebar">
+      <div class="app-ico">🏨</div>
+      <div class="title">登录 - 云栖民宿管理系统</div>
+      <div class="win-btn" onclick="toast('窗口最小化（原型演示）')">—</div>
+      <div class="win-btn close" onclick="toast('已阻止退出：原型演示模式')">✕</div>
+    </div>
+    <div class="login-body">
+      <div class="login-head">
+        <div class="app-ico-lg">🏨</div>
+        <h1>云栖民宿管理系统</h1>
+        <p>简易酒店住宿管理系统 · v1.0</p>
+      </div>
+      <div class="login-error" id="loginError"></div>
+      <div class="form-item">
+        <label class="form-label">账号<span class="req">*</span></label>
+        <input class="input" id="loginUser" placeholder="请输入操作员账号" style="height:34px">
+      </div>
+      <div class="form-item">
+        <label class="form-label">密码<span class="req">*</span></label>
+        <input class="input" id="loginPwd" type="password" placeholder="请输入密码" style="height:34px">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <label style="font-size:12px;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;gap:5px">
+          <input type="checkbox" id="loginRemember" checked>记住账号
+        </label>
+        <span style="font-size:12px;color:var(--primary);cursor:pointer" onclick="toast('请联系管理员重置密码（原型演示）')">忘记密码？</span>
+      </div>
+      <button class="btn btn-primary login-btn" onclick="doLogin()">登 录</button>
+      <div class="login-tip">
+        💡 演示账号（初始密码均为 <b>123456</b>）：<br>
+        · 管理员：<b>admin</b>（增删房间、改价、查全部记录）<br>
+        · 前台：<b>front01</b>（开房退房、登记）<br>
+        · <b>front02</b> 已停用，可用于验证停用拦截
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app-window">
+
+  <!-- ============ 标题栏 ============ -->
+  <div class="titlebar">
+    <div class="app-ico">🏨</div>
+    <div class="title" id="winTitle">云栖民宿管理系统 v1.0　—　[房态看板]</div>
+    <div class="win-btn" onclick="toast('窗口最小化（原型演示）')">—</div>
+    <div class="win-btn" onclick="toast('窗口最大化（原型演示）')">▢</div>
+    <div class="win-btn close" onclick="toast('已阻止退出：原型演示模式')">✕</div>
+  </div>
+
+  <!-- ============ 菜单栏 ============ -->
+  <div class="menubar" id="menubar">
+    <div class="mi-wrap">
+      <span class="mi">系统(S)</span>
+      <div class="dropdown">
+        <div class="di" data-act="pwd">修改密码<span class="sc">Ctrl+P</span></div>
+        <div class="di" data-act="logout">退出登录</div>
+        <div class="sep"></div>
+        <div class="di" data-act="about">关于本系统</div>
+      </div>
+    </div>
+    <div class="mi-wrap">
+      <span class="mi">前台操作(O)</span>
+      <div class="dropdown">
+        <div class="di" data-nav="checkin">入住登记<span class="sc">F2</span></div>
+        <div class="di" data-nav="reserve">预定管理</div>
+        <div class="di" data-nav="stay">在住 / 退房结算</div>
+      </div>
+    </div>
+    <div class="mi-wrap">
+      <span class="mi">记录查询(Q)</span>
+      <div class="dropdown">
+        <div class="di" data-nav="records">入住 / 账单记录</div>
+        <div class="di" data-nav="logs">操作日志</div>
+      </div>
+    </div>
+    <div class="mi-wrap">
+      <span class="mi">统计报表(R)</span>
+      <div class="dropdown">
+        <div class="di" data-nav="report">经营统计报表</div>
+      </div>
+    </div>
+    <div class="mi-wrap">
+      <span class="mi">基础信息(M)</span>
+      <div class="dropdown">
+        <div class="di admin-only" data-nav="rooms">房间管理</div>
+        <div class="di admin-only" data-nav="roomtypes">房型管理</div>
+        <div class="di admin-only" data-nav="accounts">操作员账号</div>
+      </div>
+    </div>
+    <div class="mi-wrap">
+      <span class="mi">帮助(H)</span>
+      <div class="dropdown">
+        <div class="di" data-act="keys">快捷键说明</div>
+        <div class="di" data-act="about">关于本系统</div>
+      </div>
+    </div>
+    <span class="clock">📅 2026-11-25 星期三 <span id="clockTime">10:20</span></span>
+  </div>
+
+  <!-- ============ 主体 ============ -->
+  <div class="app-body">
+
+    <aside class="nav">
+      <div class="nav-tree" id="menu">
+        <div class="nav-group">前台运营</div>
+        <div class="nav-item active" data-page="dashboard"><span class="ico">▦</span>房态看板</div>
+        <div class="nav-item" data-page="checkin"><span class="ico">✚</span>入住登记</div>
+        <div class="nav-item" data-page="reserve"><span class="ico">📅</span>预定管理<span class="badge" id="badgeReserve">2</span></div>
+        <div class="nav-item" data-page="stay"><span class="ico">🛏</span>在住/退房结算<span class="badge" id="badgeStay">4</span></div>
+        <div class="nav-group">记录与统计</div>
+        <div class="nav-item" data-page="records"><span class="ico">🗂</span>入住/账单记录</div>
+        <div class="nav-item" data-page="report"><span class="ico">📊</span>统计报表</div>
+        <div class="nav-item" data-page="logs"><span class="ico">📝</span>操作日志</div>
+        <div class="nav-group admin-only">基础信息（管理员）</div>
+        <div class="nav-item admin-only" data-page="rooms"><span class="ico">🚪</span>房间管理</div>
+        <div class="nav-item admin-only" data-page="roomtypes"><span class="ico">🏷</span>房型管理</div>
+        <div class="nav-item admin-only" data-page="accounts"><span class="ico">👥</span>操作员账号</div>
+      </div>
+      <div class="nav-user">
+        <div class="avatar" id="roleAvatar">王</div>
+        <div style="flex:1">
+          <div style="font-weight:600" id="roleName">小王（前台）</div>
+          <div class="muted" style="font-size:11px" id="roleDesc">前台操作员</div>
+        </div>
+        <span class="muted" title="修改密码" style="cursor:pointer" onclick="openPwdModal()">⚙</span>
+        <span style="font-size:11px;color:var(--primary);cursor:pointer" onclick="logout()" title="退出登录">退出</span>
+      </div>
+      <div style="padding:8px 12px 12px;border-top:1px solid var(--border-split)">
+        <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:5px">角色视图切换（演示用）</div>
+        <div class="radio-group" id="roleSwitch" style="width:100%">
+          <span class="on" data-role="front" style="flex:1;text-align:center">前台视图</span>
+          <span data-role="admin" style="flex:1;text-align:center">管理员视图</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="workspace">
+
+      <!-- ===== 页面1：房态看板 ===== -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-bar">
+          <h2>房态看板</h2>
+          <div class="legend" id="legend"></div>
+          <div class="filter-bar">
+            <select class="select" id="dashFloor" onchange="renderBoard()"></select>
+            <select class="select" id="dashType" onchange="renderBoard()"></select>
+            <button class="btn btn-primary" onclick="gotoPage('checkin')">＋ 开房登记(F2)</button>
+            <button class="btn" onclick="renderAll();toast('房态已刷新(F5)')">刷新(F5)</button>
+          </div>
+        </div>
+        <div class="panel mb0" id="boardContainer"></div>
+      </section>
+
+      <!-- ===== 页面2：入住登记 ===== -->
+      <section class="page" id="page-checkin">
+        <div class="page-bar">
+          <h2>散客入住登记</h2>
+          <div class="filter-bar">
+            <button class="btn" onclick="openReservePick()">从预定转入</button>
+            <button class="btn" onclick="resetCheckinForm(true)">清空(F4)</button>
+            <button class="btn btn-primary" onclick="submitCheckin()">保存入住单(Ctrl+S)</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="form-row-3">
+            <div class="form-item"><label class="form-label">客人姓名<span class="req">*</span></label>
+              <input class="input" id="ciName" placeholder="请输入姓名"><div class="err-msg" id="ciNameErr">请输入客人姓名</div>
+            </div>
+            <div class="form-item"><label class="form-label">手机号<span class="req">*</span></label>
+              <input class="input" id="ciPhone" placeholder="请输入手机号" maxlength="11"><div class="err-msg" id="ciPhoneErr">请输入 11 位手机号</div>
+            </div>
+            <div class="form-item"><label class="form-label">身份证号<span class="req">*</span></label>
+              <input class="input" id="ciId" placeholder="请输入身份证号" maxlength="18"><div class="err-msg" id="ciIdErr">请输入 18 位身份证号</div>
+            </div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-item"><label class="form-label">选择房间<span class="req">*</span></label>
+              <select class="select" id="ciRoom"></select>
+            </div>
+            <div class="form-item"><label class="form-label">入住时间<span class="req">*</span></label>
+              <input class="input" id="ciIn" value="2026-11-25 14:00" onchange="calcCheckin()">
+            </div>
+            <div class="form-item"><label class="form-label">预计退房时间<span class="req">*</span></label>
+              <input class="input" id="ciOut" value="2026-11-26 12:00" onchange="calcCheckin()">
+            </div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-item"><label class="form-label">成交单价（元/晚，可议价）</label>
+              <input class="input" id="ciPrice" type="number" min="0" value="128" onchange="calcCheckin()">
+            </div>
+            <div class="form-item"><label class="form-label">押金（元）</label>
+              <input class="input" id="ciDeposit" type="number" min="0" value="100" onchange="calcCheckin()">
+            </div>
+            <div class="form-item"><label class="form-label">备注</label><input class="input" id="ciNote" placeholder="选填"></div>
+          </div>
+          <div class="form-item"><label class="form-label">同住人登记</label>
+            <div id="ciCompanions"></div>
+            <button class="btn btn-sm" onclick="addCompanion()">＋ 添加同住人</button>
+            <div class="form-tip">支持录入多名同住人，用于公安登记备份。</div>
+          </div>
+          <div class="summary">
+            <div class="item"><div class="k">入住晚数</div><div class="v" id="ciNights">1 晚</div></div>
+            <div class="item"><div class="k">房费</div><div class="v money" id="ciFee">¥128</div></div>
+            <div class="item"><div class="k">押金</div><div class="v" id="ciDepSum">¥100</div></div>
+            <div class="item"><div class="k">应收合计</div><div class="v money" id="ciTotal">¥228</div></div>
+            <div style="margin-left:auto;display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="submitCheckin()">确认开房</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 页面3：预定管理 ===== -->
+      <section class="page" id="page-reserve">
+        <div class="page-bar">
+          <h2>预定管理</h2>
+          <div class="filter-bar">
+            <select class="select" id="resStatusFilter" onchange="renderReservations()">
+              <option value="all">全部状态</option><option>待到店</option><option>已转入住</option><option>已取消</option>
+            </select>
+            <input class="input" id="resKeyword" placeholder="姓名 / 手机号" oninput="renderReservations()">
+            <button class="btn" onclick="renderReservations()">查询</button>
+            <button class="btn" onclick="resetReserveFilter()">重置</button>
+            <button class="btn btn-primary" onclick="openReserveModal()">＋ 新增预定</button>
+          </div>
+        </div>
+        <div class="panel mb0">
+          <table>
+            <thead><tr><th>预定单号</th><th>客人姓名</th><th>联系电话</th><th>预定房间</th><th>到店时间</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="resTbody"></tbody>
+          </table>
+          <div class="pagination"><span id="resCount">共 0 条</span></div>
+        </div>
+      </section>
+
+      <!-- ===== 页面4：在住 & 退房结算 ===== -->
+      <section class="page" id="page-stay">
+        <div class="page-bar">
+          <h2>在住列表</h2>
+          <div class="filter-bar">
+            <input class="input" id="stayKeyword" placeholder="房号 / 姓名 / 手机号" oninput="renderStays()">
+            <button class="btn" onclick="renderStays()">查询</button>
+            <button class="btn" onclick="resetStayFilter()">重置</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:12px">
+          <table>
+            <thead><tr><th>房号</th><th>客人</th><th>手机号</th><th>入住时间</th><th>预计退房</th><th>押金</th><th>已产生费用</th><th>操作</th></tr></thead>
+            <tbody id="stayTbody"></tbody>
+          </table>
+        </div>
+        <div class="form-tip" style="padding:0 4px">💡 退房完成后房间自动变为【待打扫】；支持按天计费与可选加钟；杂费（损坏扣费）在退房结算中录入。</div>
+      </section>
+
+      <!-- ===== 页面5：记录与查询 ===== -->
+      <section class="page" id="page-records">
+        <div class="page-bar">
+          <h2>入住 / 账单记录</h2>
+          <div class="filter-bar">
+            <input class="input" id="recRoom" placeholder="房号" style="width:80px">
+            <input class="input" id="recKeyword" placeholder="姓名 / 手机号">
+            <input class="input" id="recDate" placeholder="日期(如 11-23)" style="width:130px">
+            <button class="btn" onclick="recSearch()">检索</button>
+            <button class="btn" onclick="resetRecordFilter()">重置</button>
+            <button class="btn" onclick="toast('已导出 Excel（原型演示）')">导出 Excel</button>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <span class="tab-item on" data-tab="rec" onclick="switchRecTab('rec')">入住记录</span>
+          <span class="tab-item" data-tab="bill" onclick="switchRecTab('bill')">退房账单</span>
+        </div>
+        <div class="panel mb0" id="recTabRec">
+          <table>
+            <thead><tr><th>入住单号</th><th>房号</th><th>客人</th><th>身份证</th><th>入住 → 退房</th><th>实收房费</th><th>状态</th></tr></thead>
+            <tbody id="recTbody"></tbody>
+          </table>
+          <div class="form-tip" style="border-top:1px dashed var(--border-split);padding-top:8px;margin-top:4px">
+            <span class="front-only">🔑 前台权限：仅可查询本操作员经手的记录；切换到【管理员视图】可查看全部记录。</span> 点击任意一行可查看详情。
+            <span class="admin-only">👑 管理员权限：可查询全部操作员的记录（当前为管理员视图）。</span>
+          </div>
+        </div>
+        <div class="panel mb0" id="recTabBill" style="display:none">
+          <table>
+            <thead><tr><th>结算单号</th><th>房号 / 客人</th><th>房费</th><th>杂费</th><th>押金抵扣</th><th>实收 / 退款</th><th>结算时间</th></tr></thead>
+            <tbody id="billTbody"></tbody>
+          </table>
+          <div class="form-tip" style="border-top:1px dashed var(--border-split);padding-top:8px;margin-top:4px">
+            <span class="front-only">🔑 前台权限：仅可查询本操作员经手的结算账单。</span> 点击任意一行可查看详情。
+            <span class="admin-only">👑 管理员权限：可查询全部操作员的结算账单。</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 页面6：统计报表 ===== -->
+      <section class="page" id="page-report">
+        <div class="stat-strip" id="statStrip"></div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:12px;margin-bottom:12px">
+          <div class="panel" style="margin:0">
+            <div class="panel-title">近 7 日营收（元）<span id="weekSum" style="font-weight:400;font-size:12px;color:var(--text-tertiary)"></span></div>
+            <div class="bar-chart" id="barChart"></div>
+          </div>
+          <div class="panel" style="margin:0">
+            <div class="panel-title">房型经营分析</div>
+            <table style="font-size:12px">
+              <thead><tr><th>房型</th><th>标价</th><th>房态</th><th style="width:44%">近期入住率</th></tr></thead>
+              <tbody id="reportTypeTbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel mb0">
+          <div class="panel-title">时间段营收明细</div>
+          <div class="filter-bar" style="margin-bottom:10px">
+            <input class="input" id="repStart" placeholder="开始日期(如 11-19)" style="width:140px">
+            <span class="muted">至</span>
+            <input class="input" id="repEnd" placeholder="结束日期(如 11-25)" style="width:140px">
+            <button class="btn btn-primary" onclick="queryRevenue()">查询</button>
+            <button class="btn" onclick="quickRange(1)">今日</button>
+            <button class="btn" onclick="quickRange(3)">近 3 日</button>
+            <button class="btn" onclick="quickRange(7)">近 7 日</button>
+            <button class="btn" onclick="quickRange(30)">近 30 日</button>
+            <button class="btn" onclick="toast('报表已导出（原型演示）')">导出报表</button>
+          </div>
+          <div id="reportResult" class="muted" style="font-size:13px;padding:2px 0 6px">选择日期区间查询每日营收明细与汇总（可查近 30 日内任意区间，如 10-28 至 11-25）</div>
+        </div>
+      </section>
+
+      <!-- ===== 页面7：操作日志 ===== -->
+      <section class="page" id="page-logs">
+        <div class="page-bar">
+          <h2>操作日志</h2>
+          <div class="filter-bar">
+            <select class="select" id="logTypeFilter" onchange="renderLogs()">
+              <option value="all">全部操作</option><option>开房</option><option>退房</option><option>预定</option><option>改价</option><option>打扫</option>
+            </select>
+            <input class="input" id="logKeyword" placeholder="操作人 / 房号" oninput="renderLogs()">
+            <button class="btn" onclick="renderLogs()">查询</button>
+          </div>
+        </div>
+        <div class="panel mb0">
+          <table>
+            <thead><tr><th>时间</th><th>操作人</th><th>操作类型</th><th>对象</th><th>详情</th></tr></thead>
+            <tbody id="logTbody"></tbody>
+          </table>
+          <div class="form-tip front-only" style="border-top:1px dashed var(--border-split);padding-top:8px;margin-top:4px">🔑 前台权限：仅记录本人的操作。</div>
+        </div>
+      </section>
+
+      <!-- ===== 页面8：房间管理 ===== -->
+      <section class="page" id="page-rooms">
+        <div class="page-bar">
+          <h2>房间管理</h2>
+          <div class="filter-bar">
+            <select class="select" id="roomFloorFilter" onchange="renderRooms()"></select>
+            <select class="select" id="roomTypeFilter" onchange="renderRooms()"></select>
+            <button class="btn" onclick="renderRooms()">查询</button>
+            <button class="btn btn-primary" onclick="openRoomModal()">＋ 新增房间</button>
+          </div>
+        </div>
+        <div class="panel mb0">
+          <table>
+            <thead><tr><th>房号</th><th>楼层</th><th>房型</th><th>床位数</th><th>标价</th><th>底价</th><th>押金标准</th><th>带窗</th><th>独立卫浴</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="roomTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== 页面9：房型管理 ===== -->
+      <section class="page" id="page-roomtypes">
+        <div class="page-bar">
+          <h2>房型管理</h2>
+          <button class="btn btn-primary" onclick="openTypeModal()">＋ 新增房型</button>
+        </div>
+        <div class="panel mb0">
+          <table>
+            <thead><tr><th>房型名称</th><th>基础定价（元/晚）</th><th>关联房间数</th><th>备注</th><th>操作</th></tr></thead>
+            <tbody id="typeTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== 页面10：操作员账号 ===== -->
+      <section class="page" id="page-accounts">
+        <div class="page-bar">
+          <h2>操作员账号</h2>
+          <div class="filter-bar">
+            <span class="muted">前台：开房退房、登记 ｜ 管理员：增删房间、改价、查全部记录</span>
+            <button class="btn btn-primary" onclick="openAccountModal()">＋ 新增账号</button>
+          </div>
+        </div>
+        <div class="panel mb0">
+          <table>
+            <thead><tr><th>账号</th><th>姓名</th><th>角色</th><th>状态</th><th>最近登录</th><th>操作</th></tr></thead>
+            <tbody id="accTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ============ 底部状态栏 ============ -->
+  <div class="statusbar">
+    <span class="sb-item"><span class="status-dot"></span>系统正常</span>
+    <span class="sb-sep"></span>
+    <span class="sb-item" id="sbUser">操作员：小王（前台）</span>
+    <span class="sb-sep"></span>
+    <span class="sb-item" id="sbCounts">在住 0 ｜ 待打扫 0 ｜ 今日待到店预定 0</span>
+    <div class="right">
+      <span class="sb-item">本地模式 · 数据库已连接</span>
+      <span class="sb-sep"></span>
+      <span class="sb-item">v1.0.0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：快速开房 ============ -->
+<div class="modal-mask" id="modalCheckin" onclick="maskClick(event,this)">
+  <div class="modal">
+    <div class="modal-header">快速开房<span class="modal-close" onclick="closeModal('modalCheckin')">✕</span></div>
+    <div class="modal-body">
+      <div class="form-tip" style="margin-bottom:12px">目标房间：<b id="quickRoom" style="color:var(--primary)">—</b></div>
+      <div class="form-row">
+        <div class="form-item"><label class="form-label">客人姓名<span class="req">*</span></label>
+          <input class="input" id="qName" placeholder="请输入姓名"><div class="err-msg" id="qNameErr">请输入客人姓名</div>
+        </div>
+        <div class="form-item"><label class="form-label">手机号<span class="req">*</span></label>
+          <input class="input" id="qPhone" placeholder="请输入手机号" maxlength="11"><div class="err-msg" id="qPhoneErr">请输入 11 位手机号</div>
+        </div>
+      </div>
+      <div class="form-item"><label class="form-label">身份证号<span class="req">*</span></label>
+        <input class="input" id="qId" placeholder="请输入身份证号" maxlength="18"><div class="err-msg" id="qIdErr">请输入 18 位身份证号</div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label class="form-label">入住时间</label><input class="input" id="qIn" value="2026-11-25 14:00"></div>
+        <div class="form-item"><label class="form-label">预计退房时间</label><input class="input" id="qOut" value="2026-11-26 12:00"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalCheckin')">取消(Esc)</button>
+      <button class="btn btn-primary" onclick="submitQuickCheckin()">生成入住单(Ctrl+Enter)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：新增/编辑预定 ============ -->
+<div class="modal-mask" id="modalReserve" onclick="maskClick(event,this)">
+  <div class="modal">
+    <div class="modal-header" id="resModalTitle">新增预定<span class="modal-close" onclick="closeModal('modalReserve')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="resEditId">
+      <div class="form-row">
+        <div class="form-item"><label class="form-label">客人姓名<span class="req">*</span></label>
+          <input class="input" id="resName" placeholder="请输入姓名"><div class="err-msg" id="resNameErr">请输入客人姓名</div>
+        </div>
+        <div class="form-item"><label class="form-label">联系电话<span class="req">*</span></label>
+          <input class="input" id="resPhone" placeholder="请输入手机号" maxlength="11"><div class="err-msg" id="resPhoneErr">请输入 11 位手机号</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label class="form-label">预定房间<span class="req">*</span></label>
+          <select class="select" id="resRoom"></select>
+        </div>
+        <div class="form-item"><label class="form-label">到店时间<span class="req">*</span></label>
+          <input class="input" id="resArrive" placeholder="如 2026-11-26 14:00"><div class="err-msg" id="resArriveErr">请输入到店时间</div>
+        </div>
+      </div>
+      <div class="form-item"><label class="form-label">备注</label><textarea class="input" id="resNote" rows="2" placeholder="选填"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalReserve')">取消(Esc)</button>
+      <button class="btn btn-primary" onclick="submitReserve()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：预定转入住 ============ -->
+<div class="modal-mask" id="modalResPick" onclick="maskClick(event,this)">
+  <div class="modal">
+    <div class="modal-header">从预定转入入住<span class="modal-close" onclick="closeModal('modalResPick')">✕</span></div>
+    <div class="modal-body">
+      <table>
+        <thead><tr><th>预定单</th><th>客人</th><th>房间</th><th>到店时间</th><th>操作</th></tr></thead>
+        <tbody id="resPickTbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalResPick')">关闭</button></div>
+  </div>
+</div>
+
+<!-- ============ 对话框：退房结算 ============ -->
+<div class="modal-mask" id="modalCheckout" onclick="maskClick(event,this)">
+  <div class="modal modal-lg">
+    <div class="modal-header">退房结算<span class="modal-close" onclick="closeModal('modalCheckout')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="coRoomNo">
+      <div class="form-row-3">
+        <div class="form-item"><label class="form-label">房号 / 客人</label><input class="input" id="coRoomGuest" readonly style="background:var(--bg-panel)"></div>
+        <div class="form-item"><label class="form-label">实际退房时间<span class="req">*</span></label>
+          <input class="input" id="coTime" value="2026-11-25 12:00" onchange="calcCheckout()">
+        </div>
+        <div class="form-item"><label class="form-label">计费方式</label>
+          <div class="radio-group" id="coMode"><span class="on">按天</span><span>加钟</span></div>
+        </div>
+      </div>
+      <div class="summary" style="margin-bottom:14px">
+        <div class="item"><div class="k">房费</div><div class="v money" id="coFee">¥0</div></div>
+        <div class="item"><div class="k">追加消费</div><div class="v money" id="coExtra">¥0</div></div>
+        <div class="item"><div class="k">损坏扣费 / 杂费</div><input class="input" id="coDamage" type="number" min="0" value="0" style="width:90px" onchange="calcCheckout()"></div>
+        <div class="item"><div class="k">押金</div><div class="v" id="coDeposit">¥0</div></div>
+        <div class="item"><div class="k">应补收 / 退款</div><div class="v money" id="coPay">¥0</div></div>
+      </div>
+      <div class="form-tip" id="coFeeNote" style="margin-bottom:8px"></div>
+      <div id="coExtraDetail" style="border:1px solid var(--border-split);border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:12px"></div>
+      <div class="form-item"><label class="form-label">备注（物品损坏、其他消费说明）</label><textarea class="input" id="coNote" rows="2" placeholder="选填"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalCheckout')">取消(Esc)</button>
+      <button class="btn btn-primary" onclick="submitCheckout()">确认退房</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：追加消费 ============ -->
+<div class="modal-mask" id="modalExtra" onclick="maskClick(event,this)">
+  <div class="modal">
+    <div class="modal-header">追加消费<span class="modal-close" onclick="closeModal('modalExtra')">✕</span></div>
+    <div class="modal-body">
+      <div class="form-tip" style="margin-bottom:12px">在住房间：<b id="exRoom" style="color:var(--primary)">—</b></div>
+      <input type="hidden" id="exRoomNo">
+      <div class="form-row">
+        <div class="form-item"><label class="form-label">消费项目<span class="req">*</span></label>
+          <input class="input" id="exItem" placeholder="如 矿泉水、泡面"><div class="err-msg" id="exItemErr">请输入消费项目</div>
+        </div>
+        <div class="form-item"><label class="form-label">金额（元）<span class="req">*</span></label>
+          <input class="input" id="exAmount" type="number" min="0.5" placeholder="0.00"><div class="err-msg" id="exAmountErr">请输入大于 0 的金额</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalExtra')">取消</button>
+      <button class="btn btn-primary" onclick="submitExtra()">入账</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：新增/编辑房间 ============ -->
+<div class="modal-mask" id="modalRoom" onclick="maskClick(event,this)">
+  <div class="modal">
+    <div class="modal-header" id="roomModalTitle">新增房间<span class="modal-close" onclick="closeModal('modalRoom')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="roomEditNo">
+      <div class="form-row-3">
+        <div class="form-item"><label class="form-label">房号<span class="req">*</span></label>
+          <input class="input" id="rmNo" placeholder="如 301"><div class="err-msg" id="rmNoErr">房号必填且不能重复</div>
+        </div>
+        <div class="form-item"><label class="form-label">楼层<span class="req">*</span></label>
+          <input class="input" id="rmFloor" type="number" min="1" value="1"><div class="err-msg" id="rmFloorErr">请输入楼层</div>
+        </div>
+        <div class="form-item"><label class="form-label">房型<span class="req">*</span></label>
+          <select class="select" id="rmType"></select>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-item"><label class="form-label">床位数</label><input class="input" id="rmBeds" type="number" min="1" value="2"></div>
+        <div class="form-item"><label class="form-label">标价（元/晚）<span class="req">*</span></label>
+          <input class="input" id="rmPrice" type="number" min="0"><div class="err-msg" id="rmPriceErr">请输入标价</div>
+        </div>
+        <div class="form-item"><label class="form-label">底价（元/晚）</label><input class="input" id="rmMin" type="number" min="0" placeholder="议价下限"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label class="form-label">押金标准</label><input class="input" id="rmDeposit" type="number" min="0" value="100"></div>
+        <div class="form-item"><label class="form-label">初始状态</label>
+          <select class="select" id="rmStatus"><option>空闲</option><option>维修</option><option>停用</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label class="form-label">是否带窗</label>
+          <div class="radio-group" id="rmWindow"><span class="on" data-v="1">是</span><span data-v="0">否</span></div>
+        </div>
+        <div class="form-item"><label class="form-label">独立卫浴</label>
+          <div class="radio-group" id="rmBath"><span class="on" data-v="1">是</span><span data-v="0">否</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalRoom')">取消(Esc)</button>
+      <button class="btn btn-primary" onclick="submitRoom()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：新增/编辑房型 ============ -->
+<div class="modal-mask" id="modalType" onclick="maskClick(event,this)">
+  <div class="modal" style="width:420px">
+    <div class="modal-header" id="typeModalTitle">新增房型<span class="modal-close" onclick="closeModal('modalType')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="typeEditId">
+      <div class="form-item"><label class="form-label">房型名称<span class="req">*</span></label>
+        <input class="input" id="tpName" placeholder="如 景观大床房"><div class="err-msg" id="tpNameErr">请输入房型名称</div>
+      </div>
+      <div class="form-item"><label class="form-label">基础定价（元/晚）<span class="req">*</span></label>
+        <input class="input" id="tpPrice" type="number" min="0"><div class="err-msg" id="tpPriceErr">请输入基础定价</div>
+      </div>
+      <div class="form-item"><label class="form-label">备注</label><textarea class="input" id="tpNote" rows="2" placeholder="选填"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalType')">取消</button>
+      <button class="btn btn-primary" onclick="submitType()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：新增/编辑账号 ============ -->
+<div class="modal-mask" id="modalAccount" onclick="maskClick(event,this)">
+  <div class="modal" style="width:420px">
+    <div class="modal-header" id="accModalTitle">新增账号<span class="modal-close" onclick="closeModal('modalAccount')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="accEditId">
+      <div class="form-item"><label class="form-label">账号名<span class="req">*</span></label>
+        <input class="input" id="acName" placeholder="登录账号"><div class="err-msg" id="acNameErr">请输入账号名</div>
+      </div>
+      <div class="form-item"><label class="form-label">姓名<span class="req">*</span></label>
+        <input class="input" id="acReal" placeholder="操作员姓名"><div class="err-msg" id="acRealErr">请输入姓名</div>
+      </div>
+      <div class="form-item"><label class="form-label">角色</label>
+        <select class="select" id="acRole"><option>前台</option><option>管理员</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalAccount')">取消</button>
+      <button class="btn btn-primary" onclick="submitAccount()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：修改密码 ============ -->
+<div class="modal-mask" id="modalPwd" onclick="maskClick(event,this)">
+  <div class="modal" style="width:400px">
+    <div class="modal-header">修改密码<span class="modal-close" onclick="closeModal('modalPwd')">✕</span></div>
+    <div class="modal-body">
+      <div class="form-item"><label class="form-label">原密码<span class="req">*</span></label>
+        <input class="input" id="pwOld" type="password"><div class="err-msg" id="pwOldErr">原密码不正确</div>
+      </div>
+      <div class="form-item"><label class="form-label">新密码（至少 6 位）<span class="req">*</span></label>
+        <input class="input" id="pwNew" type="password"><div class="err-msg" id="pwNewErr">新密码至少 6 位</div>
+      </div>
+      <div class="form-item"><label class="form-label">确认新密码<span class="req">*</span></label>
+        <input class="input" id="pwNew2" type="password"><div class="err-msg" id="pwNew2Err">两次输入的密码不一致</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalPwd')">取消</button>
+      <button class="btn btn-primary" onclick="submitPwd()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：预定详情（看板预定房） ============ -->
+<div class="modal-mask" id="modalRoomRes" onclick="maskClick(event,this)">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">预定详情<span class="modal-close" onclick="closeModal('modalRoomRes')">✕</span></div>
+    <div class="modal-body">
+      <input type="hidden" id="rrResId">
+      <div class="summary" style="display:block">
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span class="muted">预定单号</span><span class="text-strong" id="rrId">—</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span class="muted">客人</span><span id="rrName">—</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span class="muted">联系电话</span><span id="rrPhone">—</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span class="muted">预定房间</span><span id="rrRoom">—</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span class="muted">到店时间</span><span id="rrArrive">—</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalRoomRes')">关闭</button>
+      <button class="btn btn-danger" onclick="cancelReserve($('rrResId').value);closeModal('modalRoomRes')">取消预定</button>
+      <button class="btn btn-primary" onclick="resToCheckin($('rrResId').value);closeModal('modalRoomRes')">办理入住</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：入住记录详情 ============ -->
+<div class="modal-mask" id="modalRecDetail" onclick="maskClick(event,this)">
+  <div class="modal" style="width:500px">
+    <div class="modal-header">入住单<span class="modal-close" onclick="closeModal('modalRecDetail')">✕</span></div>
+    <div class="modal-body" id="recDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalRecDetail')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 对话框：退房账单详情 ============ -->
+<div class="modal-mask" id="modalBillDetail" onclick="maskClick(event,this)">
+  <div class="modal" style="width:500px">
+    <div class="modal-header">结算账单<span class="modal-close" onclick="closeModal('modalBillDetail')">✕</span></div>
+    <div class="modal-body" id="billDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modalBillDetail')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 轻提示 -->
+<div id="toast" style="position:absolute;top:60px;left:50%;transform:translateX(-50%);background:#fff;padding:9px 18px;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.2);display:none;z-index:200;font-size:13px;color:var(--success);border:1px solid #b7eb8f"></div>
+
+<script>
+/* =====================================================
+   状态数据模型（原型内存数据）
+===================================================== */
+let clockMin = 20;
+function nowStr() { clockMin += 1; return '11-25 ' + ('0' + Math.floor(clockMin / 60) % 24).slice(-2) + ':' + ('0' + clockMin % 60).slice(-2); }
+
+const state = {
+  role: 'front',
+  currentUser: '小王（前台）',
+  todayCheckins: 6,
+  todayCheckouts: 4,
+  todayRevenue: 2320,
+  weekRevenue: [],
+  monthRevenue: 39820,
+  roomTypes: [
+    { id: 1, name: '单人间', price: 128, note: '小面积，适合独行客人' },
+    { id: 2, name: '双人间', price: 168, note: '标准双床' },
+    { id: 3, name: '大床房', price: 198, note: '1.8m 大床，情侣/夫妻偏好' }
+  ],
+  rooms: [
+    { no:'101', floor:1, type:'单人间', beds:1, price:128, minPrice:100, deposit:100, win:true, bath:true, status:'空闲' },
+    { no:'102', floor:1, type:'双人间', beds:2, price:168, minPrice:130, deposit:200, win:true, bath:true, status:'已入住' },
+    { no:'103', floor:1, type:'大床房', beds:2, price:198, minPrice:160, deposit:200, win:true, bath:true, status:'已入住' },
+    { no:'104', floor:1, type:'单人间', beds:1, price:128, minPrice:100, deposit:100, win:true, bath:true, status:'打扫中' },
+    { no:'105', floor:1, type:'双人间', beds:2, price:168, minPrice:130, deposit:200, win:false, bath:true, status:'预定' },
+    { no:'106', floor:1, type:'双人间', beds:2, price:168, minPrice:130, deposit:200, win:false, bath:true, status:'维修' },
+    { no:'201', floor:2, type:'大床房', beds:2, price:198, minPrice:160, deposit:300, win:true, bath:true, status:'已入住' },
+    { no:'202', floor:2, type:'大床房', beds:2, price:198, minPrice:160, deposit:200, win:true, bath:true, status:'已入住' },
+    { no:'203', floor:2, type:'双人间', beds:2, price:168, minPrice:130, deposit:200, win:true, bath:true, status:'空闲' },
+    { no:'204', floor:2, type:'单人间', beds:1, price:128, minPrice:100, deposit:100, win:true, bath:false, status:'空闲' },
+    { no:'205', floor:2, type:'双人间', beds:2, price:168, minPrice:130, deposit:200, win:true, bath:true, status:'空闲' },
+    { no:'206', floor:2, type:'大床房', beds:2, price:198, minPrice:160, deposit:300, win:true, bath:true, status:'预定' },
+    { no:'207', floor:2, type:'大床房', beds:2, price:198, minPrice:160, deposit:300, win:true, bath:true, status:'打扫中' },
+    { no:'208', floor:2, type:'单人间', beds:1, price:128, minPrice:100, deposit:100, win:false, bath:false, status:'停用' }
+  ],
+  reservations: [
+    { id:'R20261125001', name:'王芳', phone:'13900005678', room:'105', arrive:'2026-11-25 18:00', status:'待到店', note:'' },
+    { id:'R20261125002', name:'孙敏', phone:'13700009012', room:'206', arrive:'2026-11-26 14:00', status:'待到店', note:'' }
+  ],
+  stays: {
+    '102': { guest:'张伟', phone:'13800001234', idcard:'330101199001120012', checkin:'2026-11-24 14:00', planOut:'2026-11-27 12:00', price:168, deposit:200, extras:[{item:'矿泉水', amount:4}], companions:[], op:'小王（前台）', note:'' },
+    '103': { guest:'李娜', phone:'15900002233', idcard:'330101199203280078', checkin:'2026-11-23 16:00', planOut:'2026-11-25 12:00', price:198, deposit:200, extras:[], companions:[], op:'小王（前台）', note:'' },
+    '201': { guest:'刘洋', phone:'13600004455', idcard:'330101198805040034', checkin:'2026-11-25 13:30', planOut:'2026-11-28 12:00', price:198, deposit:300, extras:[], companions:[], op:'小王（前台）', note:'' },
+    '202': { guest:'陈静', phone:'13500006677', idcard:'330101199511090056', checkin:'2026-11-22 15:00', planOut:'2026-11-25 12:00', price:198, deposit:200, extras:[{item:'泡面', amount:6}], companions:[], op:'小李（前台）', note:'' }
+  },
+  records: [
+    { id:'I20261125002', room:'202', guest:'陈静', phone:'13500006677', idcard:'330101199511090056', ci:'11-22', co:'11-25', fee:594, status:'在住', op:'小李（前台）' },
+    { id:'I20261125001', room:'201', guest:'刘洋', phone:'13600004455', idcard:'330101198805040034', ci:'11-25', co:'11-28', fee:594, status:'在住', op:'小王（前台）' },
+    { id:'I20261124001', room:'103', guest:'李娜', phone:'15900002233', idcard:'330101199203280078', ci:'11-23', co:'11-25', fee:396, status:'在住', op:'小王（前台）' },
+    { id:'I20261124002', room:'102', guest:'张伟', phone:'13800001234', idcard:'330101199001120012', ci:'11-24', co:'11-27', fee:504, status:'在住', op:'小王（前台）' },
+    { id:'I20261123001', room:'204', guest:'周杰', phone:'13612348765', idcard:'330101199008170090', ci:'11-22', co:'11-23', fee:128, status:'已退房', op:'小王（前台）' }
+  ],
+  bills: [
+    { id:'S20261123002', room:'204', guest:'周杰', fee:128, extra:0, extras:[], damage:0, deposit:'¥100 → 抵扣', depNum:100, total:128, diff:28, time:'11-23 12:10', op:'小王（前台）', note:'' }
+  ],
+  logs: [
+    { time:'11-25 14:12', user:'小王（前台）', type:'开房', target:'201 · 大床房', detail:'刘洋 入住，议价 ¥198，押金 ¥300' },
+    { time:'11-25 11:42', user:'小王（前台）', type:'打扫', target:'104', detail:'保洁完成，房间改为空闲' },
+    { time:'11-25 10:05', user:'小王（前台）', type:'预定', target:'206 · 大床房', detail:'孙敏 预定 11-26 到店' },
+    { time:'11-25 09:30', user:'老陈（管理员）', type:'改价', target:'房型·大床房', detail:'基础定价 ¥188 → ¥198' },
+    { time:'11-24 22:18', user:'小李（前台）', type:'打扫', target:'207', detail:'保洁完成，房间改为空闲' }
+  ],
+  accounts: [
+    { id:1, username:'admin', real:'老陈', role:'管理员', status:'启用', last:'11-25 09:28', password:'123456' },
+    { id:2, username:'front01', real:'小王', role:'前台', status:'启用', last:'11-25 08:00', password:'123456' },
+    { id:3, username:'front02', real:'小李', role:'前台', status:'停用', last:'11-24 22:30', password:'123456' }
+  ],
+  seq: { I: 3, S: 2, res: 3 }
+};
+
+const STATUS_CLASS = { '空闲':'room-free','已入住':'room-occupied','预定':'room-reserved','打扫中':'room-cleaning','维修':'room-repair','停用':'room-stopped' };
+const STATUS_TAG = { '空闲':'tag-free','已入住':'tag-occupied','预定':'tag-reserved','打扫中':'tag-cleaning','维修':'tag-repair','停用':'tag-stopped' };
+const STATUS_COLOR = { '空闲':'#52c41a','已入住':'#1677ff','预定':'#722ed1','打扫中':'#13c2c2','维修':'#faad14','停用':'#bfbfbf' };
+
+/* =====================================================
+   工具函数
+===================================================== */
+const $ = id => document.getElementById(id);
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = '✔ ' + msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.display = 'none', 2200);
+}
+function openModal(id) { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
+function maskClick(e, mask) { if (e.target === mask) mask.classList.remove('open'); }
+function room(no) { return state.rooms.find(r => r.no === no); }
+function freeRooms() { return state.rooms.filter(r => r.status === '空闲'); }
+function money(n) { return '¥' + (Math.round(n * 100) / 100); }
+function nextDay(dateStr) {
+  const d = new Date(dateStr.replace(' ', 'T'));
+  d.setDate(d.getDate() + 1);
+  const p = n => ('0' + n).slice(-2);
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function nightsBetween(ci, co) {
+  const a = new Date(ci.replace(' ', 'T')), b = new Date(co.replace(' ', 'T'));
+  if (isNaN(a) || isNaN(b) || b <= a) return 0;
+  return Math.max(1, Math.ceil((b - a) / 86400000));
+}
+function markError(inputId, errId, bad) {
+  $(inputId).classList.toggle('error', bad);
+  if (errId) $(errId).style.display = bad ? 'block' : 'none';
+  return bad;
+}
+function clearErrors(ids) { ids.forEach(p => { const i = $(p); if (i) i.classList.remove('error'); }); }
+function log(type, target, detail) {
+  state.logs.unshift({ time: nowStr(), user: state.currentUser, type, target, detail });
+  renderLogs();
+}
+
+/* =====================================================
+   页面切换
+===================================================== */
+const titles = { dashboard:'房态看板', checkin:'入住登记', reserve:'预定管理', stay:'在住/退房结算', records:'记录与查询', report:'统计报表', logs:'操作日志', rooms:'房间管理', roomtypes:'房型管理', accounts:'操作员账号' };
+function gotoPage(page) {
+  document.querySelectorAll('.nav-item').forEach(m => m.classList.remove('active'));
+  const item = document.querySelector('.nav-item[data-page="' + page + '"]');
+  if (item) item.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  $('page-' + page).classList.add('active');
+  $('winTitle').textContent = '云栖民宿管理系统 v1.0　—　[' + (titles[page] || '') + ']';
+}
+$('menu').addEventListener('click', e => {
+  const item = e.target.closest('.nav-item');
+  if (!item) return;
+  gotoPage(item.dataset.page);
+});
+function closeMenus() { document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open')); }
+$('menubar').addEventListener('click', e => {
+  const mi = e.target.closest('.mi');
+  if (!mi) return;
+  const dd = mi.parentElement.querySelector('.dropdown');
+  const wasOpen = dd.classList.contains('open');
+  closeMenus();
+  if (!wasOpen) dd.classList.add('open');
+});
+document.addEventListener('click', e => {
+  const di = e.target.closest('.dropdown .di');
+  if (di) {
+    closeMenus();
+    if (di.dataset.nav) gotoPage(di.dataset.nav);
+    else if (di.dataset.act === 'pwd') openPwdModal();
+    else if (di.dataset.act === 'logout') logout();
+    else if (di.dataset.act === 'keys') toast('快捷键：F2 快速开房 · F5 刷新 · F4 清空 · Ctrl+S 保存 · Esc 关闭对话框');
+    else if (di.dataset.act === 'about') toast('民宿管理系统 v1.0（HTML 原型演示）');
+    return;
+  }
+  if (!e.target.closest('.mi-wrap')) closeMenus();
+});
+
+/* =====================================================
+   房态看板
+===================================================== */
+function statusCounts() {
+  const c = { '空闲':0,'已入住':0,'预定':0,'打扫中':0,'维修':0,'停用':0 };
+  state.rooms.forEach(r => c[r.status]++);
+  return c;
+}
+function renderLegend() {
+  const c = statusCounts();
+  $('legend').innerHTML = Object.keys(c).map(s =>
+    '<span><span class="dot" style="background:' + STATUS_COLOR[s] + '"></span>' + s + ' ' + c[s] + '</span>').join('');
+}
+function resGuestOf(roomNo) {
+  const res = state.reservations.find(x => x.room === roomNo && x.status === '待到店');
+  return res ? res.name + ' · ' + res.arrive.slice(5, 10) + ' 到店' : '';
+}
+function renderBoard() {
+  renderLegend();
+  const floor = $('dashFloor').value, type = $('dashType').value;
+  const floors = [...new Set(state.rooms.map(r => r.floor))].sort();
+  let html = '';
+  floors.forEach(f => {
+    if (floor !== 'all' && String(f) !== floor) return;
+    const rooms = state.rooms.filter(r => r.floor === f && (type === 'all' || r.type === type));
+    if (!rooms.length) return;
+    html += '<div class="floor-block"><div class="floor-name">' + f + ' 楼</div><div class="room-grid">';
+    rooms.forEach(r => {
+      const st = state.stays[r.no];
+      const guest = st ? st.guest + ' · 至' + st.planOut.slice(5, 10) : (r.status === '预定' ? resGuestOf(r.no) : '');
+      html += '<div class="room-card ' + STATUS_CLASS[r.status] + '" onclick="onRoomClick(\'' + r.no + '\')">' +
+        '<div class="room-no">' + r.no + '</div><div class="room-type">' + r.type + ' · ' + money(r.price) + '</div>' +
+        '<div class="room-status">● ' + r.status + '</div>' + (guest ? '<div class="room-guest">' + guest + '</div>' : '') + '</div>';
+    });
+    html += '</div></div>';
+  });
+  if (!html) html = '<div style="text-align:center;color:var(--text-tertiary);padding:30px 0">当前筛选条件下没有房间</div>';
+  $('boardContainer').innerHTML = html +
+    '<div class="form-tip" style="margin-top:10px">提示：单击空闲房间快速开房；单击在住房间进入退房结算；单击打扫中房间标记为空闲；维修中房间可标记完成。</div>';
+}
+function onRoomClick(no) {
+  const r = room(no);
+  if (r.status === '空闲') { openQuick(r); }
+  else if (r.status === '已入住') { openCheckout(r.no); }
+  else if (r.status === '预定') { openRoomRes(no); }
+  else if (r.status === '打扫中') {
+    if (confirm('房间 ' + no + ' 保洁完成，标记为【空闲】吗？')) {
+      r.status = '空闲'; log('打扫', no, '保洁完成，房间改为空闲'); renderAll(); toast('房间 ' + no + ' 已标记为空闲');
+    }
+  }
+  else if (r.status === '维修') {
+    if (confirm('房间 ' + no + ' 维修完成，恢复为【空闲】吗？')) {
+      r.status = '空闲'; log('打扫', no, '维修完成，房间恢复空闲'); renderAll(); toast('房间 ' + no + ' 已恢复空闲');
+    }
+  }
+  else { toast('房间 ' + no + ' 已停用，请在【房间管理】中启用'); }
+}
+
+function openRoomRes(no) {
+  const res = state.reservations.find(x => x.room === no && x.status === '待到店');
+  if (!res) { toast('该房间没有待到店的预定'); return; }
+  $('rrResId').value = res.id;
+  $('rrId').textContent = res.id;
+  $('rrName').textContent = res.name;
+  $('rrPhone').textContent = res.phone;
+  $('rrRoom').textContent = res.room + ' · ' + (room(res.room) ? room(res.room).type : '');
+  $('rrArrive').textContent = res.arrive;
+  openModal('modalRoomRes');
+}
+
+/* =====================================================
+   入住登记
+===================================================== */
+function refreshCheckinRoomOptions() {
+  const sel = $('ciRoom');
+  const cur = sel.value;
+  sel.innerHTML = freeRooms().map(r => '<option value="' + r.no + '">' + r.no + ' · ' + r.type + '（空闲）' + money(r.price) + '</option>').join('') || '<option value="">（暂无空闲房间）</option>';
+  if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+  calcCheckin();
+}
+$('ciRoom').addEventListener('change', () => {
+  const r = room($('ciRoom').value);
+  if (r) { $('ciPrice').value = r.price; $('ciDeposit').value = r.deposit; }
+  calcCheckin();
+});
+function calcCheckin() {
+  const n = nightsBetween($('ciIn').value, $('ciOut').value);
+  const fee = n * (Number($('ciPrice').value) || 0);
+  const dep = Number($('ciDeposit').value) || 0;
+  $('ciNights').textContent = n + ' 晚';
+  $('ciFee').textContent = money(fee);
+  $('ciDepSum').textContent = money(dep);
+  $('ciTotal').textContent = money(fee + dep);
+}
+function addCompanion(name, id) {
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;max-width:560px';
+  div.innerHTML = '<input class="input" placeholder="同住人姓名" style="width:160px" value="' + (name || '') + '">' +
+    '<input class="input" placeholder="身份证号" style="flex:1" maxlength="18" value="' + (id || '') + '">' +
+    '<button class="btn btn-sm btn-danger">删除</button>';
+  div.querySelector('button').onclick = () => div.remove();
+  $('ciCompanions').appendChild(div);
+}
+function companionsFromForm() {
+  return [...$('ciCompanions').children].map(div => ({
+    name: div.children[0].value.trim(), id: div.children[1].value.trim()
+  })).filter(c => c.name);
+}
+function collectCheckin() {
+  const name = $('ciName').value.trim(), phone = $('ciPhone').value.trim(), id = $('ciId').value.trim();
+  const roomNo = $('ciRoom').value;
+  let bad = false;
+  bad = markError('ciName', 'ciNameErr', !name) || bad;
+  bad = markError('ciPhone', 'ciPhoneErr', !/^\d{11}$/.test(phone)) || bad;
+  bad = markError('ciId', 'ciIdErr', !/^\d{17}[\dXx]$/.test(id)) || bad;
+  if (bad) { toast('请先修正表单中标红的必填项'); return null; }
+  if (!roomNo) { toast('暂无空闲房间，无法办理入住'); return null; }
+  const n = nightsBetween($('ciIn').value, $('ciOut').value);
+  if (!n) { toast('预计退房时间必须晚于入住时间'); return null; }
+  const price = Number($('ciPrice').value) || 0;
+  const minP = room(roomNo) ? room(roomNo).minPrice : 0;
+  if (minP && price && price < minP && !confirm('成交单价 ' + money(price) + ' 低于该房间底价 ' + money(minP) + '，确认按议价继续吗？')) return null;
+  return {
+    roomNo, name, phone, id,
+    ci: $('ciIn').value, co: $('ciOut').value,
+    price, deposit: Number($('ciDeposit').value) || 0,
+    note: $('ciNote').value.trim(), companions: companionsFromForm(), nights: n
+  };
+}
+function createStay(d, resId) {
+  const r = room(d.roomNo);
+  const stayId = 'I20261125' + ('0' + (state.seq.I++)).slice(-2);
+  state.stays[d.roomNo] = {
+    guest: d.name, phone: d.phone, idcard: d.id, checkin: d.ci, planOut: d.co,
+    price: d.price, deposit: d.deposit, extras: [], companions: d.companions,
+    op: state.currentUser, note: d.note
+  };
+  r.status = '已入住';
+  state.records.unshift({ id: stayId, room: d.roomNo, guest: d.name, phone: d.phone, idcard: d.id, ci: d.ci.slice(5, 10), co: d.co.slice(5, 10), fee: d.price * d.nights, status: '在住', op: state.currentUser });
+  state.todayCheckins++;
+  log('开房', d.roomNo + ' · ' + r.type, d.name + ' 入住，' + (d.price !== r.price ? '议价 ' : '') + money(d.price) + '/晚，押金 ' + money(d.deposit));
+  if (resId) {
+    const res = state.reservations.find(x => x.id === resId);
+    if (res) res.status = '已转入住';
+    log('预定', d.roomNo, '预定客人 ' + d.name + ' 到店，转入住');
+  }
+  renderAll();
+  return stayId;
+}
+function submitCheckin() {
+  const d = collectCheckin();
+  if (!d) return;
+  const resId = $('ciIn').dataset.resId || null;
+  const stayId = createStay(d, resId);
+  resetCheckinForm(false);
+  toast('入住单 ' + stayId + ' 已生成，房间 ' + d.roomNo + ' 状态改为【已入住】');
+}
+function resetCheckinForm(showTip) {
+  ['ciName','ciPhone','ciId','ciNote'].forEach(id => $(id).value = '');
+  $('ciIn').value = '2026-11-25 14:00'; $('ciOut').value = '2026-11-26 12:00';
+  $('ciIn').dataset.resId = '';
+  $('ciCompanions').innerHTML = '';
+  clearErrors(['ciName','ciPhone','ciId']);
+  refreshCheckinRoomOptions();
+  const r = room($('ciRoom').value);
+  if (r) { $('ciPrice').value = r.price; $('ciDeposit').value = r.deposit; }
+  calcCheckin();
+  if (showTip) toast('表单已清空');
+}
+function openQuick(r) {
+  $('modalCheckin').dataset.roomNo = r.no;
+  $('quickRoom').textContent = r.no + ' · ' + r.type + ' · ' + money(r.price) + '/晚';
+  ['qName','qPhone','qId'].forEach(id => $(id).value = '');
+  clearErrors(['qName','qPhone','qId']);
+  openModal('modalCheckin');
+  $('qName').focus();
+}
+function submitQuickCheckin() {
+  const name = $('qName').value.trim(), phone = $('qPhone').value.trim(), id = $('qId').value.trim();
+  const roomNo = $('modalCheckin').dataset.roomNo;
+  let bad = false;
+  bad = markError('qName', 'qNameErr', !name) || bad;
+  bad = markError('qPhone', 'qPhoneErr', !/^\d{11}$/.test(phone)) || bad;
+  bad = markError('qId', 'qIdErr', !/^\d{17}[\dXx]$/.test(id)) || bad;
+  if (bad) return;
+  const r = room(roomNo);
+  createStay({ roomNo, name, phone, id, ci: $('qIn').value, co: $('qOut').value, price: r.price, deposit: r.deposit, note: '', companions: [], nights: nightsBetween($('qIn').value, $('qOut').value) || 1 });
+  closeModal('modalCheckin');
+  toast('入住单已生成，房间 ' + roomNo + ' 状态改为【已入住】');
+}
+
+/* =====================================================
+   预定管理
+===================================================== */
+function renderReservations() {
+  const st = $('resStatusFilter').value;
+  const kw = $('resKeyword').value.trim();
+  const list = state.reservations.filter(r =>
+    (st === 'all' || r.status === st) && (!kw || r.name.includes(kw) || r.phone.includes(kw)));
+  $('resTbody').innerHTML = list.length ? list.map(r => {
+    const ops = r.status === '待到店'
+      ? '<button class="btn-link" onclick="resToCheckin(\'' + r.id + '\')">转入住</button><button class="btn-link" onclick="editReserve(\'' + r.id + '\')">编辑</button><button class="btn-link danger" onclick="cancelReserve(\'' + r.id + '\')">取消</button>'
+      : r.status === '已转入住' ? '<span class="muted">已完成</span>' : '<span class="muted">—</span>';
+    return '<tr><td>' + r.id + '</td><td class="text-strong">' + r.name + '</td><td>' + r.phone + '</td><td>' + r.room + ' · ' + (room(r.room) ? room(r.room).type : '') + '</td><td>' + r.arrive + '</td>' +
+      '<td><span class="tag ' + (r.status === '待到店' ? 'tag-reserved' : r.status === '已转入住' ? 'tag-occupied' : 'tag-stopped') + '">' + r.status + '</span></td>' +
+      '<td>' + ops + '</td></tr>';
+  }).join('') : '<tr class="empty-row"><td colspan="7">暂无符合条件的预定记录</td></tr>';
+  $('resCount').textContent = '共 ' + list.length + ' 条';
+  const pending = state.reservations.filter(r => r.status === '待到店').length;
+  $('badgeReserve').textContent = pending;
+  $('badgeReserve').style.display = pending ? '' : 'none';
+}
+function resetReserveFilter() { $('resStatusFilter').value = 'all'; $('resKeyword').value = ''; renderReservations(); toast('筛选已重置'); }
+function refreshReserveRoomOptions(selected) {
+  $('resRoom').innerHTML = state.rooms.filter(r => ['空闲','预定'].includes(r.status))
+    .map(r => '<option value="' + r.no + '">' + r.no + ' · ' + r.type + '（' + r.status + '）</option>').join('');
+  if (selected) $('resRoom').value = selected;
+}
+function openReserveModal(res) {
+  $('resModalTitle').textContent = res ? '编辑预定 · ' + res.id : '新增预定';
+  $('resEditId').value = res ? res.id : '';
+  $('resName').value = res ? res.name : '';
+  $('resPhone').value = res ? res.phone : '';
+  $('resArrive').value = res ? res.arrive : '';
+  $('resNote').value = res ? res.note : '';
+  clearErrors(['resName','resPhone','resArrive']);
+  refreshReserveRoomOptions(res ? res.room : null);
+  openModal('modalReserve');
+  $('resName').focus();
+}
+function editReserve(id) { openReserveModal(state.reservations.find(r => r.id === id)); }
+function submitReserve() {
+  const name = $('resName').value.trim(), phone = $('resPhone').value.trim(), arrive = $('resArrive').value.trim();
+  let bad = false;
+  bad = markError('resName', 'resNameErr', !name) || bad;
+  bad = markError('resPhone', 'resPhoneErr', !/^\d{11}$/.test(phone)) || bad;
+  bad = markError('resArrive', 'resArriveErr', !arrive) || bad;
+  if (bad) return;
+  const roomNo = $('resRoom').value;
+  const editId = $('resEditId').value;
+  if (editId) {
+    const res = state.reservations.find(r => r.id === editId);
+    Object.assign(res, { name, phone, room: roomNo, arrive, note: $('resNote').value.trim() });
+    toast('预定 ' + editId + ' 已更新');
+  } else {
+    const id = 'R20261125' + ('0' + (state.seq.res++)).slice(-2);
+    state.reservations.unshift({ id, name, phone, room: roomNo, arrive, status: '待到店', note: $('resNote').value.trim() });
+    if (room(roomNo).status === '空闲') room(roomNo).status = '预定';
+    log('预定', roomNo, name + ' 预定 ' + arrive);
+    toast('预定单 ' + id + ' 已创建，房间 ' + roomNo + ' 状态改为【预定】');
+  }
+  closeModal('modalReserve');
+  renderAll();
+}
+function cancelReserve(id) {
+  const res = state.reservations.find(r => r.id === id);
+  if (!confirm('确定取消预定 ' + id + '（' + res.name + '）吗？')) return;
+  res.status = '已取消';
+  const r = room(res.room);
+  if (r && r.status === '预定' && !state.reservations.some(x => x.room === res.room && x.status === '待到店')) r.status = '空闲';
+  log('预定', res.room, '预定 ' + id + '（' + res.name + '）已取消');
+  renderAll();
+  toast('预定 ' + id + ' 已取消');
+}
+function openReservePick() {
+  const list = state.reservations.filter(r => r.status === '待到店');
+  $('resPickTbody').innerHTML = list.length ? list.map(r =>
+    '<tr><td>' + r.id + '</td><td class="text-strong">' + r.name + '</td><td>' + r.room + '</td><td>' + r.arrive + '</td>' +
+    '<td><button class="btn-link" onclick="resToCheckin(\'' + r.id + '\')">转入入住</button></td></tr>').join('')
+    : '<tr class="empty-row"><td colspan="5">暂无待到店的预定</td></tr>';
+  openModal('modalResPick');
+}
+function resToCheckin(id) {
+  const res = state.reservations.find(r => r.id === id);
+  closeModal('modalResPick');
+  gotoPage('checkin');
+  $('ciName').value = res.name; $('ciPhone').value = res.phone;
+  $('ciIn').value = res.arrive.slice(0, 10) + ' 14:00';
+  $('ciOut').value = nextDay(res.arrive.slice(0, 10)) + ' 12:00';
+  $('ciIn').dataset.resId = id;
+  refreshCheckinRoomOptions();
+  if (room(res.room).status === '预定') {
+    const sel = $('ciRoom');
+    const opt = document.createElement('option');
+    opt.value = res.room; opt.textContent = res.room + ' · ' + room(res.room).type + '（预定）' + money(room(res.room).price);
+    sel.insertBefore(opt, sel.firstChild);
+    sel.value = res.room;
+  }
+  const r = room($('ciRoom').value);
+  if (r) { $('ciPrice').value = r.price; $('ciDeposit').value = r.deposit; }
+  calcCheckin();
+  toast('已带入预定信息：' + res.name + '，确认后保存入住单');
+}
+
+/* =====================================================
+   在住 & 退房结算
+===================================================== */
+function coModeIsHourly() {
+  const on = [...$('coMode').children].find(s => s.classList.contains('on'));
+  return !!(on && on.textContent === '加钟');
+}
+function stayFeeOf(no, until) {
+  const st = state.stays[no];
+  const end = until || st.planOut;
+  if (coModeIsHourly()) {
+    const s = new Date(st.checkin.replace(' ', 'T')), e = new Date(end.replace(' ', 'T'));
+    const hours = e > s ? Math.ceil((e - s) / 3600000) : 0;
+    return { nights: hours, fee: Math.ceil(hours * st.price / 24), extras: st.extras.reduce((x, y) => x + y.amount, 0), deposit: st.deposit };
+  }
+  const n = nightsBetween(st.checkin, end);
+  return { nights: n, fee: n * st.price, extras: st.extras.reduce((s, e) => s + e.amount, 0), deposit: st.deposit };
+}
+function stayCostText(no) {
+  const st = state.stays[no];
+  const base = nightsBetween(st.checkin, st.planOut) * st.price;
+  return base + st.extras.reduce((s, e) => s + e.amount, 0);
+}
+function stayCostTitle(no) {
+  const st = state.stays[no];
+  return '房费 ' + money(nightsBetween(st.checkin, st.planOut) * st.price) +
+    (st.extras.length ? ' + 追加消费 ' + st.extras.map(e => e.item + ' ' + money(e.amount)).join(' + ') : '') +
+    '（明细在退房结算时查看）';
+}
+function renderStays() {
+  const kw = $('stayKeyword').value.trim();
+  const rows = Object.keys(state.stays).filter(no => {
+    const s = state.stays[no];
+    return !kw || no.includes(kw) || s.guest.includes(kw) || s.phone.includes(kw);
+  });
+  $('stayTbody').innerHTML = rows.length ? rows.map(no => {
+    const s = state.stays[no];
+    return '<tr><td class="text-strong">' + no + '</td><td>' + s.guest + '</td><td>' + s.phone + '</td><td>' + s.checkin + '</td><td>' + s.planOut + '</td>' +
+      '<td>' + money(s.deposit) + '</td><td class="text-money" title="' + stayCostTitle(no) + '">' + money(stayCostText(no)) + '</td>' +
+      '<td><button class="btn-link" onclick="openCheckout(\'' + no + '\')">退房结算</button><button class="btn-link" onclick="openExtra(\'' + no + '\')">追加消费</button></td></tr>';
+  }).join('') : '<tr class="empty-row"><td colspan="8">暂无在住客人</td></tr>';
+  $('badgeStay').textContent = Object.keys(state.stays).length;
+  $('badgeStay').style.display = Object.keys(state.stays).length ? '' : 'none';
+}
+function resetStayFilter() { $('stayKeyword').value = ''; renderStays(); toast('筛选已重置'); }
+function openCheckout(no) {
+  const st = state.stays[no];
+  if (!st) return;
+  $('coRoomNo').value = no;
+  $('coRoomGuest').value = no + ' · ' + st.guest;
+  $('coTime').value = NOW_TIME;
+  $('coDamage').value = 0;
+  $('coNote').value = '';
+  calcCheckout();
+  openModal('modalCheckout');
+}
+function calcCheckout() {
+  const no = $('coRoomNo').value;
+  if (!no || !state.stays[no]) return;
+  const st = state.stays[no];
+  const f = stayFeeOf(no, $('coTime').value);
+  const damage = Number($('coDamage').value) || 0;
+  const diff = f.fee + f.extras + damage - f.deposit;
+  $('coFee').textContent = money(f.fee);
+  $('coExtra').textContent = money(f.extras);
+  $('coDeposit').textContent = money(f.deposit);
+  $('coPay').textContent = diff >= 0 ? '应补收 ' + money(diff) : '退 ' + money(-diff);
+  $('coFeeNote').textContent = coModeIsHourly()
+    ? '加钟计费：' + f.nights + ' 小时，按 标价÷24 每小时折算'
+    : '按天计费：' + f.nights + ' 晚 × ' + money(st.price) + '/晚（跨日不足一晚按一晚计）';
+  $('coExtraDetail').innerHTML = st.extras.length
+    ? '<div style="font-weight:600;margin-bottom:4px">追加消费明细（' + st.extras.length + ' 项）</div>' +
+      st.extras.map((e, i) =>
+        '<div style="display:flex;justify-content:space-between;padding:2px 0">' +
+        '<span>' + (i + 1) + '. ' + e.item + '</span><span class="text-money">' + money(e.amount) + '</span></div>').join('') +
+      '<div style="display:flex;justify-content:space-between;padding:3px 0;border-top:1px dashed var(--border-split);margin-top:4px;font-weight:600">' +
+      '<span>小计</span><span class="text-money">' + money(f.extras) + '</span></div>'
+    : '<span class="muted">无追加消费。如需入账，请先取消本对话框，在「在住列表」点击「追加消费」。</span>';
+}
+function submitCheckout() {
+  const no = $('coRoomNo').value;
+  const st = state.stays[no];
+  if (new Date($('coTime').value.replace(' ', 'T')) <= new Date(st.checkin.replace(' ', 'T'))) { toast('实际退房时间必须晚于入住时间 ' + st.checkin); return; }
+  const f = stayFeeOf(no, $('coTime').value);
+  const damage = Number($('coDamage').value) || 0;
+  const total = f.fee + f.extras + damage;
+  const diff = total - f.deposit;
+  const billId = 'S20261125' + ('0' + (state.seq.S++)).slice(-2);
+  state.bills.unshift({
+    id: billId, room: no, guest: st.guest, fee: f.fee, extra: f.extras + damage,
+    extras: st.extras.slice(), damage,
+    deposit: money(f.deposit) + ' → ' + (diff >= 0 ? '抵扣' : '退 ' + money(f.deposit - total)),
+    depNum: f.deposit, total, diff, time: nowStr().slice(3), op: state.currentUser,
+    note: $('coNote').value.trim()
+  });
+  const rec = state.records.find(r => r.room === no && r.status === '在住');
+  if (rec) { rec.status = '已退房'; rec.co = $('coTime').value.slice(5, 10); rec.fee = total; }
+  delete state.stays[no];
+  room(no).status = '打扫中';
+  state.todayCheckouts++;
+  state.todayRevenue += total;
+  state.weekRevenue[state.weekRevenue.length - 1] = state.todayRevenue;
+  state.monthRevenue += total;
+  log('退房', no + ' · ' + st.guest, '结算 ' + money(total) + (damage ? '（含损坏扣费 ' + money(damage) + '）' : '') + '，房间转待打扫');
+  closeModal('modalCheckout');
+  renderAll();
+  toast('退房完成：' + billId + '，房间 ' + no + ' 已变为【待打扫】');
+}
+function openExtra(no) {
+  $('exRoomNo').value = no;
+  $('exRoom').textContent = no + ' · ' + state.stays[no].guest;
+  $('exItem').value = ''; $('exAmount').value = '';
+  clearErrors(['exItem','exAmount']);
+  openModal('modalExtra');
+  $('exItem').focus();
+}
+function submitExtra() {
+  const item = $('exItem').value.trim(), amount = Number($('exAmount').value);
+  let bad = false;
+  bad = markError('exItem', 'exItemErr', !item) || bad;
+  bad = markError('exAmount', 'exAmountErr', !(amount > 0)) || bad;
+  if (bad) return;
+  const no = $('exRoomNo').value;
+  state.stays[no].extras.push({ item, amount });
+  closeModal('modalExtra');
+  renderStays(); renderBoard();
+  toast('已入账：' + item + ' ' + money(amount) + '（房间 ' + no + '）');
+}
+
+/* =====================================================
+   记录与查询
+===================================================== */
+function renderRecords() {
+  const r = $('recRoom').value.trim(), kw = $('recKeyword').value.trim(), dt = $('recDate').value.trim();
+  let list = state.records.filter(x =>
+    (!r || x.room.includes(r)) && (!kw || x.guest.includes(kw) || x.idcard.includes(kw)) &&
+    (!dt || x.ci.includes(dt.replace('2026-', '')) || (x.co && x.co.includes(dt.replace('2026-', '')))));
+  if (state.role === 'front') list = list.filter(x => x.op === state.currentUser);
+  $('recTbody').innerHTML = list.length ? list.map(x =>
+    '<tr class="clickable-row" title="点击查看详情" onclick="openRecDetail(\'' + x.id + '\')"><td>' + x.id + '</td><td class="text-strong">' + x.room + '</td><td>' + x.guest + '</td><td>' + x.idcard.slice(0, 4) + '**********' + x.idcard.slice(-4) + '</td>' +
+    '<td>' + x.ci + ' → ' + (x.status === '在住' ? '在住' : x.co) + '</td><td class="text-money">' + money(x.fee) + '</td>' +
+    '<td><span class="tag ' + (x.status === '在住' ? 'tag-occupied' : 'tag-free') + '">' + x.status + '</span></td></tr>').join('')
+    : '<tr class="empty-row"><td colspan="7">暂无符合条件的记录</td></tr>';
+}
+function resetRecordFilter() { $('recRoom').value = ''; $('recKeyword').value = ''; $('recDate').value = ''; renderRecords(); renderBills(); toast('筛选已重置'); }
+let recTab = 'rec';
+function switchRecTab(tab) {
+  recTab = tab;
+  document.querySelectorAll('#page-records .tab-item').forEach(t => t.classList.toggle('on', t.dataset.tab === tab));
+  $('recTabRec').style.display = tab === 'rec' ? '' : 'none';
+  $('recTabBill').style.display = tab === 'bill' ? '' : 'none';
+  if (tab === 'bill') renderBills(); else renderRecords();
+}
+function recSearch() { if (recTab === 'bill') renderBills(); else renderRecords(); }
+function renderBills() {
+  const r = $('recRoom').value.trim(), kw = $('recKeyword').value.trim(), dt = $('recDate').value.trim();
+  let list = state.bills.filter(b =>
+    (!r || b.room.includes(r)) && (!kw || b.guest.includes(kw)) &&
+    (!dt || b.time.includes(dt.replace('2026-', ''))));
+  if (state.role === 'front') list = list.filter(b => b.op === state.currentUser);
+  $('billTbody').innerHTML = list.length ? list.map(b =>
+    '<tr class="clickable-row" title="点击查看详情" onclick="openBillDetail(\'' + b.id + '\')"><td>' + b.id + '</td><td>' + b.room + ' · ' + b.guest + '</td><td class="text-money">' + money(b.fee) + '</td>' +
+    '<td class="text-money">' + money(b.extra) + '</td><td>' + b.deposit + '</td>' +
+    '<td class="text-money">' + (b.diff >= 0 ? '补收 ' : '退 ') + money(Math.abs(b.diff)) + '</td><td>' + b.time + '</td></tr>').join('')
+    : '<tr class="empty-row"><td colspan="7">暂无结算账单</td></tr>';
+}
+
+/* =====================================================
+   记录 / 账单详情
+===================================================== */
+function dlCell(k, v) {
+  return '<div class="dl-cell"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>';
+}
+function dlLine(k, v, dim) {
+  return '<div class="dl-line' + (dim ? ' dim' : '') + '"><span>' + k + '</span><span class="amt">' + v + '</span></div>';
+}
+function dlSec(title) {
+  return '<div class="dl-sec-title">' + title + '</div>';
+}
+function openRecDetail(id) {
+  const x = state.records.find(r => r.id === id);
+  if (!x) return;
+  const t = room(x.room) ? room(x.room).type : '—';
+  const staying = x.status === '在住';
+  $('recDetailBody').innerHTML =
+    '<div class="dl-head"><div><div class="id">' + x.id + '</div><div class="sub">登记时间 ' + x.ci + ' · 操作员 ' + (x.op || '—') + '</div></div>' +
+    '<div class="room"><div class="no">' + x.room + '</div><div class="tp">' + t + '</div></div></div>' +
+    '<div class="dl-guest"><div class="dl-avatar">' + (x.guest || '?').slice(0, 1) + '</div><div><div class="name">' + x.guest + '</div><div class="dl-sub">' + (x.phone || '未留手机号') + '</div></div>' +
+    '<span class="tag ' + (staying ? 'tag-occupied' : 'tag-free') + '" style="margin-left:auto">' + x.status + '</span></div>' +
+    dlSec('证件与入住信息') +
+    '<div class="dl-grid">' +
+    dlCell('身份证号', x.idcard) +
+    dlCell('入住时间', x.ci) +
+    dlCell('预计 / 实际退房', x.co) +
+    '</div>' +
+    dlSec(staying ? '预估费用' : '费用信息') +
+    '<div class="dl-lines">' +
+    dlLine('房费（' + (staying ? '按预估晚数' : '实际入住') + '）', money(x.fee)) +
+    (staying ? '' : dlLine('追加消费 / 杂费', '结算时计入', true)) +
+    '</div>' +
+    (staying
+      ? '<div class="dl-result blue"><span class="t">客人仍在住，费用以退房结算为准</span><span class="big">预估 ' + money(x.fee) + '</span></div>'
+      : '<div class="dl-result"><span class="t">该笔入住已退房结清，详见退房账单</span><span class="big">' + money(x.fee) + '</span></div>');
+  openModal('modalRecDetail');
+}
+function openBillDetail(id) {
+  const b = state.bills.find(x => x.id === id);
+  if (!b) return;
+  const depNum = b.depNum !== undefined ? b.depNum : 0;
+  const total = b.total !== undefined ? b.total : (b.fee + b.extra);
+  const refund = b.diff >= 0 ? '应补收 ' + money(b.diff) : '应退 ' + money(-b.diff);
+  let lines = dlLine('房费', money(b.fee));
+  (b.extras || []).forEach(e => { lines += dlLine('追加消费 · ' + e.item, money(e.amount)); });
+  if (b.damage) lines += dlLine('损坏扣费', money(b.damage));
+  lines += '<div class="dl-total"><span>费用合计</span><span class="amt">' + money(total) + '</span></div>';
+  $('billDetailBody').innerHTML =
+    '<div class="dl-head"><div><div class="id">' + b.id + '</div><div class="sub">结算时间 ' + b.time + ' · 操作员 ' + (b.op || '—') + '</div></div>' +
+    '<div class="room"><div class="no">' + b.room + '</div><div class="tp">' + b.guest + '</div></div></div>' +
+    dlSec('费用明细') +
+    '<div class="dl-lines">' + lines + '</div>' +
+    dlSec('押金结算') +
+    '<div class="dl-lines">' +
+    dlLine('已收押金', money(depNum)) +
+    dlLine('押金处理', b.deposit, true) +
+    '</div>' +
+    '<div class="dl-result"><span class="t">结算结果</span><span class="big">' + refund + '</span></div>' +
+    (b.note ? '<div class="dl-note">📝 备注：' + b.note + '</div>' : '');
+  openModal('modalBillDetail');
+}
+
+/* =====================================================
+   统计报表
+===================================================== */
+function statBox(ico, bg, color, label, numHtml, sub) {
+  return '<div class="stat-box"><div class="ico-box" style="background:' + bg + ';color:' + color + '">' + ico + '</div><div>' +
+    '<div class="label">' + label + '</div><div class="num"' + (color ? ' style="color:' + color + '"' : '') + '>' + numHtml + '</div>' +
+    (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div></div>';
+}
+function fillSelect(id, placeholder, items) {
+  const el = $(id), cur = el.value;
+  el.innerHTML = '<option value="all">' + placeholder + '</option>' +
+    items.map(it => '<option value="' + it.v + '">' + it.label + '</option>').join('');
+  el.value = items.some(it => it.v === cur) ? cur : 'all';
+}
+function refreshFilterOptions() {
+  const floors = [...new Set(state.rooms.map(r => r.floor))].sort((a, b) => a - b);
+  const types = state.roomTypes.map(t => t.name).filter(n => state.rooms.some(r => r.type === n));
+  fillSelect('dashFloor', '全部楼层', floors.map(f => ({ v: String(f), label: f + ' 楼' })));
+  fillSelect('dashType', '全部房型', types.map(t => ({ v: t, label: t })));
+  fillSelect('roomFloorFilter', '全部楼层', floors.map(f => ({ v: String(f), label: f + ' 楼' })));
+  fillSelect('roomTypeFilter', '全部房型', types.map(t => ({ v: t, label: t })));
+}
+/* 近 30 日营收种子：按星期生成（周末峰值），确定性扰动保持数据稳定 */
+const REPORT_DAYS = (() => {
+  const arr = [], base = new Date('2026-11-25T00:00:00');
+  for (let i = 29; i >= 0; i--) {
+    const x = new Date(base); x.setDate(x.getDate() - i);
+    arr.push((x.getMonth() + 1) + '-' + ('0' + x.getDate()).slice(-2));
+  }
+  return arr;
+})();
+const WEEK_BASE = { '一': 1500, '二': 1450, '三': 1550, '四': 1650, '五': 2050, '六': 2450, '日': 2250 };
+(function seedRevenue() {
+  const names = ['日', '一', '二', '三', '四', '五', '六'];
+  REPORT_DAYS.forEach((d, i) => {
+    const wd = names[new Date('2026-' + d + 'T00:00:00').getDay()];
+    const wobble = 0.92 + ((i * 37) % 17) / 100;
+    state.weekRevenue.push(Math.round(WEEK_BASE[wd] * wobble / 10) * 10);
+  });
+})();
+function renderStats() {
+  const occ = state.rooms.filter(r => r.status === '已入住').length;
+  const rate = Math.round(occ / state.rooms.length * 100);
+  const stayNos = Object.keys(state.stays);
+  const last = state.weekRevenue.length - 1;
+  const today = state.weekRevenue[last], yest = state.weekRevenue[last - 1];
+  const mom = yest ? Math.round((today - yest) / yest * 100) : 0;
+  const momTxt = mom >= 0 ? '↑ 较昨日 +' + mom + '%' : '↓ 较昨日 -' + (-mom) + '%';
+  const adr = stayNos.length ? Math.round(stayNos.reduce((s, no) => s + state.stays[no].price, 0) / stayNos.length) : 0;
+  const depositHold = stayNos.reduce((s, no) => s + state.stays[no].deposit, 0);
+  const pendRes = state.reservations.filter(r => r.status === '待到店').length;
+  const cleaning = state.rooms.filter(r => r.status === '打扫中').length;
+  $('statStrip').innerHTML =
+    statBox('💰', '#fff7e6', '#fa8c16', '今日营收', money(state.todayRevenue), momTxt) +
+    statBox('📅', '#e6f4ff', 'var(--primary)', '本月累计营收', money(state.monthRevenue), '11 月至今') +
+    statBox('📈', '#f9f0ff', 'var(--purple)', '当前入住率', rate + '%', occ + ' / ' + state.rooms.length + ' 间在住') +
+    statBox('🏷', '#fff1f0', '#cf1322', '平均房价', adr ? money(adr) : '—', '当前在住成交均价') +
+    statBox('🔄', '#e6f4ff', 'var(--primary)', '今日开房 / 退房', state.todayCheckins + ' / ' + state.todayCheckouts, '实时统计') +
+    statBox('📅', '#fff7e6', '#fa8c16', '待到店预定', pendRes + ' 间', pendRes ? '记得提前备房' : '暂无预定') +
+    statBox('🧹', '#fffbe6', '#d4b106', '待打扫', cleaning + ' 间', cleaning ? '打扫完成后可售' : '全部干净') +
+    statBox('🔒', '#f6ffed', 'var(--success)', '押金占用', money(depositHold), '在住客人押金合计');
+  const chartDays = REPORT_DAYS.slice(-7), chartVals = state.weekRevenue.slice(-7);
+  const max = Math.max(...chartVals, 1);
+  const sum = chartVals.reduce((a, b) => a + b, 0);
+  $('weekSum').textContent = '合计 ¥' + sum.toLocaleString() + ' · 日均 ¥' + Math.round(sum / 7).toLocaleString();
+  $('barChart').innerHTML = chartVals.map((v, i) =>
+    '<div class="bar-col"><div class="bar" style="height:' + Math.round(v / max * 100) + '%"><span class="val">' + v.toLocaleString() + '</span></div><span class="name">' + chartDays[i] + (i === 6 ? '（今天）' : '') + '</span></div>').join('');
+  const rows = state.roomTypes.map(t => {
+    const rs = state.rooms.filter(r => r.type === t.name);
+    if (!rs.length) return '';
+    const cnt = { '已入住': 0, '预定': 0 };
+    rs.forEach(r => { if (cnt[r.status] !== undefined) cnt[r.status]++; });
+    const sellable = rs.filter(r => r.status !== '停用' && r.status !== '维修').length;
+    const rr = sellable ? Math.round((cnt['已入住'] + cnt['预定']) / sellable * 100) : 0;
+    const statusTxt = Object.keys(cnt).filter(k => cnt[k]).map(k => k + ' ' + cnt[k]).join(' · ') || '全部空闲';
+    const idle = rs.length - cnt['已入住'] - cnt['预定'];
+    return '<tr><td class="text-strong">' + t.name + '</td><td class="text-money">' + money(t.price) + '</td>' +
+      '<td class="muted" title="另有' + (idle ? ' ' + idle + ' 间空闲/待打扫' : '') + '">' + statusTxt + (idle ? '<br>空闲 ' + idle : '') + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="flex:1;margin:0"><div class="fill" style="width:' + rr + '%"></div></div>' +
+      '<span class="text-strong" style="min-width:36px">' + rr + '%</span></div></td></tr>';
+  }).filter(Boolean).join('');
+  $('reportTypeTbody').innerHTML = rows || '<tr class="empty-row"><td colspan="4">暂无房型数据</td></tr>';
+}
+function normDate(str) {
+  const m = str.match(/^(\d{1,2})-(\d{1,2})$/);
+  return m ? m[1] + '-' + ('0' + m[2]).slice(-2) : str;
+}
+function queryRevenue() {
+  const a = normDate($('repStart').value.trim()), b = normDate($('repEnd').value.trim());
+  const i1 = REPORT_DAYS.indexOf(a), i2 = REPORT_DAYS.indexOf(b);
+  if (i1 < 0 || i2 < 0 || i1 > i2) { toast('请输入近 30 日内的有效日期区间（如 10-27 至 11-25）'); return; }
+  const days = REPORT_DAYS.slice(i1, i2 + 1);
+  const vals = state.weekRevenue.slice(i1, i2 + 1);
+  const n = days.length;
+  const sum = vals.reduce((x, y) => x + y, 0);
+  const max = Math.max(...vals), min = Math.min(...vals);
+  const avg = Math.round(sum / n);
+  const prevVal = i1 > 0 ? state.weekRevenue[i1 - 1] : null;
+  const mom = prevVal ? Math.round((sum - prevVal * n) / (prevVal * n) * 100) : null;
+  $('reportResult').innerHTML =
+    '<div class="summary" style="display:flex;gap:24px;margin-bottom:12px">' +
+    '<div class="item"><div class="k">区间合计</div><div class="v money">' + money(sum) + '</div></div>' +
+    '<div class="item"><div class="k">日均营收</div><div class="v">' + money(avg) + '</div></div>' +
+    '<div class="item"><div class="k">最高 / 最低单日</div><div class="v">' + money(max) + ' / ' + money(min) + '</div></div>' +
+    '<div class="item"><div class="k">较上一周期</div><div class="v">' + (mom === null ? '—' : (mom >= 0 ? '↑ +' : '↓ -') + Math.abs(mom) + '%') + '</div></div>' +
+    '</div>' +
+    '<table style="font-size:12px"><thead><tr><th>日期</th><th>营收（元）</th><th>环比前日</th><th>区间占比</th></tr></thead><tbody>' +
+    days.map((d, i) => {
+      const v = vals[i];
+      const p = vals[i - 1] !== undefined ? vals[i - 1] : prevVal;
+      const md = p ? Math.round((v - p) / p * 100) : null;
+      const mdTxt = md === null ? '<span class="muted">—</span>'
+        : (md >= 0 ? '<span style="color:var(--success)">↑ +' + md + '%</span>' : '<span style="color:#cf1322">↓ -' + (-md) + '%</span>');
+      const bar = max ? Math.round(v / max * 100) : 0;
+      const today = d === REPORT_DAYS[REPORT_DAYS.length - 1] ? ' <span class="tag tag-occupied">今天</span>' : '';
+      return '<tr><td class="text-strong">' + d + today + '</td><td class="text-money">' + v.toLocaleString() + '</td>' +
+        '<td>' + mdTxt + '</td>' +
+        '<td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:120px;margin:0"><div class="fill" style="width:' + bar + '%"></div></div><span class="muted">' + Math.round(v / sum * 100) + '%</span></div></td></tr>';
+    }).join('') +
+    '<tr style="font-weight:700;background:#fafafa"><td>合计（' + n + ' 天）</td><td class="text-money">' + sum.toLocaleString() + '</td><td></td><td></td></tr>' +
+    '</tbody></table>';
+}
+function quickRange(n) {
+  $('repStart').value = REPORT_DAYS[REPORT_DAYS.length - n];
+  $('repEnd').value = REPORT_DAYS[REPORT_DAYS.length - 1];
+  queryRevenue();
+}
+
+/* =====================================================
+   操作日志
+===================================================== */
+const LOG_TAG = { '开房':'tag-occupied','退房':'tag-free','预定':'tag-reserved','改价':'tag-repair','打扫':'tag-cleaning' };
+function renderLogs() {
+  const t = $('logTypeFilter').value, kw = $('logKeyword').value.trim();
+  let list = state.logs.filter(l => (t === 'all' || l.type === t) && (!kw || l.user.includes(kw) || l.target.includes(kw)));
+  if (state.role === 'front') list = list.filter(l => l.user === state.currentUser);
+  $('logTbody').innerHTML = list.length ? list.map(l =>
+    '<tr><td>' + l.time + '</td><td>' + l.user + '</td><td><span class="tag ' + (LOG_TAG[l.type] || 'tag-stopped') + '">' + l.type + '</span></td>' +
+    '<td>' + l.target + '</td><td class="muted">' + l.detail + '</td></tr>').join('')
+    : '<tr class="empty-row"><td colspan="5">暂无符合条件的日志</td></tr>';
+}
+
+/* =====================================================
+   房间管理
+===================================================== */
+function renderRooms() {
+  const f = $('roomFloorFilter').value, t = $('roomTypeFilter').value;
+  const list = state.rooms.filter(r => (f === 'all' || String(r.floor) === f) && (t === 'all' || r.type === t));
+  $('roomTbody').innerHTML = list.length ? list.map(r =>
+    '<tr><td class="text-strong">' + r.no + '</td><td>' + r.floor + '</td><td>' + r.type + '</td><td>' + r.beds + '</td>' +
+    '<td>' + money(r.price) + '</td><td>' + (r.minPrice ? money(r.minPrice) : '—') + '</td><td>' + money(r.deposit) + '</td>' +
+    '<td>' + (r.win ? '✔' : '✘') + '</td><td>' + (r.bath ? '✔' : '✘') + '</td>' +
+    '<td><span class="tag ' + STATUS_TAG[r.status] + '">' + r.status + '</span></td>' +
+    '<td>' + (r.status === '停用'
+      ? '<button class="btn-link" onclick="toggleRoom(\'' + r.no + '\')">启用</button>'
+      : '<button class="btn-link" onclick="openRoomModal(room(\'' + r.no + '\'))">编辑</button>') +
+    '<button class="btn-link danger" onclick="deleteRoom(\'' + r.no + '\')">删除</button></td></tr>').join('')
+    : '<tr class="empty-row"><td colspan="11">暂无符合条件的房间</td></tr>';
+}
+function setRadio(groupId, val) {
+  [...$(groupId).children].forEach(s => s.classList.toggle('on', s.dataset.v === val));
+}
+function getRadio(groupId) {
+  const on = [...$(groupId).children].find(s => s.classList.contains('on'));
+  return on ? on.dataset.v : '1';
+}
+function openRoomModal(r) {
+  $('roomModalTitle').textContent = r ? '编辑房间 · ' + r.no : '新增房间';
+  $('roomEditNo').value = r ? r.no : '';
+  $('rmNo').value = r ? r.no : '';
+  $('rmFloor').value = r ? r.floor : 1;
+  $('rmType').innerHTML = state.roomTypes.map(t => '<option' + (r && r.type === t.name ? ' selected' : '') + '>' + t.name + '</option>').join('');
+  $('rmBeds').value = r ? r.beds : 2;
+  $('rmPrice').value = r ? r.price : '';
+  $('rmMin').value = r ? (r.minPrice || '') : '';
+  $('rmDeposit').value = r ? r.deposit : 100;
+  $('rmStatus').value = r ? r.status : '空闲';
+  setRadio('rmWindow', r ? (r.win ? '1' : '0') : '1');
+  setRadio('rmBath', r ? (r.bath ? '1' : '0') : '1');
+  clearErrors(['rmNo','rmFloor','rmPrice']);
+  openModal('modalRoom');
+  if (!r) $('rmNo').focus();
+}
+function submitRoom() {
+  const no = $('rmNo').value.trim();
+  let bad = false;
+  bad = markError('rmNo', 'rmNoErr', !no || (!$('roomEditNo').value && room(no))) || bad;
+  bad = markError('rmFloor', 'rmFloorErr', !(Number($('rmFloor').value) >= 1)) || bad;
+  bad = markError('rmPrice', 'rmPriceErr', !(Number($('rmPrice').value) > 0)) || bad;
+  if (bad) return;
+  const editNo = $('roomEditNo').value;
+  const data = {
+    no, floor: Number($('rmFloor').value), type: $('rmType').value, beds: Number($('rmBeds').value) || 1,
+    price: Number($('rmPrice').value), minPrice: Number($('rmMin').value) || 0, deposit: Number($('rmDeposit').value) || 0,
+    win: getRadio('rmWindow') === '1', bath: getRadio('rmBath') === '1', status: $('rmStatus').value
+  };
+  if (editNo) {
+    const r = room(editNo);
+    if (state.stays[editNo] && no !== editNo) { toast('该房间有在住客人，不能修改房号'); return; }
+    Object.assign(r, data);
+    if (no !== editNo) { state.stays[no] = state.stays[editNo]; delete state.stays[editNo]; }
+    log('改价', no, '房间信息已更新（标价 ' + money(data.price) + '）');
+    toast('房间 ' + editNo + ' 信息已更新');
+  } else {
+    state.rooms.push(data);
+    log('改价', no, '新增房间：' + data.type + '，标价 ' + money(data.price));
+    toast('房间 ' + no + ' 已创建');
+  }
+  closeModal('modalRoom');
+  renderAll();
+}
+function deleteRoom(no) {
+  if (state.stays[no]) { toast('房间 ' + no + ' 有在住客人，不能删除'); return; }
+  if (state.reservations.some(x => x.room === no && x.status === '待到店')) { toast('房间 ' + no + ' 存在待到店预定，请先取消预定'); return; }
+  if (!confirm('确定删除房间 ' + no + ' 吗？该操作不可恢复。')) return;
+  state.rooms = state.rooms.filter(x => x.no !== no);
+  log('改价', no, '删除房间 ' + no);
+  renderAll();
+  toast('房间 ' + no + ' 已删除');
+}
+function toggleRoom(no) {
+  room(no).status = '空闲';
+  log('打扫', no, '房间启用，状态改为空闲');
+  renderAll();
+  toast('房间 ' + no + ' 已启用');
+}
+
+/* =====================================================
+   房型管理
+===================================================== */
+function renderTypes() {
+  $('typeTbody').innerHTML = state.roomTypes.map(t => {
+    const count = state.rooms.filter(r => r.type === t.name).length;
+    return '<tr><td class="text-strong">' + t.name + '</td><td>' + money(t.price) + '</td><td>' + count + '</td>' +
+      '<td class="muted">' + (t.note || '—') + '</td>' +
+      '<td><button class="btn-link" onclick="editType(' + t.id + ')">编辑</button>' +
+      '<button class="btn-link danger" onclick="deleteType(' + t.id + ')">删除</button></td></tr>';
+  }).join('');
+}
+function openTypeModal(t) {
+  $('typeModalTitle').textContent = t ? '编辑房型 · ' + t.name : '新增房型';
+  $('typeEditId').value = t ? t.id : '';
+  $('tpName').value = t ? t.name : '';
+  $('tpPrice').value = t ? t.price : '';
+  $('tpNote').value = t ? (t.note || '') : '';
+  clearErrors(['tpName','tpPrice']);
+  openModal('modalType');
+  if (!t) $('tpName').focus();
+}
+function editType(id) { openTypeModal(state.roomTypes.find(t => t.id === id)); }
+function submitType() {
+  const name = $('tpName').value.trim(), price = Number($('tpPrice').value);
+  let bad = false;
+  bad = markError('tpName', 'tpNameErr', !name) || bad;
+  bad = markError('tpPrice', 'tpPriceErr', !(price > 0)) || bad;
+  if (bad) return;
+  const editId = $('typeEditId').value;
+  if (state.roomTypes.some(t => t.name === name && String(t.id) !== editId)) { toast('房型名称【' + name + '】已存在'); return; }
+  if (editId) {
+    const t = state.roomTypes.find(t => t.id === Number(editId));
+    const oldPrice = t.price;
+    const oldName = t.name;
+    Object.assign(t, { name, price, note: $('tpNote').value.trim() });
+    if (oldName !== name) state.rooms.forEach(r => { if (r.type === oldName) r.type = name; });
+    if (oldPrice !== price) log('改价', '房型·' + name, '基础定价 ' + money(oldPrice) + ' → ' + money(price));
+    toast('房型【' + name + '】已更新');
+  } else {
+    state.roomTypes.push({ id: Date.now(), name, price, note: $('tpNote').value.trim() });
+    toast('房型【' + name + '】已创建');
+  }
+  closeModal('modalType');
+  renderAll();
+}
+function deleteType(id) {
+  const t = state.roomTypes.find(t => t.id === id);
+  const count = state.rooms.filter(r => r.type === t.name).length;
+  if (count > 0) { toast('房型【' + t.name + '】下还有 ' + count + ' 间关联房间，不能删除'); return; }
+  if (!confirm('确定删除房型【' + t.name + '】吗？')) return;
+  state.roomTypes = state.roomTypes.filter(x => x.id !== id);
+  renderAll();
+  toast('房型【' + t.name + '】已删除');
+}
+
+/* =====================================================
+   操作员账号
+===================================================== */
+function renderAccounts() {
+  $('accTbody').innerHTML = state.accounts.map(a =>
+    '<tr><td class="text-strong">' + a.username + '</td><td>' + a.real + '</td>' +
+    '<td><span class="tag ' + (a.role === '管理员' ? 'tag-repair' : 'tag-occupied') + '">' + a.role + '</span></td>' +
+    '<td><span class="tag ' + (a.status === '启用' ? 'tag-free' : 'tag-stopped') + '">' + a.status + '</span></td>' +
+    '<td>' + a.last + '</td>' +
+    '<td>' + (a.status === '启用'
+      ? '<button class="btn-link" onclick="editAccount(' + a.id + ')">编辑</button><button class="btn-link" onclick="resetPwd(\'' + a.username + '\')">重置密码</button><button class="btn-link danger" onclick="toggleAccount(' + a.id + ')">停用</button>'
+      : '<button class="btn-link" onclick="toggleAccount(' + a.id + ')">启用</button>') + '</td></tr>').join('');
+}
+function openAccountModal(a) {
+  $('accModalTitle').textContent = a ? '编辑账号 · ' + a.username : '新增账号';
+  $('accEditId').value = a ? a.id : '';
+  $('acName').value = a ? a.username : '';
+  $('acReal').value = a ? a.real : '';
+  $('acRole').value = a ? a.role : '前台';
+  clearErrors(['acName','acReal']);
+  openModal('modalAccount');
+  if (!a) $('acName').focus();
+}
+function editAccount(id) { openAccountModal(state.accounts.find(a => a.id === id)); }
+function submitAccount() {
+  const username = $('acName').value.trim(), real = $('acReal').value.trim();
+  let bad = false;
+  bad = markError('acName', 'acNameErr', !username) || bad;
+  bad = markError('acReal', 'acRealErr', !real) || bad;
+  if (bad) return;
+  const editId = $('accEditId').value;
+  if (state.accounts.some(a => a.username === username && String(a.id) !== editId)) { toast('账号名 ' + username + ' 已存在'); return; }
+  if (editId) {
+    const a = state.accounts.find(a => a.id === Number(editId));
+    Object.assign(a, { username, real, role: $('acRole').value });
+    toast('账号 ' + username + ' 已更新');
+  } else {
+    state.accounts.push({ id: Date.now(), username, real, role: $('acRole').value, status: '启用', last: '—' });
+    toast('账号 ' + username + ' 已创建');
+  }
+  closeModal('modalAccount');
+  renderAccounts();
+}
+function resetPwd(username) {
+  if (!confirm('确定将账号 ' + username + ' 的密码重置为初始密码 123456 吗？')) return;
+  const a = state.accounts.find(a => a.username === username);
+  if (a) a.password = DEMO_PWD;
+  toast('账号 ' + username + ' 密码已重置为 123456');
+}
+function toggleAccount(id) {
+  const a = state.accounts.find(a => a.id === id);
+  if (a.username === state.loginUsername && a.status === '启用') { toast('不能停用当前登录的账号'); return; }
+  a.status = a.status === '启用' ? '停用' : '启用';
+  renderAccounts();
+  toast('账号 ' + a.username + ' 已' + a.status);
+}
+
+/* =====================================================
+   修改密码
+===================================================== */
+function openPwdModal() {
+  ['pwOld','pwNew','pwNew2'].forEach(id => $(id).value = '');
+  clearErrors(['pwOld','pwNew','pwNew2']);
+  openModal('modalPwd');
+  $('pwOld').focus();
+}
+function submitPwd() {
+  const oldP = $('pwOld').value, p1 = $('pwNew').value, p2 = $('pwNew2').value;
+  const acc = state.accounts.find(a => a.username === state.loginUsername);
+  let bad = false;
+  bad = markError('pwOld', 'pwOldErr', !acc || oldP !== (acc.password || DEMO_PWD)) || bad;
+  bad = markError('pwNew', 'pwNewErr', p1.length < 6) || bad;
+  bad = markError('pwNew2', 'pwNew2Err', p1 !== p2) || bad;
+  if (bad) return;
+  acc.password = p1;
+  closeModal('modalPwd');
+  toast('密码修改成功，下次登录请使用新密码');
+}
+
+/* =====================================================
+   登录 / 退出登录
+===================================================== */
+const DEMO_PWD = '123456';
+function showLoginError(msg) {
+  const el = $('loginError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function doLogin() {
+  const username = $('loginUser').value.trim(), pwd = $('loginPwd').value;
+  $('loginError').style.display = 'none';
+  const acc = state.accounts.find(a => a.username === username);
+  if (!username || !pwd) { showLoginError('请输入账号和密码'); return; }
+  if (!acc) { showLoginError('账号不存在，请检查输入'); return; }
+  if (acc.status !== '启用') { showLoginError('账号 ' + username + ' 已停用，请联系管理员启用'); return; }
+  if (pwd !== (acc.password || DEMO_PWD)) { showLoginError('密码错误，请重新输入'); return; }
+  state.loginUsername = username;
+  // 登录成功：按账号角色切换视图
+  const role = acc.role === '管理员' ? 'admin' : 'front';
+  acc.last = nowStr().slice(3);
+  $('loginMask').classList.add('hidden');
+  [...$('roleSwitch').children].forEach(s => s.classList.toggle('on', s.dataset.role === role));
+  setRole(role);
+  // 用真实登录账号覆盖演示身份显示
+  state.currentUser = acc.real + '（' + acc.role + '）';
+  $('roleName').textContent = state.currentUser;
+  $('roleDesc').textContent = acc.role + '操作员';
+  $('roleAvatar').textContent = acc.real.slice(0, 1);
+  $('sbUser').textContent = '操作员：' + state.currentUser;
+  renderAccounts();
+  log('登录', acc.username, acc.real + '（' + acc.role + '）登录系统');
+  gotoPage('dashboard');
+  toast('欢迎回来，' + acc.real + '（' + acc.role + '）');
+}
+function logout() {
+  if (!confirm('确定退出登录吗？')) return;
+  log('登录', state.currentUser, '退出登录');
+  $('loginPwd').value = '';
+  $('loginError').style.display = 'none';
+  $('loginMask').classList.remove('hidden');
+  $('loginUser').focus();
+}
+$('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') $('loginPwd').focus(); });
+$('loginPwd').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+/* =====================================================
+   状态栏 / 全量渲染 / 角色切换 / 快捷键
+===================================================== */
+function renderStatusbar() {
+  const cleaning = state.rooms.filter(r => r.status === '打扫中').length;
+  const pending = state.reservations.filter(r => r.status === '待到店').length;
+  $('sbCounts').textContent = '在住 ' + Object.keys(state.stays).length + ' ｜ 待打扫 ' + cleaning + ' ｜ 今日待到店预定 ' + pending;
+}
+function tickClock() {
+  const d = new Date();
+  $('clockTime').textContent = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+}
+tickClock();
+setInterval(tickClock, 30000);
+function renderAll() {
+  refreshFilterOptions();
+  renderBoard(); renderReservations(); renderStays(); renderRecords(); renderBills();
+  renderStats(); renderLogs(); renderRooms(); renderTypes(); renderAccounts(); renderStatusbar();
+}
+const roleInfo = {
+  front: { name: '小王（前台）', desc: '前台操作员', avatar: '王' },
+  admin: { name: '老陈（管理员）', desc: '系统管理员', avatar: '陈' }
+};
+function setRole(role) {
+  state.role = role;
+  state.currentUser = roleInfo[role].name;
+  document.body.classList.toggle('role-front', role === 'front');
+  document.body.classList.toggle('role-admin', role === 'admin');
+  $('roleName').textContent = roleInfo[role].name;
+  $('roleDesc').textContent = roleInfo[role].desc;
+  $('roleAvatar').textContent = roleInfo[role].avatar;
+  $('sbUser').textContent = '操作员：' + roleInfo[role].name;
+  if (role === 'front') {
+    const activeItem = document.querySelector('.nav-item.active');
+    if (activeItem && activeItem.classList.contains('admin-only')) gotoPage('dashboard');
+  }
+  renderLogs();
+}
+$('roleSwitch').addEventListener('click', e => {
+  const span = e.target.closest('span[data-role]');
+  if (!span) return;
+  [...$('roleSwitch').children].forEach(s => s.classList.remove('on'));
+  span.classList.add('on');
+  setRole(span.dataset.role);
+  toast(span.dataset.role === 'admin' ? '已切换到管理员视图：可见房间管理 / 房型 / 账号' : '已切换到前台视图');
+});
+
+// 单选组通用切换（排除角色切换组）
+document.querySelectorAll('.radio-group:not(#roleSwitch)').forEach(g => {
+  g.addEventListener('click', e => {
+    if (e.target.tagName !== 'SPAN') return;
+    [...g.children].forEach(s => s.classList.remove('on'));
+    e.target.classList.add('on');
+    if (g.id === 'coMode') calcCheckout();
+  });
+});
+
+// 快捷键
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { document.querySelectorAll('.modal-mask.open').forEach(m => m.classList.remove('open')); return; }
+  if (e.key === 'F2') { e.preventDefault(); gotoPage('checkin'); }
+  if (e.key === 'F5') { e.preventDefault(); renderAll(); toast('数据已刷新(F5)'); }
+  if (e.key === 'F4' && $('page-checkin').classList.contains('active')) { e.preventDefault(); resetCheckinForm(true); }
+  if (e.ctrlKey && e.key === 's' && $('page-checkin').classList.contains('active')) { e.preventDefault(); submitCheckin(); }
+  if (e.ctrlKey && e.key === 'Enter' && $('modalCheckin').classList.contains('open')) { e.preventDefault(); submitQuickCheckin(); }
+});
+
+/* =====================================================
+   初始化
+===================================================== */
+const NOW_TIME = NOW_DEFAULT();
+function NOW_DEFAULT() { return '2026-11-25 12:00'; }
+refreshCheckinRoomOptions();
+const initRoom = room($('ciRoom').value);
+if (initRoom) { $('ciPrice').value = initRoom.price; $('ciDeposit').value = initRoom.deposit; }
+calcCheckin();
+refreshReserveRoomOptions();
+$('loginUser').value = 'front01';
+renderAll();
+</script>
+</body>
+</html>
