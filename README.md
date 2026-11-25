@@ -1,0 +1,219 @@
+# HospiKeeper · 云栖民宿管理系统
+
+面向中小型民宿 / 小旅馆的桌面经营系统，覆盖「登录与权限、房态看板、入住登记、预定、在住、追加消费、退房结算、记录查询、统计报表、房间 / 房型 / 账号管理」的完整闭环。
+
+项目采用 **Avalonia 桌面客户端 → ASP.NET Core API → EF Core / MySQL** 的分层架构，并内置一套参考 Ant Design 规范实现的可复用控件库。当前代码主要用于验证 .NET 桌面 + Web API + EF Core 的主流技术栈组合，同时为后续新增 Blazor 模块预留了清晰的模块边界。
+
+## 技术栈
+
+| 层 | 技术 |
+|----|------|
+| 运行时 | .NET 10（LTS） |
+| 桌面客户端 | Avalonia 12.2 · CommunityToolkit.Mvvm 8.4 |
+| UI 设计系统 | 自研 Ant 风格控件库 `HospiKeeper.UI`（TemplatedControl / ControlTheme） |
+| API | ASP.NET Core 10 · Controllers · Swagger |
+| 持久化 | EF Core 10.0.12 · MySql.EntityFrameworkCore 10.0.12（官方 MySQL Provider） |
+| 数据库 | MySQL 8（`Scripts/docker-compose.yml`，端口 3306） |
+| 测试 | xUnit · EF Core InMemory（25 个用例） |
+
+## 解决方案结构
+
+```
+HospiKeeper.slnx
+├─ src/
+│  ├─ HospiKeeper.Domain/          # 实体、枚举、计费领域服务（无框架依赖）
+│  ├─ HospiKeeper.Contracts/       # 客户端/API 共享请求、响应与 API DTO
+│  ├─ HospiKeeper.Application/     # 业务服务 + 仓储抽象 + 工作单元抽象
+│  ├─ HospiKeeper.Infrastructure/  # EF Core DbContext、映射、仓储、迁移、演示数据
+│  ├─ HospiKeeper.Api/             # 独立 Web API（Token 鉴权 + REST + Swagger）
+│  ├─ HospiKeeper.Client/          # 桌面端 HTTP 客户端（IHospiKeeperApi）
+│  ├─ HospiKeeper.UI/              # 可复用 UI 设计系统与自研控件
+│  └─ HospiKeeper.Desktop/         # Avalonia 桌面应用（MVVM 页面 + 弹窗）
+├─ tests/
+│  └─ HospiKeeper.Tests/           # 领域与业务流程测试（EF Core InMemory）
+├─ Docs/                           # 原型、功能设计、MySQL 数据库设计参考
+├─ Scripts/                        # docker compose 与开发启动脚本
+├─ CLAUDE.md                       # 项目开发规范与 Claude Code 指引
+└─ dotnet-tools.json               # 本地 dotnet-ef 工具清单
+```
+
+依赖方向：`Desktop → Client → Contracts → Domain`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`。UI 模块不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Api`。
+
+## 自研 UI 控件库
+
+`HospiKeeper.UI` 不依赖任何第三方 UI 组件，包含：
+
+- `AntButton`：Primary / Default / Danger / Text / Link 变体，Small / Middle / Large 尺寸
+- `AntTag`：默认 / 成功 / 处理中 / 警告 / 失败 / 紫色 / 青色
+- `AntCard`、`AntStatCard`、`AntPageHeader`、`AntSectionTitle`
+- `AntFormItem`：标签、必填星号、错误信息
+- `AntModal`：主窗口内模态弹窗容器
+- `AntRoomCard`：六种房态渐变卡片与交互态
+- `AntTable` / `AntTableColumn`：替代废弃 DataGrid 的轻量数据表格
+- `AntBarChart`：自绘柱状图，无图表库依赖
+- `AntEmpty`、`AntToast`、`AntIcons`
+- `Theme/`：Ant Design 色彩 Token、控件主题、输入框 / 下拉 / 菜单 / 票据等统一样式
+
+## 快速开始
+
+### 环境要求
+
+- .NET 10 SDK
+- Docker Desktop（MySQL 8）
+
+### 1. 启动 MySQL
+
+```bash
+docker compose -f Scripts/docker-compose.yml up -d --wait
+```
+
+数据库连接信息（与 compose 一致）：
+
+```text
+Host=127.0.0.1
+Port=3306
+Database=hospikeeper
+User=hospikeeper
+Password=123456
+```
+
+> 数据库表结构与演示数据由 API 启动时的 EF Core Migrations 自动创建；
+> `Docs/民宿管理系统-数据库设计-v1.sql` 保留为设计参考，不再由 compose 自动执行。
+
+### 2. 启动 API
+
+```bash
+dotnet run --project src/HospiKeeper.Api
+```
+
+- API：`http://localhost:5080`
+- Swagger：`http://localhost:5080/swagger`
+- 首次启动自动执行 `Database.MigrateAsync()`，并在空库中生成演示数据。
+
+### 3. 启动桌面客户端
+
+```bash
+dotnet run --project src/HospiKeeper.Desktop
+```
+
+或者直接运行：
+
+```powershell
+./Scripts/run-dev.ps1
+```
+
+## 初始账号
+
+| 账号 | 密码 | 角色 | 状态 |
+|------|------|------|------|
+| `admin` | `123456` | 管理员 | 启用 |
+| `front01` | `123456` | 前台 | 启用 |
+| `front02` | `123456` | 前台 | 停用（用于验证停用拦截） |
+
+> 页面上不展示演示账号信息；以上仅用于本地启动。
+
+## 配置
+
+### API 数据库连接
+
+`src/HospiKeeper.Api/appsettings.json`：
+
+```json
+{
+  "Database": {
+    "Host": "127.0.0.1",
+    "Port": 3306,
+    "Name": "hospikeeper",
+    "User": "hospikeeper",
+    "Password": "123456"
+  }
+}
+```
+
+支持环境变量覆盖：
+
+- `HOSPITKEEPER_DB_HOST` / `MYSQL_HOST`
+- `HOSPITKEEPER_DB_PORT` / `MYSQL_PORT`
+- `HOSPITKEEPER_DB_NAME` / `MYSQL_DATABASE`
+- `HOSPITKEEPER_DB_USER` / `MYSQL_USER`
+- `HOSPITKEEPER_DB_PASSWORD` / `MYSQL_PASSWORD`
+
+### 桌面端 API 地址
+
+`src/HospiKeeper.Desktop/appsettings.json`：
+
+```json
+{
+  "Api": {
+    "BaseUrl": "http://localhost:5080"
+  }
+}
+```
+
+可通过 `HOSPITKEEPER_API_URL` 覆盖。
+
+## EF Core 迁移
+
+本地工具清单已包含 `dotnet-ef 10.0.12`：
+
+```bash
+dotnet tool restore
+```
+
+新增迁移：
+
+```bash
+dotnet ef migrations add <MigrationName> \
+  --project src/HospiKeeper.Infrastructure \
+  --startup-project src/HospiKeeper.Api \
+  --output-dir Persistence/Migrations
+```
+
+手动更新数据库：
+
+```bash
+dotnet ef database update \
+  --project src/HospiKeeper.Infrastructure \
+  --startup-project src/HospiKeeper.Api
+```
+
+重置本地数据库（会删除全部数据，重启 API 后自动迁移并重新生成演示数据）：
+
+```bash
+docker exec hospikeeper-mysql mysql -uroot -p123456 -e "
+DROP DATABASE IF EXISTS hospikeeper;
+CREATE DATABASE hospikeeper CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+GRANT ALL PRIVILEGES ON hospikeeper.* TO 'hospikeeper'@'%';
+FLUSH PRIVILEGES;"
+```
+
+## 权限约定
+
+- API 使用 Bearer Token（内存会话，12 小时有效）；每个请求由服务端重新加载用户角色与状态。
+- 前台：可办理入住 / 退房 / 追加消费 / 打扫；记录与日志只能查看本人经办。
+- 管理员：额外拥有房间、房型、操作员账号管理权限，并可查看全部记录。
+- 服务端同样做权限校验，避免仅依赖 UI 隐藏。
+
+## 业务要点
+
+- 计费：按天（不足一晚按一晚）或加钟（小时数向上取整，房费 = ceil(小时 × 单价 ÷ 24)）。
+- 结算差额：`应收 − 押金`；正数应补收、负数应退款。
+- 入住 `I+yyyyMMdd+序号`、结算 `S+…`、预定 `R+…`，序号由 `doc_sequence` 表维护。
+- 退房后房间自动进入「打扫中」；保洁完成后恢复「空闲」。
+- 房型改名会同步所有房间的冗余房型名；改价写入「改价」日志。
+
+## 测试
+
+```bash
+dotnet test
+```
+
+当前覆盖：计费口径、登录 / 停用 / 越权、账号唯一性、改密、入住校验、预定 / 取消 / 转入住、追加消费、退房结算、房间历史保护、前台数据隔离、报表指标与区间统计。
+
+## 后续 Blazor 模块
+
+新增 `src/HospiKeeper.Blazor` 时建议：
+
+- 引用 `HospiKeeper.Contracts` 与 `HospiKeeper.Client`，通过现有 API 访问业务，不在 Web 端直连数据库；
+- 继续由 `HospiKeeper.Api` 承担鉴权、权限与业务规则；
+- 若需要共享视觉规范，可将 Ant Design Token 移植为 Blazor CSS 变量，业务契约无需改动。
