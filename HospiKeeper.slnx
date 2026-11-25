@@ -4,6 +4,7 @@
     <Project Path="src/HospiKeeper.Contracts/HospiKeeper.Contracts.csproj" />
     <Project Path="src/HospiKeeper.Application/HospiKeeper.Application.csproj" />
     <Project Path="src/Sylvie233.Caching/Sylvie233.Caching.csproj" />
+    <Project Path="src/Sylvie233.Logging/Sylvie233.Logging.csproj" />
     <Project Path="src/HospiKeeper.Infrastructure/HospiKeeper.Infrastructure.csproj" />
     <Project Path="src/HospiKeeper.Api/HospiKeeper.Api.csproj" />
     <Project Path="src/HospiKeeper.Client/HospiKeeper.Client.csproj" />
