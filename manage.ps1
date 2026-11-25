@@ -336,7 +336,7 @@ function Wait-ApiHealthy {
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
         if (Test-ApiHealth) {
-            Write-Ok "API 已就绪：$ApiBaseUrl/swagger"
+            Write-Ok "API 已就绪：$ApiBaseUrl/scalar/v1"
             return
         }
 
@@ -395,13 +395,21 @@ function Start-Api {
     }
 
     Write-Step '启动 API...'
-    $process = Start-Process -FilePath 'dotnet' `
-        -ArgumentList @($ApiDll) `
-        -WorkingDirectory $ApiProjectDir `
-        -RedirectStandardOutput $ApiOutLog `
-        -RedirectStandardError $ApiErrLog `
-        -WindowStyle Hidden `
-        -PassThru
+    # 本地运维默认使用 Development，启用 Scalar 接口文档与详细错误信息。
+    $previousEnvironment = $env:ASPNETCORE_ENVIRONMENT
+    $env:ASPNETCORE_ENVIRONMENT = 'Development'
+    try {
+        $process = Start-Process -FilePath 'dotnet' `
+            -ArgumentList @($ApiDll) `
+            -WorkingDirectory $ApiProjectDir `
+            -RedirectStandardOutput $ApiOutLog `
+            -RedirectStandardError $ApiErrLog `
+            -WindowStyle Hidden `
+            -PassThru
+    }
+    finally {
+        $env:ASPNETCORE_ENVIRONMENT = $previousEnvironment
+    }
 
     Set-Content -LiteralPath $ApiPidFile -Value $process.Id -Encoding utf8
     Write-Ok "API 进程 PID $($process.Id)，日志：$ApiOutLog"
@@ -534,7 +542,8 @@ function Show-Status {
     Write-Host ''
     Write-Host '访问地址：' -ForegroundColor Cyan
     Write-Host "    API        $ApiBaseUrl"
-    Write-Host "    Swagger    $ApiBaseUrl/swagger"
+    Write-Host "    Scalar     $ApiBaseUrl/scalar/v1"
+    Write-Host "    OpenAPI    $ApiBaseUrl/openapi/v1.json"
     Write-Host "    MySQL      127.0.0.1:3306/hospikeeper"
     Write-Host "    Redis      localhost:6379"
     $apiLogFile = Get-SerilogFile -Prefix 'api'
