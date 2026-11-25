@@ -13,6 +13,7 @@
 | UI 设计系统 | 自研 Ant 风格控件库 `Sylvie233.UI`（TemplatedControl / ControlTheme） |
 | API | ASP.NET Core 10 · Controllers · Swagger |
 | 持久化 | EF Core 10.0.12 · MySql.EntityFrameworkCore 10.0.12（官方 MySQL Provider） |
+| 数据库组件 | 自研 `Sylvie233.Database`：连接配置 + DbContext 注册 + 迁移执行（无业务依赖） |
 | 缓存 | 自研 `Sylvie233.Caching`：Memory / Redis 可切换 · StackExchange.Redis 3.4 |
 | 日志 | 自研 `Sylvie233.Logging`：Serilog 4 · 控制台 + 按天滚动文件 · 结构化字段 |
 | 基础设施 | MySQL 8 · Redis 7（`Scripts/docker-compose.yml`，3306 / 6379） |
@@ -28,6 +29,7 @@ HospiKeeper.slnx
 │  ├─ HospiKeeper.Application/     # 业务服务 + 仓储/工作单元 + 缓存失效协调
 │  ├─ Sylvie233.Caching/           # ICacheService 端口 + Memory / Redis 实现（无业务依赖）
 │  ├─ Sylvie233.Logging/           # Serilog 统一配置：控制台 / 滚动文件（无业务依赖）
+│  ├─ Sylvie233.Database/          # 连接配置、MySQL DbContext 注册、迁移执行（无业务依赖）
 │  ├─ HospiKeeper.Infrastructure/  # EF Core DbContext、映射、仓储、迁移、演示数据
 │  ├─ HospiKeeper.Api/             # 独立 Web API（Token 鉴权 + REST + Swagger）
 │  ├─ HospiKeeper.Client/          # 桌面端 HTTP 客户端（IHospiKeeperApi）
@@ -42,7 +44,7 @@ HospiKeeper.slnx
 └─ dotnet-tools.json               # 本地 dotnet-ef 工具清单
 ```
 
-依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI` 与 `Sylvie233.Logging`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`；`Application → Sylvie233.Caching`（使用共享缓存端口）。`Sylvie233.UI`、`Sylvie233.Caching`、`Sylvie233.Logging` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Sylvie233.Logging` / `Api`。
+依赖方向：`Desktop → Client → Contracts → Domain`，并引用共享控件库 `Sylvie233.UI` 与 `Sylvie233.Logging`；`Api → Application → Contracts → Domain`；`Infrastructure → Application/Contracts`，并引用 `Sylvie233.Database`；`Application → Sylvie233.Caching`（使用共享缓存端口）。`Sylvie233.UI`、`Sylvie233.Caching`、`Sylvie233.Logging`、`Sylvie233.Database` 均不依赖业务模块，Blazor 等新客户端可直接复用 `Client` / `Contracts` / `Sylvie233.UI` 设计规范 / `Sylvie233.Logging` / `Api`。
 
 ## 自研 UI 控件库
 
@@ -149,13 +151,19 @@ pwsh ./manage.ps1 down            # 停止 API 与容器
 }
 ```
 
-支持环境变量覆盖：
+支持环境变量覆盖，查找顺序为：
 
-- `HOSPITKEEPER_DB_HOST` / `MYSQL_HOST`
-- `HOSPITKEEPER_DB_PORT` / `MYSQL_PORT`
-- `HOSPITKEEPER_DB_NAME` / `MYSQL_DATABASE`
-- `HOSPITKEEPER_DB_USER` / `MYSQL_USER`
-- `HOSPITKEEPER_DB_PASSWORD` / `MYSQL_PASSWORD`
+1. 业务前缀（当前 API 使用 `HOSPITKEEPER_`）
+2. `SYLVIE233_`
+3. Docker MySQL 约定（`MYSQL_`）
+
+| 配置 | 可用变量（任一即可） |
+|------|----------------------|
+| Host | `HOSPITKEEPER_DB_HOST` / `SYLVIE233_DB_HOST` / `MYSQL_HOST` |
+| Port | `HOSPITKEEPER_DB_PORT` / `SYLVIE233_DB_PORT` / `MYSQL_PORT` |
+| Name | `HOSPITKEEPER_DB_NAME` / `SYLVIE233_DB_NAME` / `MYSQL_DATABASE` |
+| User | `HOSPITKEEPER_DB_USER` / `SYLVIE233_DB_USER` / `MYSQL_USER` |
+| Password | `HOSPITKEEPER_DB_PASSWORD` / `SYLVIE233_DB_PASSWORD` / `MYSQL_PASSWORD` |
 
 ### 缓存配置
 
@@ -291,6 +299,23 @@ FLUSH PRIVILEGES;"
 ```powershell
 pwsh ./manage.ps1 logs -Target api -Follow   # 优先读取 logs/api-*.log
 Get-Content logs/desktop-*.log -Tail 100
+```
+
+## 数据库模块
+
+`Sylvie233.Database` 只承载“连接 + 注册 + 迁移执行”，不感知任何业务表：
+
+- `DatabaseOptions`：Host / Port / Name / User / Password、连接串构造、`SafeDisplay`；
+- `DatabaseEnvironmentOverrides`：按“业务前缀 → `SYLVIE233_` → `MYSQL_`”解析环境变量；
+- `AddSylvie233MySql<TContext>(options)`：以 MySQL 提供程序注册任意 DbContext；
+- `IDatabaseMigrator` / `MySqlDatabaseMigrator<TContext>`：记录待应用迁移并执行 `MigrateAsync`。
+
+业务侧仍由 `HospiKeeper.Infrastructure` 负责：`HotelDbContext`、表映射、仓储、`Migrations`、演示数据种子，以及组合各部分的 `AddInfrastructure`。启动流程为：
+
+```text
+HotelDataInitializer
+  ├─ IDatabaseMigrator.MigrateAsync()   # 共享模块
+  └─ DemoDataSeeder.SeedAsync()          # 业务种子
 ```
 
 ## 权限约定
