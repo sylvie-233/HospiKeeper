@@ -5,6 +5,7 @@ using Xunit;
 
 namespace HospiKeeper.Tests;
 
+/// <summary>入住 / 退房 / 预定主流程的回归测试。</summary>
 public sealed class BookingWorkflowTests
 {
     private static CheckInRequest CreateRequest(

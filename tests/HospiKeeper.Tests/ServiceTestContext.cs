@@ -1,3 +1,4 @@
+using HospiKeeper.Application.Abstractions.Services;
 using HospiKeeper.Application.Caching;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Application.Services;

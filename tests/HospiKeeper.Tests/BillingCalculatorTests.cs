@@ -5,6 +5,7 @@ using Xunit;
 
 namespace HospiKeeper.Tests;
 
+/// <summary>计费口径的单元测试。</summary>
 public sealed class BillingCalculatorTests
 {
     [Fact]

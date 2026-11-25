@@ -7,6 +7,7 @@ using Xunit;
 
 namespace HospiKeeper.Tests;
 
+/// <summary>缓存读写、防击穿与前缀失效测试。</summary>
 public sealed class CacheServiceTests
 {
     [Fact]

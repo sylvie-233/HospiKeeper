@@ -5,6 +5,7 @@ using Xunit;
 
 namespace HospiKeeper.Tests;
 
+/// <summary>登录、停用与权限校验的回归测试。</summary>
 public sealed class AuthServiceTests
 {
     [Fact]
@@ -47,7 +48,7 @@ public sealed class AuthServiceTests
     {
         await using var ctx = await ServiceTestContext.CreateAsync();
         var current = ctx.Session.CurrentUser!;
-        await Assert.ThrowsAsync<DomainException>(
+        await Assert.ThrowsAsync<ForbiddenException>(
             () => ctx.Auth.SetUserStatusAsync(current.Id, AccountStatus.Disabled));
     }
 
@@ -55,7 +56,7 @@ public sealed class AuthServiceTests
     public async Task FrontDesk_CannotListAccounts()
     {
         await using var ctx = await ServiceTestContext.CreateAsync("front01");
-        await Assert.ThrowsAsync<DomainException>(() => ctx.Auth.GetUsersAsync());
+        await Assert.ThrowsAsync<ForbiddenException>(() => ctx.Auth.GetUsersAsync());
     }
 
     [Fact]
