@@ -56,7 +56,8 @@ public sealed class BookingService : IBookingService
             .GroupBy(c => c.RoomId)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.CheckInTime).First());
         var reservedByRoom = reserved
-            .GroupBy(r => r.RoomId)
+            .Where(r => r.RoomId is not null)
+            .GroupBy(r => r.RoomId!.Value)
             .ToDictionary(g => g.Key, g => g.OrderBy(r => r.ArriveTime).First());
 
         return rooms
