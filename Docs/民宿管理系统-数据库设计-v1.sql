@@ -77,8 +77,7 @@ CREATE TABLE `room` (
   `has_window`  TINYINT(1)       NOT NULL DEFAULT 1      COMMENT '是否带窗：1=是 0=否',
   `has_bath`    TINYINT(1)       NOT NULL DEFAULT 1      COMMENT '是否独立卫浴：1=是 0=否',
   `status`      ENUM('FREE','OCCUPIED','RESERVED','CLEANING','REPAIR','DISABLED')
-                                 NOT NULL DEFAULT 'FREE' COMMENT '房态：FREE=空闲 OCCUPIED=已入住 RESERVED=预定 '
-                                                          'CLEANING=打扫中 REPAIR=维修 DISABLED=停用',
+                                 NOT NULL DEFAULT 'FREE' COMMENT '房态：FREE=空闲 OCCUPIED=已入住 RESERVED=预定 CLEANING=打扫中 REPAIR=维修 DISABLED=停用',
   `note`        VARCHAR(255)              NULL           COMMENT '备注（如维修原因）',
   `created_at`  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at`  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
