@@ -2,8 +2,11 @@ using System.Text.Json.Serialization;
 using HospiKeeper.Api.Middleware;
 using HospiKeeper.Api.Security;
 using HospiKeeper.Application.Abstractions;
+using HospiKeeper.Application.Abstractions.Caching;
+using HospiKeeper.Application.Caching;
 using HospiKeeper.Application.Common;
 using HospiKeeper.Application.Services;
+using HospiKeeper.Caching;
 using HospiKeeper.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,9 +15,14 @@ var dbOptions = new DatabaseOptions();
 builder.Configuration.GetSection("Database").Bind(dbOptions);
 ApplyEnvironmentOverrides(dbOptions);
 
+var cacheOptions = new CacheOptions();
+builder.Configuration.GetSection("Cache").Bind(cacheOptions);
+
 builder.Services.AddSingleton(dbOptions);
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddInfrastructure(dbOptions);
+builder.Services.AddCaching(cacheOptions);
+builder.Services.AddSingleton<IHotelCacheInvalidator, HotelCacheInvalidator>();
 builder.Services.AddSingleton<ApiTokenStore>();
 
 builder.Services.AddScoped<SessionContext>();

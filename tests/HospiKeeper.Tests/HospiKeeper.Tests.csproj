@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\HospiKeeper.Application\HospiKeeper.Application.csproj" />
+    <ProjectReference Include="..\..\src\HospiKeeper.Caching\HospiKeeper.Caching.csproj" />
     <ProjectReference Include="..\..\src\HospiKeeper.Infrastructure\HospiKeeper.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
