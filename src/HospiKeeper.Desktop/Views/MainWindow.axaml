@@ -4,6 +4,7 @@
         xmlns:svc="using:HospiKeeper.Desktop.Services"
         xmlns:controls="using:Sylvie233.UI.Controls"
         xmlns:icons="using:Sylvie233.UI.Icons"
+        Icon="avares://HospiKeeper.Desktop/Assets/app.png"
         x:Class="HospiKeeper.Desktop.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="{Binding WindowTitle}"

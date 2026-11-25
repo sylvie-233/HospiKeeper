@@ -4,6 +4,7 @@
         xmlns:controls="using:Sylvie233.UI.Controls"
         xmlns:icons="using:Sylvie233.UI.Icons"
         xmlns:conv="using:Avalonia.Data.Converters"
+        Icon="avares://HospiKeeper.Desktop/Assets/app.png"
         x:Class="HospiKeeper.Desktop.Views.LoginWindow"
         x:DataType="vm:LoginViewModel"
         Title="登录 - 云栖民宿管理系统"
