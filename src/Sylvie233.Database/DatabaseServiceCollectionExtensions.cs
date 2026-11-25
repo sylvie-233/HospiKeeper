@@ -9,13 +9,18 @@ public static class DatabaseServiceCollectionExtensions
     /// <summary>注册指定 DbContext（MySQL 提供程序）。业务层只需定义自己的 DbContext 与映射。</summary>
     public static IServiceCollection AddSylvie233MySql<TContext>(
         this IServiceCollection services,
-        DatabaseOptions options)
+        DatabaseOptions options,
+        Action<DbContextOptionsBuilder>? configure = null)
         where TContext : DbContext
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(options);
 
-        services.AddDbContext<TContext>(builder => builder.UseMySQL(options.BuildConnectionString()));
+        services.AddDbContext<TContext>(builder =>
+        {
+            builder.UseMySQL(options.BuildConnectionString());
+            configure?.Invoke(builder);
+        });
         return services;
     }
 }

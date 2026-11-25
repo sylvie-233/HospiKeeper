@@ -31,6 +31,29 @@ internal sealed class ReservationRepository : IReservationRepository
             .OrderBy(r => r.ArriveTime)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<Reservation>> GetByPhoneAsync(
+        string phone,
+        CancellationToken cancellationToken = default)
+        => await _db.Reservations.AsNoTracking()
+            .Where(r => r.GuestPhone == phone)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+    public Task<Reservation?> GetByResNoAsync(string resNo, CancellationToken cancellationToken = default)
+        => _db.Reservations.FirstOrDefaultAsync(r => r.ResNo == resNo, cancellationToken);
+
+    public async Task<IReadOnlyList<Reservation>> GetOverlappingPendingAsync(
+        int typeId,
+        DateTime checkInDate,
+        DateTime checkOutDate,
+        CancellationToken cancellationToken = default)
+        => await _db.Reservations.AsNoTracking()
+            .Where(r => r.Status == ReservationStatus.Pending
+                        && r.TypeId == typeId
+                        && r.CheckInDate < checkOutDate.Date
+                        && r.CheckOutDate > checkInDate.Date)
+            .ToListAsync(cancellationToken);
+
     public Task<bool> HasPendingForRoomAsync(
         int roomId,
         int? excludeReservationId = null,

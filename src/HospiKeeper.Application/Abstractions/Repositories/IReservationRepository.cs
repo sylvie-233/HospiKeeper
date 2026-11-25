@@ -17,6 +17,19 @@ public interface IReservationRepository
     /// <summary>查询全部待到店预定。</summary>
     Task<IReadOnlyList<Reservation>> GetPendingAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>按手机号查询预订（游客「我的预订」）。</summary>
+    Task<IReadOnlyList<Reservation>> GetByPhoneAsync(string phone, CancellationToken cancellationToken = default);
+
+    /// <summary>按预订号查询。</summary>
+    Task<Reservation?> GetByResNoAsync(string resNo, CancellationToken cancellationToken = default);
+
+    /// <summary>查询与指定房型、日期段重叠的待到店预订（库存扣减口径）。</summary>
+    Task<IReadOnlyList<Reservation>> GetOverlappingPendingAsync(
+        int typeId,
+        DateTime checkInDate,
+        DateTime checkOutDate,
+        CancellationToken cancellationToken = default);
+
     /// <summary>判断房间是否已有待到店预定。</summary>
     Task<bool> HasPendingForRoomAsync(
         int roomId,

@@ -1,4 +1,5 @@
 using HospiKeeper.Domain.Entities;
+using HospiKeeper.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,8 +17,20 @@ internal sealed class ReservationConfiguration : IEntityTypeConfiguration<Reserv
         builder.Property(x => x.ResNo).HasColumnName("res_no").HasMaxLength(32).IsRequired();
         builder.Property(x => x.GuestName).HasColumnName("guest_name").HasMaxLength(32).IsRequired();
         builder.Property(x => x.GuestPhone).HasColumnName("guest_phone").HasMaxLength(20).IsRequired();
+        builder.Property(x => x.GuestIdCard).HasColumnName("guest_id_card").HasMaxLength(18);
         builder.Property(x => x.RoomId).HasColumnName("room_id");
-        builder.Property(x => x.RoomNo).HasColumnName("room_no").HasMaxLength(16).IsRequired();
+        builder.Property(x => x.RoomNo).HasColumnName("room_no").HasMaxLength(16);
+        builder.Property(x => x.TypeId).HasColumnName("type_id").IsRequired();
+        builder.Property(x => x.CheckInDate).HasColumnName("check_in_date").HasColumnType("date").IsRequired();
+        builder.Property(x => x.CheckOutDate).HasColumnName("check_out_date").HasColumnType("date").IsRequired();
+        builder.Property(x => x.Channel)
+            .HasColumnName("channel")
+            .HasConversion(
+                value => value == ReservationChannel.Web ? "WEB" : "WALK_IN",
+                value => value == "WEB" ? ReservationChannel.Web : ReservationChannel.WalkIn)
+            .HasMaxLength(16)
+            .IsRequired();
+        builder.Property(x => x.UnitPrice).HasColumnName("unit_price").HasPrecision(10, 2);
         builder.Property(x => x.RoomTypeName).HasColumnName("room_type_name").HasMaxLength(32).IsRequired();
         builder.Property(x => x.ArriveTime).HasColumnName("arrive_time");
         builder.Property(x => x.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(16).IsRequired();
@@ -32,10 +45,16 @@ internal sealed class ReservationConfiguration : IEntityTypeConfiguration<Reserv
         builder.HasIndex(x => x.Status);
         builder.HasIndex(x => x.ArriveTime);
         builder.HasIndex(x => x.GuestPhone);
+        builder.HasIndex(x => new { x.TypeId, x.CheckInDate, x.CheckOutDate });
 
         builder.HasOne<Room>()
             .WithMany()
             .HasForeignKey(x => x.RoomId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<RoomType>()
+            .WithMany()
+            .HasForeignKey(x => x.TypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.CheckIn)

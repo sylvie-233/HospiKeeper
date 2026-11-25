@@ -29,7 +29,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS `sys_user`;
 CREATE TABLE `sys_user` (
-  `id`          INT UNSIGNED     NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `id`          INT     NOT NULL AUTO_INCREMENT COMMENT '主键',
   `username`    VARCHAR(32)      NOT NULL                COMMENT '登录账号（唯一）',
   `password`    CHAR(64)         NOT NULL                COMMENT '密码 SHA-256 摘要（demo 明文 123456）',
   `real_name`   VARCHAR(32)      NOT NULL                COMMENT '姓名，如：老陈 / 小王',
@@ -48,7 +48,7 @@ CREATE TABLE `sys_user` (
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS `room_type`;
 CREATE TABLE `room_type` (
-  `id`          INT UNSIGNED     NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `id`          INT     NOT NULL AUTO_INCREMENT COMMENT '主键',
   `name`        VARCHAR(32)      NOT NULL                COMMENT '房型名称：单人间/双人间/大床房',
   `base_price`  DECIMAL(10,2)    NOT NULL DEFAULT 0.00   COMMENT '基础定价（元/晚）',
   `note`        VARCHAR(255)              NULL           COMMENT '备注',
@@ -65,10 +65,10 @@ CREATE TABLE `room_type` (
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS `room`;
 CREATE TABLE `room` (
-  `id`          INT UNSIGNED     NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `id`          INT     NOT NULL AUTO_INCREMENT COMMENT '主键',
   `room_no`     VARCHAR(16)      NOT NULL                COMMENT '房号，如 101 / 205（唯一）',
   `floor`       INT              NOT NULL DEFAULT 1      COMMENT '楼层（看板/筛选维度）',
-  `type_id`     INT UNSIGNED     NOT NULL                COMMENT '房型 ID → room_type.id',
+  `type_id`     INT     NOT NULL                COMMENT '房型 ID → room_type.id',
   `type_name`   VARCHAR(32)      NOT NULL                COMMENT '房型名称冗余（看板直读，房型改名时同步更新）',
   `beds`        TINYINT UNSIGNED NOT NULL DEFAULT 1      COMMENT '床位数',
   `price`       DECIMAL(10,2)    NOT NULL DEFAULT 0.00   COMMENT '标价（元/晚）',
@@ -95,23 +95,25 @@ CREATE TABLE `room` (
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS `reservation`;
 CREATE TABLE `reservation` (
-  `id`           INT UNSIGNED    NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `id`           INT    NOT NULL AUTO_INCREMENT COMMENT '主键',
   `res_no`       VARCHAR(32)     NOT NULL                COMMENT '预定单号：R+日期+序号，如 R20261125001',
   `guest_name`   VARCHAR(32)     NOT NULL                COMMENT '客人姓名',
   `guest_phone`  VARCHAR(20)     NOT NULL                COMMENT '联系电话',
-  `type_id`      INT UNSIGNED    NOT NULL                COMMENT '预定房型 → room_type.id（房型库存模型）',
-  `room_id`      INT UNSIGNED             NULL           COMMENT '到店分配的房间 → room.id；游客在线预订提交时为 NULL',
+  `guest_id_card` VARCHAR(18)              NULL           COMMENT '游客身份证号（Web 预订选填）',
+  `type_id`      INT             NOT NULL                COMMENT '预定房型 → room_type.id（房型库存模型）',
+  `room_id`      INT                      NULL           COMMENT '到店分配的房间 → room.id；游客在线预订提交时为 NULL',
   `room_no`      VARCHAR(16)              NULL           COMMENT '房号冗余；游客在线预订提交时为 NULL，转入住时回填',
   `room_type_name` VARCHAR(32)   NOT NULL                COMMENT '房型名称冗余（列表直读）',
   `check_in_date`  DATE          NOT NULL                COMMENT '入住日期',
   `check_out_date` DATE          NOT NULL                COMMENT '退房日期，必须晚于入住日期',
   `channel`      ENUM('WALK_IN','WEB') NOT NULL DEFAULT 'WALK_IN' COMMENT '预订渠道：前台 / 游客 Web',
+  `unit_price`   DECIMAL(10,2)             NULL           COMMENT '下单时房型单价快照',
   `arrive_time`  DATETIME        NOT NULL                COMMENT '预计到店时间',
   `status`       ENUM('PENDING','CONVERTED','CANCELLED') NOT NULL DEFAULT 'PENDING'
                                                          COMMENT '状态：PENDING=待到店 CONVERTED=已转入住 CANCELLED=已取消',
-  `checkin_id`   INT UNSIGNED             NULL           COMMENT '转入住后的入住单 → checkin_record.id（未转为 NULL）',
+  `checkin_id`   INT             NULL           COMMENT '转入住后的入住单 → checkin_record.id（未转为 NULL）',
   `note`         VARCHAR(255)             NULL           COMMENT '备注',
-  `op_user_id`   INT UNSIGNED             NULL           COMMENT '经办人 → sys_user.id',
+  `op_user_id`   INT             NULL           COMMENT '经办人 → sys_user.id',
   `created_at`   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at`   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
@@ -134,9 +136,9 @@ CREATE TABLE `reservation` (
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS `checkin_record`;
 CREATE TABLE `checkin_record` (
-  `id`            INT UNSIGNED   NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `id`            INT   NOT NULL AUTO_INCREMENT COMMENT '主键',
   `checkin_no`    VARCHAR(32)    NOT NULL                COMMENT '入住单号：I+日期+序号，如 I20261125001',
-  `room_id`       INT UNSIGNED   NOT NULL                COMMENT '房间 → room.id',
+  `room_id`       INT   NOT NULL                COMMENT '房间 → room.id',
   `room_no`       VARCHAR(16)    NOT NULL                COMMENT '房号冗余（列表直读/检索）',
   `guest_name`    VARCHAR(32)    NOT NULL                COMMENT '主客人姓名',
   `guest_phone`   VARCHAR(20)    NOT NULL                COMMENT '主客人手机号',
@@ -151,7 +153,7 @@ CREATE TABLE `checkin_record` (
   `status`        ENUM('LIVING','CHECKED_OUT') NOT NULL DEFAULT 'LIVING'
                                                         COMMENT '状态：LIVING=在住 CHECKED_OUT=已退房',
   `note`          VARCHAR(255)            NULL           COMMENT '备注',
-  `op_user_id`    INT UNSIGNED            NULL           COMMENT '经办人 → sys_user.id',
+  `op_user_id`    INT            NULL           COMMENT '经办人 → sys_user.id',
   `created_at`    DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at`    DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
@@ -172,8 +174,8 @@ CREATE TABLE `checkin_record` (
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS `checkin_companion`;
 CREATE TABLE `checkin_companion` (
-  `id`           INT UNSIGNED    NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `checkin_id`   INT UNSIGNED    NOT NULL                COMMENT '入住单 → checkin_record.id',
+  `id`           INT    NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `checkin_id`   INT    NOT NULL                COMMENT '入住单 → checkin_record.id',
   `name`         VARCHAR(32)     NOT NULL                COMMENT '同住人姓名',
   `phone`        VARCHAR(20)              NULL           COMMENT '手机号',
   `idcard`       VARCHAR(18)              NULL           COMMENT '身份证号',
@@ -189,12 +191,12 @@ CREATE TABLE `checkin_companion` (
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS `extra_charge`;
 CREATE TABLE `extra_charge` (
-  `id`           INT UNSIGNED    NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `checkin_id`   INT UNSIGNED    NOT NULL                COMMENT '入住单 → checkin_record.id',
+  `id`           INT    NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `checkin_id`   INT    NOT NULL                COMMENT '入住单 → checkin_record.id',
   `item`         VARCHAR(64)     NOT NULL                COMMENT '消费项目，如：矿泉水 / 泡面',
   `amount`       DECIMAL(10,2)   NOT NULL DEFAULT 0.00   COMMENT '金额（元）',
   `charge_time`  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '消费时间',
-  `op_user_id`   INT UNSIGNED             NULL           COMMENT '经办人 → sys_user.id',
+  `op_user_id`   INT             NULL           COMMENT '经办人 → sys_user.id',
   PRIMARY KEY (`id`),
   KEY `idx_checkin` (`checkin_id`),
   CONSTRAINT `fk_ec_checkin` FOREIGN KEY (`checkin_id`) REFERENCES `checkin_record` (`id`) ON DELETE CASCADE,
@@ -212,10 +214,10 @@ CREATE TABLE `extra_charge` (
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS `checkout_bill`;
 CREATE TABLE `checkout_bill` (
-  `id`            INT UNSIGNED   NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `id`            INT   NOT NULL AUTO_INCREMENT COMMENT '主键',
   `bill_no`       VARCHAR(32)    NOT NULL                COMMENT '结算单号：S+日期+序号，如 S20261123002',
-  `checkin_id`    INT UNSIGNED   NOT NULL                COMMENT '入住单 → checkin_record.id（1:1）',
-  `room_id`       INT UNSIGNED   NOT NULL                COMMENT '房间 → room.id',
+  `checkin_id`    INT   NOT NULL                COMMENT '入住单 → checkin_record.id（1:1）',
+  `room_id`       INT   NOT NULL                COMMENT '房间 → room.id',
   `room_no`       VARCHAR(16)    NOT NULL                COMMENT '房号冗余',
   `guest_name`    VARCHAR(32)    NOT NULL                COMMENT '客人姓名（快照）',
   `checkin_time`  DATETIME       NOT NULL                COMMENT '入住时间（快照）',
@@ -230,7 +232,7 @@ CREATE TABLE `checkout_bill` (
   `total`         DECIMAL(10,2)  NOT NULL DEFAULT 0.00   COMMENT '应收合计 = room_fee + extra_total + damage + other_fee',
   `diff`          DECIMAL(10,2)  NOT NULL DEFAULT 0.00   COMMENT '结算差额：>0 应补收，<0 应退款，=0 押金正好抵扣',
   `note`          VARCHAR(255)            NULL           COMMENT '备注（损坏说明等）',
-  `op_user_id`    INT UNSIGNED            NULL           COMMENT '结算经办人 → sys_user.id',
+  `op_user_id`    INT            NULL           COMMENT '结算经办人 → sys_user.id',
   `created_at`    DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '结算时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_bill_no` (`bill_no`),
@@ -249,8 +251,8 @@ CREATE TABLE `checkout_bill` (
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS `op_log`;
 CREATE TABLE `op_log` (
-  `id`           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `user_id`      INT UNSIGNED             NULL           COMMENT '操作人 → sys_user.id',
+  `id`           BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id`      INT             NULL           COMMENT '操作人 → sys_user.id',
   `user_name`    VARCHAR(64)              NULL           COMMENT '操作人姓名冗余（含角色），如：小王（前台）',
   `action`       VARCHAR(32)     NOT NULL                COMMENT '动作类型：开房/退房/预定/取消预定/打扫/改价/登录 等',
   `target`       VARCHAR(64)              NULL           COMMENT '操作对象，如：201 · 大床房 / 房型·大床房',
@@ -274,7 +276,7 @@ CREATE TABLE `op_log` (
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS `daily_revenue_stat`;
 CREATE TABLE `daily_revenue_stat` (
-  `id`             INT UNSIGNED  NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `id`             INT  NOT NULL AUTO_INCREMENT COMMENT '主键',
   `stat_date`      DATE          NOT NULL                COMMENT '统计日期（唯一）',
   `revenue`        DECIMAL(12,2) NOT NULL DEFAULT 0.00   COMMENT '当日营收合计（元）',
   `checkin_count`  INT           NOT NULL DEFAULT 0      COMMENT '当日开房数量',

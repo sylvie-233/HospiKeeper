@@ -166,14 +166,24 @@ public sealed class BookingService : IBookingService
                 throw new DomainException("该预定已处理，不能重复转入入住。");
             }
 
-            if (reservation.RoomId != room.Id)
+            if (reservation.RoomId is int reservedRoomId && reservedRoomId != room.Id)
             {
                 throw new DomainException("预定房间与入住房间不一致。");
             }
 
-            if (room.Status != RoomStatus.Reserved)
+            if (reservation.RoomId is null && reservation.TypeId != room.TypeId)
+            {
+                throw new DomainException("请选择与预定房型一致的房间。");
+            }
+
+            if (reservation.RoomId is int && room.Status != RoomStatus.Reserved)
             {
                 throw new DomainException("预定房间当前不是「预定」状态，请刷新房态。");
+            }
+
+            if (reservation.RoomId is null && room.Status != RoomStatus.Free)
+            {
+                throw new DomainException("请选择该房型下的空闲房间。");
             }
         }
         else if (room.Status != RoomStatus.Free)
@@ -220,6 +230,9 @@ public sealed class BookingService : IBookingService
         if (reservation is not null)
         {
             reservation.Status = ReservationStatus.Converted;
+            reservation.RoomId = room.Id;
+            reservation.RoomNo = room.RoomNo;
+            reservation.RoomTypeName = room.TypeName;
             reservation.CheckIn = record;
             reservation.CheckInNo = record.CheckInNo;
         }
@@ -390,7 +403,12 @@ public sealed class BookingService : IBookingService
             GuestPhone = guestPhone,
             RoomId = room.Id,
             RoomNo = room.RoomNo,
+            TypeId = room.TypeId,
             RoomTypeName = room.TypeName,
+            CheckInDate = request.ArriveTime.Date,
+            CheckOutDate = request.ArriveTime.Date.AddDays(1),
+            Channel = ReservationChannel.WalkIn,
+            UnitPrice = room.Price,
             ArriveTime = request.ArriveTime,
             Status = ReservationStatus.Pending,
             Note = note,
@@ -424,7 +442,9 @@ public sealed class BookingService : IBookingService
 
         reservation.Status = ReservationStatus.Cancelled;
 
-        var room = await _unitOfWork.Rooms.GetByIdAsync(reservation.RoomId, cancellationToken);
+        var room = reservation.RoomId is int roomId
+            ? await _unitOfWork.Rooms.GetByIdAsync(roomId, cancellationToken)
+            : null;
         if (room is not null
             && room.Status == RoomStatus.Reserved
             && !await _unitOfWork.Reservations.HasPendingForRoomAsync(room.Id, reservation.Id, cancellationToken))

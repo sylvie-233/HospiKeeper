@@ -40,4 +40,31 @@ public sealed class EfUnitOfWork : IUnitOfWork
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => _db.SaveChangesAsync(cancellationToken);
+
+    public async Task<T> ExecuteInTransactionAsync<T>(
+        Func<CancellationToken, Task<T>> action,
+        CancellationToken cancellationToken = default)
+    {
+        // EF InMemory 不支持事务，测试环境直接执行并保存。
+        if (_db.Database.ProviderName?.Contains("InMemory", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            var testResult = await action(cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return testResult;
+        }
+
+        await using var transaction = _db.Database.BeginTransaction();
+        try
+        {
+            var result = await action(cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return result;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
 }

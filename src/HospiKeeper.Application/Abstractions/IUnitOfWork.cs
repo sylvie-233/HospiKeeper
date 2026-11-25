@@ -33,4 +33,12 @@ public interface IUnitOfWork
 
     /// <summary>提交当前工作单元内的全部变更，返回受影响行数。</summary>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 在事务中执行一段业务动作并在成功后统一提交；动作内不要再次调用 <see cref="SaveChangesAsync"/>。
+    /// 用于游客预订的「库存校验 + 写入」等需要原子性的场景。
+    /// </summary>
+    Task<T> ExecuteInTransactionAsync<T>(
+        Func<CancellationToken, Task<T>> action,
+        CancellationToken cancellationToken = default);
 }

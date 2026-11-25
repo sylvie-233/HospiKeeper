@@ -117,7 +117,7 @@ public sealed class BookingWorkflowTests
         var reservation = (await ctx.Booking.GetReservationsAsync(ReservationStatus.Pending)).First();
 
         var record = await ctx.Booking.CheckInAsync(new CheckInRequest(
-            reservation.RoomId,
+            reservation.RoomId!.Value,
             reservation.GuestName,
             reservation.GuestPhone,
             "330101199001011234",
@@ -132,7 +132,7 @@ public sealed class BookingWorkflowTests
         Assert.Equal(ReservationStatus.Converted, updated.Status);
         Assert.Equal(record.CheckInNo, updated.CheckInNo);
         Assert.Equal(RoomStatus.Occupied,
-            (await ctx.Rooms.GetRoomAsync(reservation.RoomId))!.Status);
+            (await ctx.Rooms.GetRoomAsync(reservation.RoomId!.Value))!.Status);
     }
 
     [Fact]

@@ -1,4 +1,6 @@
 using HospiKeeper.Application.Abstractions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Sylvie233.Database;
 
@@ -12,8 +14,14 @@ public static class InfrastructureServiceCollectionExtensions
         this IServiceCollection services,
         DatabaseOptions options)
     {
-        services.AddSylvie233MySql<HotelDbContext>(options);
+        // 本项目游客预订 v1.1 通过 SQL 维护结构（见 ReservationSchemaUpgrader），
+        // EF 模型会领先于迁移快照，因此忽略启动时的待迁移模型检查警告。
+        services.AddSylvie233MySql<HotelDbContext>(
+            options,
+            builder => builder.ConfigureWarnings(w =>
+                w.Ignore(RelationalEventId.PendingModelChangesWarning)));
         services.AddScoped<IDatabaseMigrator, MySqlDatabaseMigrator<HotelDbContext>>();
+        services.AddScoped<ReservationSchemaUpgrader>();
         services.AddScoped<HotelDataInitializer>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 

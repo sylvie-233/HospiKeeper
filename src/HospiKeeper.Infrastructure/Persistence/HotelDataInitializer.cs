@@ -9,18 +9,25 @@ public sealed class HotelDataInitializer
 {
     private readonly HotelDbContext _db;
     private readonly IDatabaseMigrator _migrator;
+    private readonly ReservationSchemaUpgrader _schemaUpgrader;
     private readonly IClock _clock;
 
-    public HotelDataInitializer(HotelDbContext db, IDatabaseMigrator migrator, IClock clock)
+    public HotelDataInitializer(
+        HotelDbContext db,
+        IDatabaseMigrator migrator,
+        ReservationSchemaUpgrader schemaUpgrader,
+        IClock clock)
     {
         _db = db;
         _migrator = migrator;
+        _schemaUpgrader = schemaUpgrader;
         _clock = clock;
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         await _migrator.MigrateAsync(cancellationToken);
+        await _schemaUpgrader.EnsureAsync(cancellationToken);
         await DemoDataSeeder.SeedAsync(_db, _clock.Now, cancellationToken);
     }
 }

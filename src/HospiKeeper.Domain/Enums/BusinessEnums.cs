@@ -65,6 +65,16 @@ public enum CheckInStatus
     CheckedOut = 1
 }
 
+/// <summary>预订渠道。</summary>
+public enum ReservationChannel
+{
+    /// <summary>前台代客预订（已指定房间）。</summary>
+    WalkIn = 0,
+
+    /// <summary>游客在线预订（只锁房型与日期段，到店分配房间）。</summary>
+    Web = 1
+}
+
 /// <summary>退房计费方式：按天 / 加钟（按小时折算）。</summary>
 public enum BillingMode
 {
