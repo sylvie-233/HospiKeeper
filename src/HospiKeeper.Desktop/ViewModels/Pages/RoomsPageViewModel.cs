@@ -70,7 +70,6 @@ public sealed class RoomRowViewModel
 /// <summary>房间管理页面。</summary>
 public sealed partial class RoomsPageViewModel : PageViewModelBase
 {
-    private bool _filtersLoaded;
     private bool _suppressFilterReload;
     private IReadOnlyList<RoomType> _roomTypes = Array.Empty<RoomType>();
 
@@ -126,42 +125,46 @@ public sealed partial class RoomsPageViewModel : PageViewModelBase
 
     public override async Task OnNavigatedToAsync(object? argument)
     {
-        await EnsureFiltersAsync();
+        // 房间 / 房型随时可能变化，进入页面时重新生成筛选选项。
+        await RefreshFiltersAsync();
         await LoadAsync();
     }
 
-
-    private async Task EnsureFiltersAsync()
+    private async Task RefreshFiltersAsync()
     {
-        if (_filtersLoaded)
-        {
-            return;
-        }
-
         await TryLoadAsync(async () =>
         {
             var floors = await Api.GetFloorsAsync();
             _roomTypes = await Api.GetRoomTypesAsync();
+            var previousFloor = SelectedFloor?.Value;
+            var previousType = SelectedRoomType?.Value;
 
             _suppressFilterReload = true;
-            FloorOptions.Clear();
-            FloorOptions.Add(new FloorFilterOption(null, "全部楼层"));
-            foreach (var floor in floors)
+            try
             {
-                FloorOptions.Add(new FloorFilterOption(floor, $"{floor} 楼"));
-            }
+                FloorOptions.Clear();
+                FloorOptions.Add(new FloorFilterOption(null, "全部楼层"));
+                foreach (var floor in floors)
+                {
+                    FloorOptions.Add(new FloorFilterOption(floor, $"{floor} 楼"));
+                }
 
-            RoomTypeOptions.Clear();
-            RoomTypeOptions.Add(new RoomTypeFilterOption(null, "全部房型"));
-            foreach (var type in _roomTypes)
+                RoomTypeOptions.Clear();
+                RoomTypeOptions.Add(new RoomTypeFilterOption(null, "全部房型"));
+                foreach (var type in _roomTypes)
+                {
+                    RoomTypeOptions.Add(new RoomTypeFilterOption(type.Id, type.Name));
+                }
+
+                SelectedFloor = FloorOptions.FirstOrDefault(option => option.Value == previousFloor)
+                                ?? FloorOptions[0];
+                SelectedRoomType = RoomTypeOptions.FirstOrDefault(option => option.Value == previousType)
+                                   ?? RoomTypeOptions[0];
+            }
+            finally
             {
-                RoomTypeOptions.Add(new RoomTypeFilterOption(type.Id, type.Name));
+                _suppressFilterReload = false;
             }
-
-            SelectedFloor = FloorOptions[0];
-            SelectedRoomType = RoomTypeOptions[0];
-            _suppressFilterReload = false;
-            _filtersLoaded = true;
         });
     }
 
@@ -180,25 +183,23 @@ public sealed partial class RoomsPageViewModel : PageViewModelBase
         });
     }
 
-    private async Task AddAsync()
+    private Task AddAsync()
     {
-        if (!_filtersLoaded)
-        {
-            await EnsureFiltersAsync();
-        }
-
         Dialog.Show(new RoomEditDialogViewModel(
             Dialog, Toast, Api, null, _roomTypes, async () =>
             {
+                await RefreshFiltersAsync();
                 await LoadAsync();
                 NotifyDataChanged();
             }));
+        return Task.CompletedTask;
     }
 
     internal void ShowEdit(RoomRowViewModel row)
         => Dialog.Show(new RoomEditDialogViewModel(
             Dialog, Toast, Api, row.Room, _roomTypes, async () =>
             {
+                await RefreshFiltersAsync();
                 await LoadAsync();
                 NotifyDataChanged();
             }));
@@ -218,6 +219,7 @@ public sealed partial class RoomsPageViewModel : PageViewModelBase
         await RunAsync(async () =>
         {
             await Api.DeleteRoomAsync(row.Room.Id);
+            await RefreshFiltersAsync();
             await LoadAsync();
         }, $"房间 {row.RoomNo} 已删除");
     }

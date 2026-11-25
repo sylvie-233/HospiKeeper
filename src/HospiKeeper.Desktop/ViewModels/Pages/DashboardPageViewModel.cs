@@ -17,7 +17,6 @@ namespace HospiKeeper.Desktop.ViewModels.Pages;
 /// <summary>房态看板页面。</summary>
 public sealed partial class DashboardPageViewModel : PageViewModelBase
 {
-    private bool _filtersLoaded;
     private bool _suppressFilterReload;
     private IReadOnlyList<BoardRoom> _lastBoard = Array.Empty<BoardRoom>();
 
@@ -72,42 +71,46 @@ public sealed partial class DashboardPageViewModel : PageViewModelBase
 
     public override async Task OnNavigatedToAsync(object? argument)
     {
-        await EnsureFiltersAsync();
+        // 每次进入看板都刷新筛选来源，确保新增楼层 / 房型立即可见。
+        await RefreshFiltersAsync();
         await LoadBoardAsync();
     }
 
-
-    private async Task EnsureFiltersAsync()
+    private async Task RefreshFiltersAsync()
     {
-        if (_filtersLoaded)
-        {
-            return;
-        }
-
         await TryLoadAsync(async () =>
         {
             var floors = await Api.GetFloorsAsync();
             var types = await Api.GetRoomTypesAsync();
+            var previousFloor = SelectedFloor?.Value;
+            var previousType = SelectedRoomType?.Value;
 
             _suppressFilterReload = true;
-            FloorOptions.Clear();
-            FloorOptions.Add(new FloorFilterOption(null, "全部楼层"));
-            foreach (var floor in floors)
+            try
             {
-                FloorOptions.Add(new FloorFilterOption(floor, $"{floor} 楼"));
-            }
+                FloorOptions.Clear();
+                FloorOptions.Add(new FloorFilterOption(null, "全部楼层"));
+                foreach (var floor in floors)
+                {
+                    FloorOptions.Add(new FloorFilterOption(floor, $"{floor} 楼"));
+                }
 
-            RoomTypeOptions.Clear();
-            RoomTypeOptions.Add(new RoomTypeFilterOption(null, "全部房型"));
-            foreach (var type in types)
+                RoomTypeOptions.Clear();
+                RoomTypeOptions.Add(new RoomTypeFilterOption(null, "全部房型"));
+                foreach (var type in types)
+                {
+                    RoomTypeOptions.Add(new RoomTypeFilterOption(type.Id, type.Name));
+                }
+
+                SelectedFloor = FloorOptions.FirstOrDefault(option => option.Value == previousFloor)
+                                ?? FloorOptions[0];
+                SelectedRoomType = RoomTypeOptions.FirstOrDefault(option => option.Value == previousType)
+                                   ?? RoomTypeOptions[0];
+            }
+            finally
             {
-                RoomTypeOptions.Add(new RoomTypeFilterOption(type.Id, type.Name));
+                _suppressFilterReload = false;
             }
-
-            SelectedFloor = FloorOptions[0];
-            SelectedRoomType = RoomTypeOptions[0];
-            _suppressFilterReload = false;
-            _filtersLoaded = true;
         });
     }
 

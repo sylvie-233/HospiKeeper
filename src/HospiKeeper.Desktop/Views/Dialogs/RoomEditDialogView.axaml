@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:dialogs="using:HospiKeeper.Desktop.ViewModels.Dialogs"
-             xmlns:domain="using:HospiKeeper.Domain.Entities"
+             xmlns:contracts="using:HospiKeeper.Contracts"
              xmlns:controls="using:Sylvie233.UI.Controls"
              xmlns:conv="using:Avalonia.Data.Converters"
              x:Class="HospiKeeper.Desktop.Views.Dialogs.RoomEditDialogView"
@@ -30,7 +30,7 @@
       <ComboBox ItemsSource="{Binding RoomTypes}" SelectedItem="{Binding SelectedRoomType}"
                 HorizontalAlignment="Stretch">
         <ComboBox.ItemTemplate>
-          <DataTemplate x:DataType="domain:RoomType">
+          <DataTemplate x:DataType="contracts:RoomTypeDto">
             <TextBlock Text="{Binding Name}" />
           </DataTemplate>
         </ComboBox.ItemTemplate>
